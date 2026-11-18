@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   adr,
+  budgetYears,
   percentage,
   summarize,
   makeDemo,
@@ -42,4 +43,23 @@ describe("financial calculations", () => {
     d.commercial[0].weekly = [];
     expect(validData(d)).toBe(false);
   });
+});
+
+describe("historical years", () => {
+  it("offers 2021–2025 while retaining the existing years", () => {
+    expect(budgetYears).toEqual([
+      2021, 2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030,
+    ]);
+  });
+  it.each([2021, 2022, 2023, 2024, 2025])(
+    "keeps %i entries and report rows tied to their year",
+    (year) => {
+      const historical = makeDemo(year);
+      expect(historical).toHaveLength(48);
+      expect(historical.every((e) => e.year === year)).toBe(true);
+      expect(reportRows(historical).every((r) => r.Year === year)).toBe(true);
+      historical[0].data.commercial[1].bob = 123;
+      expect(makeDemo(2027)[0].data.commercial[1].bob).not.toBe(123);
+    },
+  );
 });

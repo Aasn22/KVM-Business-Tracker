@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import {
   adr,
+  budgetYears,
   blank,
   makeDemo,
   markets,
@@ -596,7 +597,7 @@ export default function App() {
                     navigate(() => setYear(Number(e.target.value)))
                   }
                 >
-                  {[2026, 2027, 2028, 2029, 2030].map((y) => (
+                  {budgetYears.map((y) => (
                     <option key={y}>{y}</option>
                   ))}
                 </select>

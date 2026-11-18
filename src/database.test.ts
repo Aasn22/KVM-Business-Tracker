@@ -130,6 +130,26 @@ describe("database security and integrity", () => {
     );
     expect(r.rows[0].n).toBe(12);
   });
+  it("stores historical years independently from the existing budget year", async () => {
+    await login(manager);
+    for (const year of [2021, 2022, 2023, 2024, 2025]) {
+      const data = blank("asia");
+      data.commercial[1].budget = year;
+      await db.query(
+        "select public.save_market_month('asia',$1,1,$2::jsonb,0)",
+        [year, JSON.stringify(data)],
+      );
+      const result = await db.query<{ year: number; budget: number }>(
+        "select year, (data#>>'{commercial,1,budget}')::integer as budget from public.market_months where year=$1",
+        [year],
+      );
+      expect(result.rows).toEqual([{ year, budget: year }]);
+    }
+    const current = await db.query<{ n: number }>(
+      "select count(*)::integer n from public.market_months where year=2027",
+    );
+    expect(current.rows[0].n).toBe(12);
+  });
   it("rejects all unauthenticated financial reads and RPC calls", async () => {
     await db.exec("reset role;set role anon;");
     await expect(db.exec("select * from public.market_months")).rejects.toThrow(

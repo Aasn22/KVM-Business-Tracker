@@ -11,6 +11,7 @@ A standalone market budget and commercial performance workspace for Kuda Villing
 - Market, monthly, quarterly, annual, and consolidated reports. Export Excel with detailed weekly breakdowns or print/save PDF through the browser.
 - Email/password sign-in, administrator-managed market assignments, database-enforced permissions, and immutable before/after audit records.
 - Responsive desktop/mobile layouts.
+- Historical viewing and reports for 2021–2025, alongside existing 2026–2030 years. Select **Budget year** on Overview, a market, or Reports; the same selection drives monthly/quarterly/annual views and Excel/PDF reports. Import each historical market workbook with its matching year selected. Real historical figures are not preloaded; demo mode remains fictional. Existing year-keyed storage and database tables keep each year separate; no database migration is required.
 
 ## Demo versus live
 

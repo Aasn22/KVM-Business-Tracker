@@ -54,6 +54,7 @@ export async function importWorkbook(
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.load(await file.arrayBuffer());
   const aliases: Record<string, string[]> = {
+    europe: ["EUROPE"],
     asia: ["ASIA"],
     america: ["AMERICA", "AMERICAS", "AMERICAS / OTHERS"],
     russia: ["RUSSIA CIS", "RUSSIA / CIS", "RUSSIA-CIS", "RUSSIA"],

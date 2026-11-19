@@ -4,11 +4,11 @@ begin;
 create table public.app_admins (user_id uuid primary key references auth.users(id) on delete cascade);
 create table public.market_members (
  user_id uuid references auth.users(id) on delete cascade,
- market_id text check (market_id in ('asia','america','middle-east','russia')),
+ market_id text check (market_id in ('asia','america','middle-east','russia','europe')),
  primary key (user_id, market_id)
 );
 create table public.market_months (
- market_id text not null check (market_id in ('asia','america','middle-east','russia')),
+ market_id text not null check (market_id in ('asia','america','middle-east','russia','europe')),
  year integer not null check (year between 2020 and 2100),
  month integer not null check (month between 1 and 12),
  data jsonb not null,

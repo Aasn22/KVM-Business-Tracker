@@ -31,6 +31,7 @@ import {
   budgetYears,
   blank,
   makeDemo,
+  restoreDemo,
   markets,
   months,
   percentage,
@@ -102,13 +103,7 @@ export default function App() {
       try {
         const stored = localStorage.getItem(`kvm-demo-${year}`);
         const data = stored ? JSON.parse(stored) : null;
-        setEntries(
-          Array.isArray(data) &&
-            data.length === 48 &&
-            data.every((e) => validData(e.data))
-            ? data
-            : makeDemo(year),
-        );
+        setEntries(restoreDemo(year, data));
       } catch {
         setEntries(makeDemo(year));
       }
@@ -401,7 +396,7 @@ export default function App() {
           ))}
         </nav>
         <div className="nav-label market-label">
-          YOUR MARKETS <span>04</span>
+          YOUR MARKETS <span>{markets.length.toString().padStart(2, "0")}</span>
         </div>
         <nav>
           {visibleMarkets.map((m) => (
@@ -674,7 +669,8 @@ export default function App() {
               <div className="section-heading">
                 <div>
                   <h2>
-                    Your markets <span>04</span>
+                    Your markets{" "}
+                    <span>{markets.length.toString().padStart(2, "0")}</span>
                   </h2>
                   <p>Select a market to explore its budget and performance.</p>
                 </div>

@@ -49,6 +49,26 @@ export const markets = [
     color: "#5c8499",
     countries: ["Russia", "CIS"],
   },
+  {
+    id: "europe",
+    name: "Europe",
+    tag: "EU",
+    region: "Europe",
+    color: "#8b7953",
+    countries: [
+      "Austria",
+      "Bulgaria",
+      "France",
+      "Germany",
+      "Great Britain",
+      "Italy",
+      "Poland",
+      "Romania",
+      "Spain",
+      "Switzerland",
+      "Europe Other",
+    ],
+  },
 ];
 export const villas = [
   "Sunrise Beach Villa",
@@ -204,4 +224,22 @@ export function reportRows(entries: Entry[]) {
       "Action plan": e.data.notes,
     };
   });
+}
+
+// Merge newly supported markets without resetting browser-saved edits/imports.
+export function restoreDemo(year: number, stored: unknown): Entry[] {
+  const saved = Array.isArray(stored) ? stored : [];
+  return makeDemo(year).map(
+    (fallback) =>
+      saved.find(
+        (e) =>
+          e &&
+          e.year === year &&
+          e.market_id === fallback.market_id &&
+          e.month === fallback.month &&
+          typeof e.version === "number" &&
+          e.data &&
+          validData(e.data),
+      ) ?? fallback,
+  );
 }

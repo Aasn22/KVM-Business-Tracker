@@ -48,6 +48,18 @@ async function fixture(
   return new File([buffer], "test.xlsx");
 }
 describe("Excel imports", () => {
+  it("imports Europe and rejects it for another market", async () => {
+    const file = await fixture("EUROPE");
+    const entries = await importWorkbook(file, "europe", 2027, []);
+    expect(entries).toHaveLength(12);
+    expect(entries.every((e) => e.market_id === "europe")).toBe(true);
+    await expect(importWorkbook(file, "asia", 2027, [])).rejects.toThrow(
+      "market",
+    );
+    await expect(
+      importWorkbook(await fixture(), "europe", 2027, []),
+    ).rejects.toThrow("market");
+  });
   it.each([2021, 2022, 2023, 2024, 2025])(
     "imports all twelve months for %i without accepting a different year",
     async (year) => {

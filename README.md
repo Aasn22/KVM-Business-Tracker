@@ -4,7 +4,7 @@ A standalone market budget and commercial performance workspace for Kuda Villing
 
 ## Features
 
-- Main market dashboard: Asia, America, Middle East, Russia / CIS.
+- Main market dashboard: Asia, America, Middle East, Russia / CIS, Europe.
 - Monthly commercial targets, BOB, weekly targets/BOB, villa types, countries, meal plans, and action plans.
 - Derived ADR, revenue variance, weighted annual ADR, and budget achievement.
 - Local Excel import with a twelve-month review/confirmation; atomic live import with optimistic concurrency checks.
@@ -46,16 +46,22 @@ insert into public.app_admins(user_id) values ('<administrator-auth-user-uuid>')
 -- delete from public.market_members where user_id='<uuid>' and market_id='asia';
 ```
 
-Supported market IDs: `asia`, `america`, `middle-east`, `russia`. Memberships/admin roles are not writable from the client. Ordinary managers can update both budgets and BOB for assigned markets; there is no approval/sign-off workflow in this version.
+Supported market IDs: `asia`, `america`, `middle-east`, `russia`, `europe`. Memberships/admin roles are not writable from the client. Ordinary managers can update both budgets and BOB for assigned markets; there is no approval/sign-off workflow in this version.
 
 4. Configure `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` in the Vercel project's environment variables for the desired environments, then redeploy. For local development, copy `.env.example` to `.env.local` and enter values there yourself. These are browser configuration variables: **never use a Supabase secret or service-role key**. RLS, not key secrecy, protects the data. No server-side secret is needed for this application.
 5. Confirm **USD** is the correct reporting currency. The current version assumes USD; there is no automatic currency conversion. Choose the correct budget year, sign in, open a market, then import its matching workbook. Configure database backups and your retention policy before production use.
 
+### Adding Europe to an existing database
+
+For an existing installation created before Europe support, run `supabase/migrations/20261119_add_europe.sql` once as the database administrator. It expands the two market allowlists without deleting records or changing access policies, and is safe to rerun. Fresh installations use the updated `schema.sql` directly. Assign the Europe manager using `market_id = 'europe'` through the existing trusted administrator procedure; no existing manager is automatically granted Europe access. This source update does not apply a migration to a live database.
+
+Europe uses the same 2021–2030 year selector, monthly/weekly editor, report filters, exports and audit history as other markets. The supplied Europe workbook is a 2027 workbook; actual figures are not preloaded into the public demo. Existing browser-saved data for other markets is preserved when Europe demo months are added.
+
 ### Workbook mapping and limitations
 
-- Import `ASIA.xlsx`, `AMERICA.xlsx`, `MIDDLE EAST.xlsx`, or `RUSSIA.xlsx` from the appropriate market. Files are parsed in the browser; no workbook is uploaded to Vercel. In live mode, confirmed parsed figures are stored in your Supabase database.
+- Import `ASIA.xlsx`, `AMERICA.xlsx`, `MIDDLE EAST.xlsx`, `RUSSIA.xlsx`, or `EUROPE.xlsx` from the appropriate market. Files are parsed in the browser; no workbook is uploaded to Vercel. In live mode, confirmed parsed figures are stored in your Supabase database.
 - Requires JAN–DEC sheets using the supplied layout: market in B4, year in A1, commercial rows 8/9, followed by numbered villa/country/meal-plan sections. B/C = monthly budget/BOB; D/E, F/G, H/I, J/K = weekly target/BOB pairs. ADR is derived, not imported. Existing action-plan notes are preserved; free-form spreadsheet notes and sign-off cells are not imported.
-- `FULL BUDGET.xlsx` is a planning reference and is intentionally **not** imported as a fifth market. Consolidated totals are calculated from authorized market records, avoiding double counting.
+- `FULL BUDGET.xlsx` is a planning reference and is intentionally **not** imported as an additional market. Consolidated totals are calculated from authorized market records, avoiding double counting.
 - Import reviews the revenue totals before replacing all twelve months. A stale version, permission failure, or validation error aborts the entire live import. It does not silently merge another manager's changes. Reload and review before retrying.
 - Formula cells need cached numeric results: recalculate and save in Excel before importing. Spreadsheet errors, negative values, and unsupported layouts are rejected. Maximum file size: 10 MB. Use only trusted workbooks.
 - BOB is business on the books, not realized revenue. Weekly values are independently editable snapshots, not automatically summed into monthly BOB. Villa/country/meal-plan breakdowns are independent; managers must reconcile them to commercial totals. Fractional room-night targets are preserved.

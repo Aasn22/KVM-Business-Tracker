@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import {
   adr,
+  markets,
+  restoreDemo,
   budgetYears,
   percentage,
   summarize,
@@ -27,10 +29,10 @@ describe("financial calculations", () => {
     );
   });
   it("creates separate years and market months", () => {
-    expect(makeDemo(2027)).toHaveLength(48);
+    expect(makeDemo(2027)).toHaveLength(60);
     expect(
       new Set(makeDemo(2027).map((e) => `${e.market_id}-${e.month}`)).size,
-    ).toBe(48);
+    ).toBe(60);
   });
   it("rejects invalid numbers, weekly shapes, and oversized notes", () => {
     const d = blank("asia");
@@ -55,11 +57,37 @@ describe("historical years", () => {
     "keeps %i entries and report rows tied to their year",
     (year) => {
       const historical = makeDemo(year);
-      expect(historical).toHaveLength(48);
+      expect(historical).toHaveLength(60);
       expect(historical.every((e) => e.year === year)).toBe(true);
       expect(reportRows(historical).every((r) => r.Year === year)).toBe(true);
       historical[0].data.commercial[1].bob = 123;
       expect(makeDemo(2027)[0].data.commercial[1].bob).not.toBe(123);
     },
   );
+});
+
+describe("Europe market", () => {
+  it("includes twelve Europe months in consolidated reports", () => {
+    expect(markets.map((m) => m.id)).toContain("europe");
+    const entries = makeDemo(2027);
+    const europe = entries.filter((e) => e.market_id === "europe");
+    expect(europe).toHaveLength(12);
+    expect(blank("europe").countries).toHaveLength(11);
+    expect(reportRows(europe).every((r) => r.Market === "Europe")).toBe(true);
+    expect(summarize(entries).budget).toBe(
+      summarize(entries.filter((e) => e.market_id !== "europe")).budget +
+        summarize(europe).budget,
+    );
+  });
+  it("preserves edits from the previous four-market demo while adding Europe", () => {
+    const old = makeDemo(2027).filter((e) => e.market_id !== "europe");
+    old[0].data.commercial[1].bob = 12345;
+    old[0].data.notes = "Existing imported budget";
+    const restored = restoreDemo(2027, old);
+    expect(restored).toHaveLength(60);
+    expect(restored[0].data).toEqual(old[0].data);
+    expect(restored.filter((e) => e.market_id === "europe")).toHaveLength(12);
+    expect(restoreDemo(2025, old)[0].data.notes).toBe("");
+    expect(restoreDemo(2027, null)).toHaveLength(60);
+  });
 });

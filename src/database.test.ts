@@ -150,6 +150,66 @@ describe("database security and integrity", () => {
     );
     expect(current.rows[0].n).toBe(12);
   });
+  it("keeps Europe protected until a manager is explicitly assigned", async () => {
+    await login(manager);
+    await expect(save("europe")).rejects.toThrow("not assigned");
+    await login(admin);
+    await save("europe");
+    await login(manager);
+    expect(
+      (
+        await db.query(
+          "select * from public.market_months where market_id='europe'",
+        )
+      ).rows,
+    ).toHaveLength(0);
+    expect(
+      (
+        await db.query(
+          "select * from public.audit_log where market_id='europe'",
+        )
+      ).rows,
+    ).toHaveLength(0);
+    await db.exec(
+      `reset role;insert into public.market_members values('${manager}','europe');`,
+    );
+    await login(manager);
+    await save("europe", 1);
+    const result = await db.query<{ version: number }>(
+      "select version from public.market_months where market_id='europe'",
+    );
+    expect(result.rows[0].version).toBe(2);
+  });
+  it("migrates the previous allowlists without deleting data or broadening assignments", async () => {
+    await db.exec("reset role");
+    // Simulate the pre-Europe database without retaining Europe rows for the old constraint.
+    await db.exec(
+      "delete from public.market_months where market_id='europe';delete from public.market_members where market_id='europe';alter table public.market_months drop constraint market_months_market_id_check;alter table public.market_members drop constraint market_members_market_id_check;alter table public.market_months add constraint market_months_market_id_check check (market_id in ('asia','america','middle-east','russia'));alter table public.market_members add constraint market_members_market_id_check check (market_id in ('asia','america','middle-east','russia'));",
+    );
+    const before = await db.query(
+      "select * from public.market_months order by market_id,year,month",
+    );
+    const migration = readFileSync(
+      "supabase/migrations/20261119_add_europe.sql",
+      "utf8",
+    );
+    await db.exec(migration);
+    await db.exec(migration);
+    expect(
+      (
+        await db.query(
+          "select * from public.market_months order by market_id,year,month",
+        )
+      ).rows,
+    ).toEqual(before.rows);
+    await login(manager);
+    await expect(save("europe")).rejects.toThrow("not assigned");
+    await db.exec(
+      `reset role;insert into public.market_members values('${manager}','europe');`,
+    );
+    await login(manager);
+    await save("europe");
+  });
   it("rejects all unauthenticated financial reads and RPC calls", async () => {
     await db.exec("reset role;set role anon;");
     await expect(db.exec("select * from public.market_months")).rejects.toThrow(

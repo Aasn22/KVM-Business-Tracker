@@ -968,11 +968,13 @@ export default function App({ publicDemo = false }: { publicDemo?: boolean }) {
                 </div>
                 <span className="subtle">
                   <span className="tiny-dot" />{" "}
-                  {demo
-                    ? "Sample performance"
-                    : session
-                      ? "Your accessible markets"
-                      : "Sign-in required"}
+                  {publicDemo
+                    ? "Published real figures"
+                    : demo
+                      ? "Sample performance"
+                      : session
+                        ? "Your accessible markets"
+                        : "Sign-in required"}
                 </span>
               </div>
               <section className="market-grid">
@@ -1100,9 +1102,11 @@ export default function App({ publicDemo = false }: { publicDemo?: boolean }) {
               </section>
               <div className="footer-note">
                 <ShieldCheck size={14} />{" "}
-                {demo
-                  ? "Exploring with fictional sample data. Connect your database before importing private budgets."
-                  : "Figures shown only for markets assigned to your account."}
+                {publicDemo
+                  ? "Published real workbook figures. Database source status is shown above."
+                  : demo
+                    ? "Exploring with fictional sample data. Connect your database before importing private budgets."
+                    : "Figures shown only for markets assigned to your account."}
                 <span>All revenue values in USD</span>
               </div>
             </>

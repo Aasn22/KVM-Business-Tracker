@@ -552,7 +552,7 @@ export default function App({
             height={46}
           />
           <span>
-            BUSINESS LENSE<small>Commercial intelligence</small>
+            KVM BUSINESS LENSE<small>Commercial intelligence</small>
           </span>
         </a>
         <button

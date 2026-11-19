@@ -33,7 +33,7 @@ export function ConfidentialityNotice({
           strokeWidth="1.5"
         />
       </svg>
-      <p className="entrance-notice-eyebrow">BUSINESS LENSE</p>
+      <p className="entrance-notice-eyebrow">KVM BUSINESS LENSE</p>
       <h1>Private &amp; Confidential</h1>
       <span className="entrance-rule" aria-hidden="true" />
       <p>
@@ -91,6 +91,8 @@ export default function Entrance({ children }: { children: ReactNode }) {
                 height="840"
                 fetchPriority="high"
               />
+              <p>KVM BUSINESS LENSE</p>
+              <span className="entrance-rule" aria-hidden="true" />
             </div>
           ) : (
             <ConfidentialityNotice onContinue={() => setStage("done")} />

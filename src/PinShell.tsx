@@ -81,7 +81,7 @@ export default function PinShell({ children }: { children: ReactNode }) {
           width={70}
           height={70}
         />
-        <div className="eyebrow">BUSINESS LENSE</div>
+        <div className="eyebrow">KVM BUSINESS LENSE</div>
         <h1>Enter your PIN</h1>
         <p>
           No username, password or email link. Unlock budget entry and property

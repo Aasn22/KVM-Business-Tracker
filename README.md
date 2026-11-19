@@ -1,4 +1,4 @@
-# BUSINESS LENSE
+# KVM BUSINESS LENSE
 
 A standalone market budget and commercial performance workspace for Kuda Villingili. Built with React, TypeScript, Vite, and Supabase. No original workbooks, employee details, or real budget figures are included in this public repository.
 
@@ -174,7 +174,7 @@ Do not publish as ready until the schema is applied, the owner Auth account is p
 
 Sign-in now uses **username + password**. `/api/username-login` resolves only linked `team_directory` usernames on the server with service credentials, verifies the password through Supabase Auth, and returns session tokens—not an email lookup. Anonymous clients cannot call the lookup RPC. Usernames are case-insensitive and must be unique; the migration stops on existing ambiguous duplicates. A persistent per-username limit of 10 attempts per 15 minutes supplements Supabase Auth limits; both wrong and unknown usernames return the same error. Add edge/IP abuse controls for production scale. No passwords or returned session tokens are logged by this code.
 
-Apply `supabase/migrations/20261119_username_login.sql` after the existing BUSINESS LENSE migrations. Custom `public.users` or `user_sessions` created by another agent are **not** valid Supabase Auth accounts and are neither used nor deleted by this migration. A real Auth user must exist and its UUID must be linked to the team profile. No chat-provided password is set by this code.
+Apply `supabase/migrations/20261119_username_login.sql` after the existing KVM BUSINESS LENSE migrations. Custom `public.users` or `user_sessions` created by another agent are **not** valid Supabase Auth accounts and are neither used nor deleted by this migration. A real Auth user must exist and its UUID must be linked to the team profile. No chat-provided password is set by this code.
 
 For a privately chosen temporary password, a trusted database administrator can insert the Auth user's current provider hash into `required_password_changes` using `insert ... select id, encrypted_password from auth.users where id=...`. Never copy/display hashes. This forces setup in the app; `complete_password_change()` clears it only after Auth reports an actual password-hash change. Password setup remains a UI onboarding gate, while database authorization is separate. Accounts must be correctly provisioned before permissions can be exercised. Recovery still uses private email, not username-only claiming. Live username login cannot succeed until Auth account linking and migration are complete.
 
@@ -188,7 +188,7 @@ The owner explicitly authorized public real-budget viewing. The main URL now pub
 
 `/api/public-budgets?year=...` reads saved `market_months` through a server-only key, returns an explicit allowlist of financial row fields and blanks notes. No team, Auth, property, audit or country-specific private endpoint is exposed. Public entry merges database months over baseline months and refreshes every 60 seconds. The banner states exactly whether database rows or only published workbook figures are available. A database error shows the actual workbook snapshot with a non-live warning, not fake figures. In years without a baseline, unavailable remains empty. Existing financial read restrictions still govern authenticated private views, but these five-market numeric figures are intentionally public by owner authorization. Admin saves remain protected.
 
-A guarded real-2027 SQL import is provided separately in chat; it refuses to overwrite existing 2027 records. This session has not executed it. The app can display real workbook figures before import, but fully persisted editing/synchronization needs the BUSINESS LENSE schema and imported database rows. The public endpoint does not modify the database or provide a write bypass. No provider or Auth role changes are made by this publication.
+A guarded real-2027 SQL import is provided separately in chat; it refuses to overwrite existing 2027 records. This session has not executed it. The app can display real workbook figures before import, but fully persisted editing/synchronization needs the KVM BUSINESS LENSE schema and imported database rows. The public endpoint does not modify the database or provide a write bypass. No provider or Auth role changes are made by this publication.
 
 ## PIN entry and local editing (current)
 

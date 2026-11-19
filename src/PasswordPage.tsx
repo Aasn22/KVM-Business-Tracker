@@ -104,11 +104,11 @@ export default function PasswordPage({
           width={70}
           height={70}
         />
-        <div className="eyebrow">BUSINESS LENSE · ACCOUNT SECURITY</div>
+        <div className="eyebrow">KVM BUSINESS LENSE · ACCOUNT SECURITY</div>
         <h1>{title}</h1>
         <p>
           {mode === "setup"
-            ? "Create your own password before entering BUSINESS LENSE. Never use a shared team password."
+            ? "Create your own password before entering KVM BUSINESS LENSE. Never use a shared team password."
             : mode === "forgot"
               ? "Enter your invited account email to receive a private reset link."
               : "Choose a password with at least 6 characters. Letters, numbers and symbols are allowed without a required mixture."}

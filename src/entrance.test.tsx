@@ -14,7 +14,7 @@ describe("branded entrance", () => {
     expect(html).toContain('aria-hidden="true"');
     expect(html).not.toContain("DO NOT SHARE");
     expect(html).not.toContain("Continue to platform");
-    expect(html).not.toContain("BUSINESS LENSE");
+    expect(html).toContain("<p>KVM BUSINESS LENSE</p>");
   });
   it("shows a separate professional notice with a continue action", () => {
     const html = renderToStaticMarkup(

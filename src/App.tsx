@@ -418,17 +418,25 @@ export default function App() {
             });
           }}
         >
-          <span className="brand-icon">
-            K<span>V</span>M
-          </span>
+          <img
+            className="brand-icon"
+            src="/kuda-villingili-logo.png"
+            alt="Kuda Villingili"
+            width={46}
+            height={46}
+          />
           <span>
             BUSINESS TRACKER<small>Commercial intelligence</small>
           </span>
         </a>
         <div className="workspace">
-          <span className="workspace-icon">
-            <Building2 size={20} />
-          </span>
+          <img
+            className="workspace-icon"
+            src="/kuda-villingili-logo.png"
+            alt=""
+            width={38}
+            height={38}
+          />
           <div>
             Kuda Villingili<small>Resort Maldives</small>
           </div>

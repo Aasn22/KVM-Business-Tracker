@@ -3,6 +3,17 @@ import { renderToStaticMarkup } from "react-dom/server";
 import App, { Numeric } from "./App";
 afterEach(() => vi.unstubAllGlobals());
 describe("read-only views and admin entry", () => {
+  it("uses the transparent Kuda Villingili logo in both sidebar positions", () => {
+    vi.stubGlobal("window", { location: { pathname: "/" } });
+    const html = renderToStaticMarkup(<App />);
+    expect(html).toMatch(
+      /class="brand-icon"[^>]*src="\/kuda-villingili-logo.png"[^>]*alt="Kuda Villingili"/,
+    );
+    expect(html).toMatch(
+      /class="workspace-icon"[^>]*src="\/kuda-villingili-logo.png"[^>]*alt=""/,
+    );
+    expect(html.match(/src="\/kuda-villingili-logo.png"/g)).toHaveLength(2);
+  });
   it("renders numbers as non-interactive text outside admin entry", () => {
     const html = renderToStaticMarkup(
       <Numeric

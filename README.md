@@ -2,6 +2,16 @@
 
 A standalone market budget and commercial performance workspace for Kuda Villingili. Built with React, TypeScript, Vite, and Supabase. No original workbooks, employee details, or real budget figures are included in this public repository.
 
+## Current authentication: passwordless email links
+
+The active sign-in flow supersedes the historical password/username sections below: **logo animation → email address → private one-time sign-in link → authorized platform**. There are no password inputs on sign-in, no first-password RPC gate, and no username-only account claiming. `/api/username-login` is retired (410). Old password database tables/functions are not dropped or modified, preserving history; they are not used by the active app.
+
+Supabase `signInWithOtp` is called with `shouldCreateUser:false` and an exact same-origin `/auth/confirm` redirect. Only existing Supabase Auth accounts can request access; requesting a link does not register users or grant roles. A generic response avoids exposing account existence; a 60-second client cooldown complements Supabase's email/rate limits. Email delivery errors are shown without provider details. Auth sessions remain managed by Supabase; sign-out and all existing Super Admin/admin/market/country data policies remain unchanged. Accounts created only in custom `public.users` tables still cannot sign in.
+
+Provider setup required: keep Email authentication/magic links enabled, disable public signup, configure SMTP, set the Site URL to the stable production origin, and allow `https://www.faisaa.digital/auth/confirm` (plus explicitly approved preview origins when testing). Magic Link template must use `{{ .ConfirmationURL }}` rather than an OTP-only token template; alternatively use `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email`. Invitation callbacks use the same route with type=invite. Only email/magiclink/invite token types are accepted; expired/used/error callbacks give a new-link route and do not bypass authentication. PKCE code and default provider session callbacks are supported. One-use token exchange is shared across StrictMode reruns. No tokens or private sign-in links are logged or displayed in chat.
+
+Legacy forgot/reset/setup/change-password URLs no longer show password forms. After email verification, users proceed directly to the platform subject to existing database role assignments. No username migration is needed to send/verify a magic link, but financial/property/team schema and correctly linked Auth identities remain necessary. Missing role/schema access is not bypassed by passwordless sign-in. This source change does not send any actual email or create/promote accounts.
+
 ## Features
 
 - Main market dashboard: Asia, America, Middle East, Russia / CIS, Europe.

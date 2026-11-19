@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import {
   ArrowDownToLine,
@@ -47,7 +47,7 @@ import { exportWorkbook, importWorkbook } from "./workbooks";
 import TotalReview from "./TotalReview";
 import PropertySetup from "./PropertySetup";
 import CountryPerformance from "./CountryPerformance";
-import { usernameLogin } from "./usernameLogin";
+import SignInPage from "./SignInPage";
 const money = (n: number) =>
   new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -583,15 +583,6 @@ export default function App() {
             <LockKeyhole size={18} />
             Admin Data Input
           </button>
-        </nav>
-        <nav className="account-nav">
-          <a
-            className="settings-nav"
-            href={session ? "/change-password" : "/forgot-password"}
-          >
-            <LockKeyhole size={17} />
-            {session ? "Change password" : "Forgot password"}
-          </a>
         </nav>
         <div className="sidebar-bottom">
           <div className="secure">
@@ -1944,62 +1935,6 @@ function Stat({
     </article>
   );
 }
-function Login({ onSuccess }: { onSuccess: () => void }) {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
-  async function submit(e: FormEvent) {
-    e.preventDefault();
-    if (!db) return;
-    setBusy(true);
-    setError("");
-    try {
-      await usernameLogin(username, password);
-      onSuccess();
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  }
-  return (
-    <form onSubmit={submit}>
-      <label>
-        Username
-        <input
-          type="text"
-          required
-          autoComplete="username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-        />
-      </label>
-      <label>
-        Password
-        <input
-          type="password"
-          required
-          autoComplete="current-password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-      </label>
-      {error && (
-        <p role="alert" className="negative">
-          {error}
-        </p>
-      )}
-      <button className="button primary" disabled={busy || !db}>
-        {busy ? "Signing in…" : "Sign in securely"}
-      </button>
-      <a className="text-button" href="/forgot-password">
-        Forgot password?
-      </a>
-      <small>
-        Need an account? Contact your Super Admin for a private email
-        invitation.
-      </small>
-    </form>
-  );
+function Login({ onSuccess: _onSuccess }: { onSuccess: () => void }) {
+  return <SignInPage />;
 }

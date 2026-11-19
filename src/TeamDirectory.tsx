@@ -226,8 +226,8 @@ export default function TeamDirectory({
         <div className="notice">
           <h3>Invite {invite.name}</h3>
           <p>
-            Use the person’s own email. They will choose their password. No
-            shared password is created or displayed.
+            Use the person’s own email. They will receive a private sign-in
+            link. No password is required.
           </p>
           <label>
             Email address

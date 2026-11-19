@@ -1,18 +1,26 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { db } from "./api";
-import { usernameLogin } from "./usernameLogin";
+import { magicLinkMessage, requestMagicLink } from "./magicLink";
 export default function SignInPage() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [sent, setSent] = useState(false);
+  const [wait, setWait] = useState(0);
+  useEffect(() => {
+    if (!wait) return;
+    const timer = setTimeout(() => setWait(wait - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [wait]);
   async function submit(event: FormEvent) {
     event.preventDefault();
-    if (!db) return;
     setBusy(true);
     setError("");
+    setSent(false);
     try {
-      await usernameLogin(username, password);
+      await requestMagicLink(email, window.location.origin);
+      setSent(true);
+      setWait(60);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -29,33 +37,21 @@ export default function SignInPage() {
           height={70}
         />
         <div className="eyebrow">BUSINESS EYE</div>
-        <h1>Welcome back.</h1>
+        <h1>Sign in without a password.</h1>
         <p>
-          Sign in to access your permitted markets. First-time users must set
-          their own password through a private setup link or
-          administrator-assisted reset.
+          Enter your account email. We’ll send a private, one-time link to open
+          BUSINESS EYE. No password is needed.
         </p>
         <form onSubmit={submit}>
           <label>
-            Username
+            Email address
             <input
-              aria-label="Sign-in username"
-              type="text"
-              autoComplete="username"
+              aria-label="Sign-in email"
+              type="email"
+              autoComplete="email"
               required
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-            />
-          </label>
-          <label>
-            Password
-            <input
-              aria-label="Sign-in password"
-              type="password"
-              autoComplete="current-password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
             />
           </label>
           {error && (
@@ -63,16 +59,28 @@ export default function SignInPage() {
               {error}
             </p>
           )}
-          <button className="button primary" disabled={busy || !db}>
-            {busy ? "Signing in…" : "Sign in"}
+          {sent && (
+            <p className="notice" role="status">
+              {magicLinkMessage}
+            </p>
+          )}
+          <button className="button primary" disabled={busy || wait > 0 || !db}>
+            {busy
+              ? "Sending…"
+              : wait > 0
+                ? `Send again in ${wait}s`
+                : "Email me a sign-in link"}
           </button>
         </form>
-        <a className="text-button" href="/forgot-password">
-          Forgot password?
-        </a>
+        {!db && (
+          <p className="notice">
+            Authentication is not configured. No message can be sent from this
+            demo.
+          </p>
+        )}
         <p className="password-help">
-          No public registration. Contact your Super Admin for access. Usernames
-          alone never authorize password setup.
+          Existing accounts only. No public registration. Your current role and
+          market permissions still apply. Never share your sign-in link.
         </p>
       </section>
     </main>

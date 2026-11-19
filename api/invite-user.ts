@@ -75,15 +75,6 @@ export default async function handler(req: Request, res: ServerResponse) {
       reply(res, 403, "Super Admin access required.");
       return;
     }
-    const ready = await caller.rpc("password_setup_required");
-    if (ready.error || ready.data !== false) {
-      reply(
-        res,
-        403,
-        "Complete your own password setup before inviting users.",
-      );
-      return;
-    }
     let body: Record<string, unknown>;
     try {
       const parsed =
@@ -130,12 +121,12 @@ export default async function handler(req: Request, res: ServerResponse) {
       reply(
         res,
         409,
-        "This team profile is already linked. Use password recovery for the existing account.",
+        "This team profile is already linked. Request a sign-in link for the existing account.",
       );
       return;
     }
     const invitation = await admin.auth.admin.inviteUserByEmail(email, {
-      redirectTo: `${base.origin}/setup-password`,
+      redirectTo: `${base.origin}/auth/confirm`,
     });
     if (invitation.error || !invitation.data.user) {
       reply(
@@ -171,7 +162,7 @@ export default async function handler(req: Request, res: ServerResponse) {
     reply(
       res,
       200,
-      "Invitation sent and saved team permissions linked. The user must set their own password through the email link.",
+      "Invitation sent and saved team permissions linked. The user can sign in using the private email link; no password is required.",
     );
   } catch {
     reply(

@@ -116,7 +116,7 @@ describe("server-only Super Admin invitations", () => {
     expect(r.res.statusCode).toBe(403);
     expect(c.invite).not.toHaveBeenCalled();
   });
-  it("rejects passwords, invalid emails and incomplete first-login setup", async () => {
+  it("rejects passwords in invitation requests", async () => {
     let c = clients();
     let r = response();
     await handler(
@@ -129,12 +129,6 @@ describe("server-only Super Admin invitations", () => {
     );
     expect(r.res.statusCode).toBe(400);
     expect(c.invite).not.toHaveBeenCalled();
-    mocks.createClient.mockReset();
-    c = clients({ passwordRequired: true });
-    r = response();
-    await handler(request(), r.res);
-    expect(r.res.statusCode).toBe(403);
-    expect(c.invite).not.toHaveBeenCalled();
   });
   it("avoids reinviting an already linked profile", async () => {
     const c = clients({ linked: true });
@@ -143,13 +137,13 @@ describe("server-only Super Admin invitations", () => {
     expect(r.res.statusCode).toBe(409);
     expect(c.invite).not.toHaveBeenCalled();
   });
-  it("sends one invite to the configured first-password route and links reviewed permissions", async () => {
+  it("sends one invite to the configured passwordless route and links reviewed permissions", async () => {
     const c = clients();
     const r = response();
     await handler(request(), r.res);
     expect(r.res.statusCode).toBe(200);
     expect(c.invite).toHaveBeenCalledWith("test@example.com", {
-      redirectTo: "https://business-eye.example/setup-password",
+      redirectTo: "https://business-eye.example/auth/confirm",
     });
     expect(c.rpc).toHaveBeenCalledWith(
       "save_team_member",

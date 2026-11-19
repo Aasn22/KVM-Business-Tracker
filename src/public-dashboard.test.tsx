@@ -13,6 +13,6 @@ describe("public read-only dashboard", () => {
     expect(html).not.toContain("Try Super Admin");
     expect(html).not.toContain(">Admin Data Input</button>");
     expect(html).not.toContain(">Property Setup</button>");
-    expect(html).toContain("Protected admin access");
+    expect(html).toContain("PIN workspace");
   });
 });

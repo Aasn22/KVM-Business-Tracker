@@ -68,8 +68,14 @@ type View =
   | "admin"
   | "property";
 type Tab = "commercial" | "villas" | "countries" | "meals" | "notes";
-export default function App({ publicDemo = false }: { publicDemo?: boolean }) {
-  const demo = !publicDemo && !db;
+export default function App({
+  publicDemo = false,
+  localPin = false,
+}: {
+  publicDemo?: boolean;
+  localPin?: boolean;
+}) {
+  const demo = localPin || (!publicDemo && !db);
   const [publicNotice, setPublicNotice] = useState(
     "Loading published real budget figures…",
   );
@@ -113,7 +119,7 @@ export default function App({ publicDemo = false }: { publicDemo?: boolean }) {
   const [period, setPeriod] = useState("year");
   const fileRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
-    if (publicDemo || !db) return;
+    if (publicDemo || localPin || !db) return;
     db.auth.getSession().then(({ data, error }) => {
       if (error) setError(error.message);
       setSession(data.session);
@@ -130,7 +136,7 @@ export default function App({ publicDemo = false }: { publicDemo?: boolean }) {
       setDirty(false);
     });
     return () => data.subscription.unsubscribe();
-  }, [publicDemo]);
+  }, [publicDemo, localPin]);
   useEffect(() => {
     let active = true;
     setAdminRole(null);
@@ -243,6 +249,32 @@ export default function App({ publicDemo = false }: { publicDemo?: boolean }) {
         clearInterval(timer);
       };
     }
+    if (localPin) {
+      setLoading(true);
+      void loadPublicBudgets(year)
+        .then((result) => {
+          if (!active) return;
+          const stored = localStorage.getItem(`business-eye-local-${year}`);
+          const edits = stored ? JSON.parse(stored) : [];
+          const records = new Map(
+            result.entries.map((e) => [`${e.market_id}:${e.month}`, e]),
+          );
+          if (Array.isArray(edits))
+            edits
+              .filter((e) => e.year === year && validData(e.data))
+              .forEach((e) => records.set(`${e.market_id}:${e.month}`, e));
+          setEntries([...records.values()]);
+        })
+        .catch((e) => {
+          if (active) setError(e.message);
+        })
+        .finally(() => {
+          if (active) setLoading(false);
+        });
+      return () => {
+        active = false;
+      };
+    }
     if (demo) {
       try {
         const stored = localStorage.getItem(`kvm-demo-${year}`);
@@ -269,7 +301,7 @@ export default function App({ publicDemo = false }: { publicDemo?: boolean }) {
     return () => {
       active = false;
     };
-  }, [demo, session, year, publicDemo]);
+  }, [demo, session, year, publicDemo, localPin]);
   const current = entries.find(
     (e) => e.market_id === market && e.month === month,
   );
@@ -399,12 +431,18 @@ export default function App({ publicDemo = false }: { publicDemo?: boolean }) {
         ...entries.filter((e) => e.market_id !== market || e.month !== month),
         entry,
       ];
-      if (demo) localStorage.setItem(`kvm-demo-${year}`, JSON.stringify(next));
+      if (demo)
+        localStorage.setItem(
+          localPin ? `business-eye-local-${year}` : `kvm-demo-${year}`,
+          JSON.stringify(next),
+        );
       setEntries(next);
       setDirty(false);
       setToast(
         demo
-          ? "Demo changes saved in this browser."
+          ? localPin
+            ? "Changes saved in this browser only. Public figures unchanged."
+            : "Demo changes saved in this browser."
           : "Changes saved securely.",
       );
     } catch (e) {
@@ -455,7 +493,11 @@ export default function App({ publicDemo = false }: { publicDemo?: boolean }) {
             ...pending.map((e) => ({ ...e, version: e.version + 1 })),
           ]
         : await loadYear(year);
-      if (demo) localStorage.setItem(`kvm-demo-${year}`, JSON.stringify(next));
+      if (demo)
+        localStorage.setItem(
+          localPin ? `business-eye-local-${year}` : `kvm-demo-${year}`,
+          JSON.stringify(next),
+        );
       setEntries(next);
       setPending(null);
       setToast("12 monthly sheets imported.");
@@ -593,7 +635,7 @@ export default function App({ publicDemo = false }: { publicDemo?: boolean }) {
           <nav className="admin-nav">
             <a className="settings-nav" href="/admin-data-input">
               <LockKeyhole size={17} />
-              Protected admin access
+              PIN workspace
             </a>
           </nav>
         ) : (
@@ -635,7 +677,7 @@ export default function App({ publicDemo = false }: { publicDemo?: boolean }) {
               One source of truth<small>Built for your commercial team</small>
             </div>
           </div>
-          {!publicDemo && (
+          {!publicDemo && !localPin && (
             <>
               <button
                 className="settings-nav"
@@ -663,13 +705,17 @@ export default function App({ publicDemo = false }: { publicDemo?: boolean }) {
               {publicDemo
                 ? "Public budget review"
                 : demo
-                  ? "Demo workspace"
+                  ? localPin
+                    ? "PIN workspace"
+                    : "Demo workspace"
                   : (session?.user.email ?? "Guest")}
               <small>
                 {publicDemo
                   ? "Read-only real figures"
                   : demo
-                    ? "Sample data only"
+                    ? localPin
+                      ? "Local edits only"
+                      : "Sample data only"
                     : session
                       ? "Signed in securely"
                       : "Sign in to your market"}
@@ -754,6 +800,11 @@ export default function App({ publicDemo = false }: { publicDemo?: boolean }) {
                 <>
                   <strong>Public real-budget review</strong> · {publicNotice}
                 </>
+              ) : localPin ? (
+                <>
+                  <strong>Local editing</strong> · Real workbook figures plus
+                  this browser’s saved edits. Not synchronized or published.
+                </>
               ) : demo ? (
                 <>
                   <strong>
@@ -773,8 +824,10 @@ export default function App({ publicDemo = false }: { publicDemo?: boolean }) {
             </span>
             {publicDemo ? (
               <a href="/admin-data-input">
-                Protected live access <ArrowUpRight size={13} />
+                PIN workspace <ArrowUpRight size={13} />
               </a>
+            ) : localPin ? (
+              <a href="/">Published dashboard</a>
             ) : demo ? (
               <button
                 onClick={() =>
@@ -906,16 +959,17 @@ export default function App({ publicDemo = false }: { publicDemo?: boolean }) {
               year={year}
               scope={financialScope as "india" | "kazakhstan"}
               editable={false}
-              demo={demo}
+              demo={demo && !localPin}
             />
           )}
-          {!publicDemo && view === "admin" && canEdit && (
+          {!publicDemo && !localPin && view === "admin" && canEdit && (
             <CountryPerformance year={year} editable demo={demo} />
           )}
           {!publicDemo && view === "property" && (
             <PropertySetup
               key={session?.user.id ?? "demo"}
               demo={demo}
+              localOnly={localPin}
               userId={session?.user.id ?? null}
               onDirtyChange={setDirty}
               onBusyChange={setBusy}
@@ -926,7 +980,7 @@ export default function App({ publicDemo = false }: { publicDemo?: boolean }) {
               entries={entries}
               year={year}
               loading={loading}
-              demo={demo}
+              demo={demo && !localPin}
             />
           )}
           {view === "overview" && !market && !countryOnly && (
@@ -970,11 +1024,13 @@ export default function App({ publicDemo = false }: { publicDemo?: boolean }) {
                   <span className="tiny-dot" />{" "}
                   {publicDemo
                     ? "Published real figures"
-                    : demo
-                      ? "Sample performance"
-                      : session
-                        ? "Your accessible markets"
-                        : "Sign-in required"}
+                    : localPin
+                      ? "Browser-local workbook figures"
+                      : demo
+                        ? "Sample performance"
+                        : session
+                          ? "Your accessible markets"
+                          : "Sign-in required"}
                 </span>
               </div>
               <section className="market-grid">
@@ -1011,7 +1067,9 @@ export default function App({ publicDemo = false }: { publicDemo?: boolean }) {
                           <b>
                             {data.length
                               ? compact(t.bob)
-                              : "Sign in for access"}
+                              : publicDemo || localPin
+                                ? "Not available"
+                                : "Sign in for access"}
                           </b>
                         </div>
                         <div>
@@ -1037,9 +1095,11 @@ export default function App({ publicDemo = false }: { publicDemo?: boolean }) {
                           />
                           {publicDemo
                             ? "Published budget"
-                            : demo
-                              ? "Demo market"
-                              : "Secure market"}
+                            : localPin
+                              ? "Local workbook"
+                              : demo
+                                ? "Demo market"
+                                : "Secure market"}
                         </span>
                         <span>
                           View market <ChevronRight size={13} />
@@ -1104,9 +1164,11 @@ export default function App({ publicDemo = false }: { publicDemo?: boolean }) {
                 <ShieldCheck size={14} />{" "}
                 {publicDemo
                   ? "Published real workbook figures. Database source status is shown above."
-                  : demo
-                    ? "Exploring with fictional sample data. Connect your database before importing private budgets."
-                    : "Figures shown only for markets assigned to your account."}
+                  : localPin
+                    ? "Real workbook figures plus browser-local edits. Not a shared live feed."
+                    : demo
+                      ? "Exploring with fictional sample data. Connect your database before importing private budgets."
+                      : "Figures shown only for markets assigned to your account."}
                 <span>All revenue values in USD</span>
               </div>
             </>
@@ -1114,9 +1176,19 @@ export default function App({ publicDemo = false }: { publicDemo?: boolean }) {
           {!publicDemo && view === "admin" && (
             <section className="panel admin-access">
               <h2>
-                {demo ? "Demo Admin Data Input" : "Administrator workspace"}
+                {localPin
+                  ? "Data Input — local browser"
+                  : demo
+                    ? "Demo Admin Data Input"
+                    : "Administrator workspace"}
               </h2>
-              {demo ? (
+              {localPin ? (
+                <div className="notice">
+                  Edits are saved on this browser only. They do not update the
+                  public website or other devices. Export a workbook to retain a
+                  backup.
+                </div>
+              ) : demo ? (
                 <div className="notice">
                   Fictional demo only. This demonstrates admin entry without
                   authentication; edits stay in this browser and do not grant
@@ -1601,9 +1673,11 @@ export default function App({ publicDemo = false }: { publicDemo?: boolean }) {
                   <div>
                     <h2>Market performance report · {year}</h2>
                     <p>
-                      {demo
-                        ? "Fictional sample data"
-                        : "Authorized markets only"}{" "}
+                      {localPin
+                        ? "Browser-local workbook data"
+                        : demo
+                          ? "Fictional sample data"
+                          : "Authorized markets only"}{" "}
                       · USD ·{" "}
                       {period === "year"
                         ? "Full year"
@@ -1670,7 +1744,11 @@ export default function App({ publicDemo = false }: { publicDemo?: boolean }) {
                 </div>
                 <Clock3 size={22} />
               </div>
-              {demo ? (
+              {localPin ? (
+                <div className="empty">
+                  Browser-local changes only. No shared audit log.
+                </div>
+              ) : demo ? (
                 <div className="empty">
                   <Clock3 size={30} />
                   <h3>A clear trail, from day one.</h3>

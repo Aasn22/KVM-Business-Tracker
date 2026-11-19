@@ -12,11 +12,13 @@ import {
 } from "./property";
 export default function PropertySetup({
   demo,
+  localOnly = false,
   userId,
   onDirtyChange,
   onBusyChange,
 }: {
   demo: boolean;
+  localOnly?: boolean;
   userId: string | null;
   onDirtyChange: (value: boolean) => void;
   onBusyChange: (value: boolean) => void;
@@ -44,7 +46,9 @@ export default function PropertySetup({
     setDraft(structuredClone(defaultProperty));
     if (demo) {
       try {
-        const raw = localStorage.getItem(propertyStorageKey);
+        const raw = localStorage.getItem(
+          localOnly ? "business-eye-local-property" : propertyStorageKey,
+        );
         const stored = raw ? JSON.parse(raw) : null;
         const r =
           stored &&
@@ -96,7 +100,7 @@ export default function PropertySetup({
     return () => {
       active = false;
     };
-  }, [demo, userId]);
+  }, [demo, userId, localOnly]);
   const update = (next: PropertyData) => {
     if (!editing || !canEdit) return;
     setDraft(next);
@@ -132,13 +136,19 @@ export default function PropertySetup({
         version,
         updated_at: new Date().toISOString(),
       };
-      if (demo) localStorage.setItem(propertyStorageKey, JSON.stringify(next));
+      if (demo)
+        localStorage.setItem(
+          localOnly ? "business-eye-local-property" : propertyStorageKey,
+          JSON.stringify(next),
+        );
       setRecord(next);
       setEditing(false);
       onDirtyChange(false);
       setMessage(
         demo
-          ? "Demo property saved in this browser."
+          ? localOnly
+            ? "Property saved in this browser only."
+            : "Demo property saved in this browser."
           : "Property settings saved.",
       );
     } catch (e) {
@@ -216,9 +226,11 @@ export default function PropertySetup({
           <div className="eyebrow">PROPERTY PROFILE</div>
           <h2>{data.name}</h2>
           <p>
-            {demo
-              ? "Demo property configuration"
-              : "Shared property configuration"}
+            {localOnly
+              ? "Local property configuration"
+              : demo
+                ? "Demo property configuration"
+                : "Shared property configuration"}
           </p>
         </div>
         {canEdit && !editing && record && (
@@ -231,7 +243,11 @@ export default function PropertySetup({
               setError("");
             }}
           >
-            {demo ? "Try Super Admin editing" : "Edit property"}
+            {localOnly
+              ? "Edit property"
+              : demo
+                ? "Try Super Admin editing"
+                : "Edit property"}
           </button>
         )}
         {editing && (
@@ -256,11 +272,13 @@ export default function PropertySetup({
       </div>
       <div className="notice">
         <LockKeyhole size={14} />{" "}
-        {demo
-          ? "Demo viewer by default. “Try Super Admin editing” changes fictional local settings only; no live privileges are granted."
-          : superAdmin
-            ? "Super Admin verified. Only this role can change property settings."
-            : "Read-only access. Regular admins and market managers cannot edit property settings."}
+        {localOnly
+          ? "PIN workspace: settings are stored on this browser only, not shared."
+          : demo
+            ? "Demo viewer by default. “Try Super Admin editing” changes fictional local settings only; no live privileges are granted."
+            : superAdmin
+              ? "Super Admin verified. Only this role can change property settings."
+              : "Read-only access. Regular admins and market managers cannot edit property settings."}
       </div>
       {error && (
         <div role="alert" className="error">
@@ -589,21 +607,25 @@ export default function PropertySetup({
           ))}
         </ul>
       </fieldset>
-      <TeamDirectory
-        demo={demo}
-        userId={userId}
-        canEdit={canEdit && !editing}
-        onEditingChange={setTeamEditing}
-        onDirtyChange={onDirtyChange}
-        onBusyChange={onBusyChange}
-      />
+      {!localOnly && (
+        <TeamDirectory
+          demo={demo}
+          userId={userId}
+          canEdit={canEdit && !editing}
+          onEditingChange={setTeamEditing}
+          onDirtyChange={onDirtyChange}
+          onBusyChange={onBusyChange}
+        />
+      )}
       <footer className="editor-footer">
         {record?.version
           ? `Version ${record.version} · Last saved ${record.updated_at ? new Date(record.updated_at).toLocaleString() : "previously"}`
           : "Default profile · not yet saved"}{" "}
         ·{" "}
         {demo
-          ? "Browser-only demo"
+          ? localOnly
+            ? "Browser-local property"
+            : "Browser-only demo"
           : "Super Admin saves are versioned and audit logged"}
       </footer>
     </section>

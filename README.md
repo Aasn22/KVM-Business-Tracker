@@ -15,7 +15,7 @@ A standalone market budget and commercial performance workspace for Kuda Villing
 
 ## Admin Data Input and read-only views
 
-All manual entry, number changes (budgets, BOB and weekly values), category additions, Excel imports and action-plan edits are restricted to **Admin Data Input** at `/admin-data-input`. Choose a market there, then year/month and section. Market pages, Overview, Reports and Total Budget Review are read-only for everyone, including administrators. They show saved values only. Managers may still view authorized markets and export reports; they cannot change data through the client or RPCs.
+All manual entry, number changes (budgets, BOB and weekly values), category additions, Excel imports and action-plan edits are restricted to **Admin Data Input** at `/admin-data-input`. Choose a market there, then year/month and section. Market pages, Overview, Reports and Management Review are read-only for everyone, including administrators. They show saved values only. Managers may still view authorized markets and export reports; they cannot change data through the client or RPCs.
 
 For a **fresh** database, the updated `supabase/schema.sql` includes these rules. For an **existing** database, a database administrator must run `supabase/migrations/20261119_admin_only_data_input.sql` before rollout. It replaces the two write RPCs with admin-only checks and adds a role lookup RPC without changing records, assignments, read policies, version checks or audit triggers. Existing manager sessions immediately lose RPC write access when the migration is applied. Apply the Europe migration too if that installation predates Europe. No migration is automatically applied to a live database by deploying this source.
 
@@ -23,9 +23,9 @@ Admins are provisioned only through `public.app_admins` by a trusted database ad
 
 The unconfigured **demo** provides a clearly labeled Demo Admin Data Input without sign-in for testing fictional data in local browser storage only. It does not create or imply live administrator privileges. Test `/admin-data-input` directly or via the sidebar, choose a market, save/import, then verify the corresponding market and total views. Do not place private budgets in a shared-device demo. Live role/login flows still need a configured Supabase project and real test accounts.
 
-## Total Budget Review
+## Management Review
 
-Use **Total Budget Review** below the market tabs for a read-only roll-up of saved records from the five markets. The global Budget year selector and review period (month/quarter/year) control the totals, breakdown tables and exports. Admin Data Input edits appear in the review after saving; unsaved drafts are never included. No separate total record or FULL BUDGET workbook is imported, so totals cannot double-count a sixth dataset.
+Use **Management Review** directly below KVM-OVERVIEW for a read-only roll-up of saved records from the five markets. The global Budget year selector and review period (month/quarter/year) control the totals, breakdown tables and exports. Admin Data Input edits appear in the review after saving; unsaved drafts are never included. No separate total record or FULL BUDGET workbook is imported, so totals cannot double-count a sixth dataset.
 
 Commercial, villa, country and meal-plan rows are summed by label, including all four weekly target/BOB pairs. ADR is calculated as total revenue divided by total room nights, including weekly ADR; it is never the sum or simple average of market ADRs. Weekly columns for annual/quarterly periods sum that week across the selected months. Weekly snapshots do not overwrite or add to monthly BOB. Different category spellings remain separate, and source breakdown units/independent reconciliation rules still apply.
 

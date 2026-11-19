@@ -117,7 +117,7 @@ h3 {
   background: #1b383d;
   border: 1px solid #29464b;
   border-radius: 9px;
-  margin-bottom: 31px;
+  margin-bottom: 10px;
   font-weight: 500;
   color: #e5eeee;
   font-size: 12px;
@@ -1482,9 +1482,8 @@ fieldset {
 }
 
 .total-nav {
-  margin-top: 16px;
-  border-top: 1px solid #294348;
-  padding-top: 12px;
+  margin-top: 0;
+  margin-bottom: 26px;
 }
 .total-controls {
   flex-wrap: wrap;

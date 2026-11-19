@@ -62,7 +62,7 @@ export default function TotalReview({
         `KVM-total-budget-${year}-${period}`,
       );
       setMessage(
-        `Total Budget Review Excel report generated for ${year} · ${periodLabel}.`,
+        `Management Review Excel report generated for ${year} · ${periodLabel}.`,
       );
     } catch (e) {
       setError((e as Error).message);
@@ -171,7 +171,7 @@ export default function TotalReview({
         <div className="section-heading">
           <div>
             <h2>
-              Total Budget Review · {year} · {periodLabel}
+              Management Review · {year} · {periodLabel}
             </h2>
             <p>
               {review.complete

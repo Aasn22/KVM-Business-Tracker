@@ -17,9 +17,7 @@ describe("read-only views and admin entry", () => {
   it("merges the resort card and duplicate overview into one current-page button", () => {
     vi.stubGlobal("window", { location: { pathname: "/" } });
     const html = renderToStaticMarkup(<App />);
-    expect(html.match(/aria-label="Kuda Villingili Overview"/g)).toHaveLength(
-      1,
-    );
+    expect(html.match(/aria-label="KVM-OVERVIEW"/g)).toHaveLength(1);
     expect(html).toContain('aria-current="page"');
     expect(html).not.toContain(">Overview</button>");
     expect(html).not.toContain("Resort Maldives</small>");
@@ -27,6 +25,23 @@ describe("read-only views and admin entry", () => {
   it("does not mark the overview card current on the admin page", () => {
     vi.stubGlobal("window", { location: { pathname: "/admin-data-input" } });
     expect(renderToStaticMarkup(<App />)).not.toContain('aria-current="page"');
+  });
+  it("places Management Review directly after KVM-OVERVIEW and before workspace links", () => {
+    vi.stubGlobal("window", { location: { pathname: "/" } });
+    const html = renderToStaticMarkup(<App />);
+    const sidebar = html.slice(
+      html.indexOf("<aside"),
+      html.indexOf("</aside>"),
+    );
+    expect(sidebar).toMatch(
+      /KVM-OVERVIEW<\/div>[\s\S]*?<\/button><nav class="total-nav">/,
+    );
+    expect(sidebar.indexOf("Management Review")).toBeLessThan(
+      sidebar.indexOf("WORKSPACE"),
+    );
+    expect(sidebar.match(/Management Review/g)).toHaveLength(1);
+    expect(sidebar).not.toContain("Total Budget Review");
+    expect(sidebar).not.toContain("Kuda Villingili Overview");
   });
   it("renders numbers as non-interactive text outside admin entry", () => {
     const html = renderToStaticMarkup(

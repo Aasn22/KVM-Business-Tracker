@@ -430,7 +430,7 @@ export default function App() {
         </a>
         <button
           className={`workspace ${view === "overview" && !market ? "active" : ""}`}
-          aria-label="Kuda Villingili Overview"
+          aria-label="KVM-OVERVIEW"
           aria-current={view === "overview" && !market ? "page" : undefined}
           onClick={() =>
             navigate(() => {
@@ -446,9 +446,24 @@ export default function App() {
             width={38}
             height={38}
           />
-          <div>Kuda Villingili Overview</div>
+          <div>KVM-OVERVIEW</div>
           <ChevronRight size={14} />
         </button>
+        <nav className="total-nav">
+          <button
+            className={view === "total" ? "active" : ""}
+            aria-current={view === "total" ? "page" : undefined}
+            onClick={() =>
+              navigate(() => {
+                setMarket(null);
+                setView("total");
+              })
+            }
+          >
+            <BarChart3 size={18} />
+            Management Review
+          </button>
+        </nav>
         <div className="nav-label">WORKSPACE</div>
         <nav>
           {(
@@ -488,20 +503,7 @@ export default function App() {
             </button>
           ))}
         </nav>
-        <nav className="total-nav">
-          <button
-            className={view === "total" ? "active" : ""}
-            onClick={() =>
-              navigate(() => {
-                setMarket(null);
-                setView("total");
-              })
-            }
-          >
-            <BarChart3 size={18} />
-            Total Budget Review
-          </button>
-        </nav>
+
         <nav className="admin-nav">
           <button
             className={view === "admin" ? "active" : ""}
@@ -584,8 +586,8 @@ export default function App() {
             <strong>
               {selected?.name ??
                 {
-                  overview: "Kuda Villingili Overview",
-                  total: "Total Budget Review",
+                  overview: "KVM-OVERVIEW",
+                  total: "Management Review",
                   admin: "Admin Data Input",
                   reports: "Reports",
                   activity: "Activity log",
@@ -671,7 +673,7 @@ export default function App() {
                   : selected
                     ? selected.name
                     : view === "total"
-                      ? "Total Budget Review"
+                      ? "Management Review"
                       : view === "overview"
                         ? "Every market. One clear view."
                         : view === "reports"

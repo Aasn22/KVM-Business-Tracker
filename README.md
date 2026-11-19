@@ -42,6 +42,22 @@ Logos accept PNG/JPEG/WebP up to 200 KB, are decoded in the browser, and saved a
 
 Unconfigured demo mode opens the page **read-only** with “Try Super Admin editing” for explicitly simulated local-only editing. No real privilege is granted. Demo settings persist separately from market budgets in browser local storage. Save, Cancel, unsaved-navigation warning and reload behave independently from Admin Data Input. Live configuration requires migration and real accounts.
 
+## Account invitations and passwords
+
+Account flows are now provided at `/setup-password` (invitation), `/forgot-password` (email request), `/reset-password` (recovery link) and `/change-password` (signed-in voluntary change, current-password reauthentication required). Minimum is **6 Unicode characters**, allowing letters/numbers/symbols without a required mixture. Set the Supabase Auth project's password minimum to 6 and no character-class requirements to match; provider-side limits still own enforcement. Passwords are never displayed, saved to app tables, logged, or set to a shared default.
+
+After all previous schema migrations, run `supabase/migrations/20261119_password_setup.sql`. It exposes only whether the caller's provider account has a password (never a hash). The auth shell asks invited users with no password to set one before entering the app, including on reload. This is a UI onboarding gate, not a replacement for database row-level permissions. Apply migrations before enabling live auth; lookup errors fail closed. Existing accounts with passwords are not forced to reset on each login.
+
+For first login, use **Property Setup → team member → Invite** as a verified Super Admin after privately entering the user's individual email. `/api/invite-user` verifies the caller with Supabase, rechecks Super Admin and completed password setup, accepts only email/profile ID, sends one private invitation and links the already-reviewed profile's role/scope. Already linked profiles are not reinvited. If invitation succeeds but linking fails, the API explicitly reports partial completion: review Auth and link manually before retrying. No bulk account creation runs on deploy.
+
+The server endpoint needs `SUPABASE_SECRET_KEY` (server-only, NEVER VITE-prefixed) and `BUSINESS_EYE_APP_URL` (the stable HTTPS application origin), in addition to the existing Supabase URL/publishable configuration. Enter these privately in Vercel environment settings or your ignored local `.env.local`, never in chat. The secret is used only by the server invitation function and is not bundled into the browser. Keep environment access restricted to trusted collaborators. Local Vite alone does not run the Vercel API function.
+
+Configure Supabase Site URL/allowed redirects for the stable deployment's `/setup-password` and `/reset-password`. Default invite links must redirect to `/setup-password`; recovery links to `/reset-password`. Alternatively configure email templates using `{{ .SiteURL }}/setup-password?token_hash={{ .TokenHash }}&type=invite` and `{{ .SiteURL }}/reset-password?token_hash={{ .TokenHash }}&type=recovery`; only invite/recovery token-hash callbacks are accepted and callback parameters are removed after verification. Tokens stay in provider/browser flow, never in app logs. Invalid/expired links show a recovery route. Use real email delivery (SMTP), provider rate limits and disable public signups. The first Super Admin invitation/role assignment must be bootstrapped by a trusted Supabase administrator; it cannot be self-provisioned in the browser.
+
+Forgot-password submits to Supabase with a generic success response so account existence is not disclosed by the UI. A 60-second client retry delay complements provider limits. Voluntary change requires current-password reauthentication; users who forgot it use email recovery. After successful setup/reset/change, the app reloads into the normal sign-in/session flow. In unconfigured demo mode, password pages clearly state that authentication/email is disconnected and cannot send invitations, update passwords or create users.
+
+**Rollout status:** the supplied team PDF contains usernames/permissions but no email addresses. No live accounts have been created or invitations sent. The Vercel project currently has no environment variables or connected Supabase resource. Supply a private email-to-username mapping, connect/configure Supabase, apply migrations and provision the first Super Admin before using Invite. Do not use passwords from the supplied roster.
+
 ## Property codes, team directory and country access
 
 Defaults now match the supplied **75 physical villa units** and ten villa codes; meal-plan setup includes BB, HB, HBR, FB, FBR, AI and UAI with descriptions. The new HBR/FBR plans configure the property only; no historical bookings are fabricated. Existing saved property profiles are never silently overwritten: Super Admin can choose **Use supplied villa & meal plan configuration (75 units)** then Save property. Codes are validated on client/database writes. Property details still do not rewrite financial history.
@@ -86,7 +102,7 @@ npm run build
 ## Live setup (required before actual manager use)
 
 1. Create a Supabase project. Run `supabase/schema.sql` **once**, as the database administrator, in a fresh project's SQL editor. Review policies before using production financial data. Never disable row-level security.
-2. Create manager accounts using your Supabase Auth administration interface. Disable public user sign-ups. An administrator should issue invitations/password recovery through Supabase; no registration, account provisioning, or password-reset UI is provided in this initial version. Managers sign in with their own email/password. Never send passwords or API keys through chat.
+2. Create manager accounts using your Supabase Auth administration interface. Disable public user sign-ups. Use private invitations through the Super Admin team UI after server configuration. Password setup/recovery/change pages are provided; public registration is not. Managers sign in with their own email/password. Never send passwords or API keys through chat.
 3. Assign users from a trusted database administrator session (replace the placeholders with the appropriate Auth user UUIDs):
 
 ```sql

@@ -583,6 +583,15 @@ export default function App() {
             Admin Data Input
           </button>
         </nav>
+        <nav className="account-nav">
+          <a
+            className="settings-nav"
+            href={session ? "/change-password" : "/forgot-password"}
+          >
+            <LockKeyhole size={17} />
+            {session ? "Change password" : "Forgot password"}
+          </a>
+        </nav>
         <div className="sidebar-bottom">
           <div className="secure">
             <ShieldCheck size={20} />
@@ -1984,8 +1993,12 @@ function Login({ onSuccess }: { onSuccess: () => void }) {
       <button className="button primary" disabled={busy || !db}>
         {busy ? "Signing in…" : "Sign in securely"}
       </button>
+      <a className="text-button" href="/forgot-password">
+        Forgot password?
+      </a>
       <small>
-        Need an account or password reset? Contact your administrator.
+        Need an account? Contact your Super Admin for a private email
+        invitation.
       </small>
     </form>
   );

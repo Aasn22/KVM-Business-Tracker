@@ -25,6 +25,8 @@ export default function TeamDirectory({
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [draft, setDraft] = useState<TeamMember | null>(null);
   const [link, setLink] = useState("");
+  const [invite, setInvite] = useState<TeamMember | null>(null);
+  const [inviteEmail, setInviteEmail] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
@@ -93,6 +95,47 @@ export default function TeamDirectory({
       setMessage(
         "Team profile saved. New Auth users must still be privately invited and linked by Super Admin.",
       );
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+      onBusyChange(false);
+    }
+  }
+  async function sendInvite() {
+    if (!canEdit || !invite?.id || demo) return;
+    if (!inviteEmail.trim()) {
+      setError("Enter the team member’s individual email address.");
+      return;
+    }
+    setBusy(true);
+    onBusyChange(true);
+    setError("");
+    setMessage("");
+    try {
+      const current = await db!.auth.getSession();
+      if (!current.data.session) throw Error("Sign in again.");
+      const response = await fetch("/api/invite-user", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${current.data.session.access_token}`,
+        },
+        body: JSON.stringify({
+          email: inviteEmail.trim(),
+          memberId: invite.id,
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok)
+        throw Error(
+          result.message ||
+            "Invitation could not be confirmed. Check Supabase Auth before retrying.",
+        );
+      setMessage(result.message);
+      setInvite(null);
+      setInviteEmail("");
+      await load();
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -178,6 +221,39 @@ export default function TeamDirectory({
         <p role="status" className="notice">
           {message}
         </p>
+      )}
+      {invite && canEdit && (
+        <div className="notice">
+          <h3>Invite {invite.name}</h3>
+          <p>
+            Use the person’s own email. They will choose their password. No
+            shared password is created or displayed.
+          </p>
+          <label>
+            Email address
+            <input
+              aria-label="Invitation email"
+              type="email"
+              value={inviteEmail}
+              onChange={(e) => setInviteEmail(e.target.value)}
+            />
+          </label>
+          <button
+            className="button outline"
+            disabled={busy}
+            onClick={() => setInvite(null)}
+          >
+            Cancel invitation
+          </button>
+          <button
+            className="button primary"
+            disabled={busy || demo}
+            onClick={sendInvite}
+          >
+            {busy ? "Sending…" : "Send private invitation"}
+          </button>
+          {demo && <p>Invitation delivery is disabled in demo mode.</p>}
+        </div>
       )}
       {draft && canEdit && (
         <fieldset disabled={busy} className="team-form">
@@ -328,6 +404,17 @@ export default function TeamDirectory({
                       }}
                     >
                       Edit {m.name}
+                    </button>
+                    <button
+                      className="text-button"
+                      disabled={busy || !!draft}
+                      onClick={() => {
+                        setInvite(m);
+                        setInviteEmail("");
+                        setError("");
+                      }}
+                    >
+                      Invite {m.name}
                     </button>
                   </td>
                 )}

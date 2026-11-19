@@ -43,7 +43,7 @@ import {
   type MonthData,
   type Row,
 } from "./model";
-import { db, loadYear, saveImport, saveMonth } from "./api";
+import { db, loadYear, loadAdminRole, saveImport, saveMonth } from "./api";
 import { exportWorkbook, importWorkbook } from "./workbooks";
 import TotalReview from "./TotalReview";
 const money = (n: number) =>
@@ -56,7 +56,7 @@ const num = (n: number) =>
   new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 }).format(n);
 const compact = (n: number) =>
   n >= 1e6 ? `$${(n / 1e6).toFixed(2)}m` : money(n);
-type View = "overview" | "reports" | "activity" | "setup" | "total";
+type View = "overview" | "reports" | "activity" | "setup" | "total" | "admin";
 type Tab = "commercial" | "villas" | "countries" | "meals" | "notes";
 export default function App() {
   const demo = !db;
@@ -64,7 +64,17 @@ export default function App() {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [session, setSession] = useState<Session | null>(null);
   const [authReady, setAuthReady] = useState(!db);
-  const [view, setView] = useState<View>("overview");
+  const [adminRole, setAdminRole] = useState<{
+    userId: string;
+    allowed: boolean;
+  } | null>(null);
+  const [roleError, setRoleError] = useState("");
+  const isAdmin =
+    !!session && adminRole?.userId === session.user.id && adminRole.allowed;
+  const [view, setView] = useState<View>(
+    window.location.pathname === "/admin-data-input" ? "admin" : "overview",
+  );
+  const canEdit = view === "admin" && (demo || isAdmin);
   const [market, setMarket] = useState<string | null>(null);
   const [month, setMonth] = useState(1);
   const [tab, setTab] = useState<Tab>("commercial");
@@ -91,12 +101,61 @@ export default function App() {
     });
     const { data } = db.auth.onAuthStateChange((_, s) => {
       setSession(s);
+      setAdminRole(null);
       setEntries([]);
       setDraft(null);
+      setPending(null);
+      setAudit([]);
       setDirty(false);
     });
     return () => data.subscription.unsubscribe();
   }, []);
+  useEffect(() => {
+    let active = true;
+    setAdminRole(null);
+    setRoleError("");
+    if (!session || !db) return;
+    const userId = session.user.id;
+    loadAdminRole()
+      .then((allowed) => {
+        if (active) setAdminRole({ userId, allowed });
+      })
+      .catch((e) => {
+        if (active) {
+          setRoleError(
+            `Unable to verify administrator access: ${e.message}. Apply the admin-only database migration before enabling live entry.`,
+          );
+          setAdminRole({ userId, allowed: false });
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [session]);
+  useEffect(() => {
+    const path = view === "admin" ? "/admin-data-input" : "/";
+    if (window.location.pathname !== path)
+      window.history.pushState(null, "", path);
+  }, [view]);
+  useEffect(() => {
+    function onPop() {
+      if (busy || (dirty && !window.confirm("Discard your unsaved changes?"))) {
+        window.history.pushState(
+          null,
+          "",
+          view === "admin" ? "/admin-data-input" : "/",
+        );
+        return;
+      }
+      setDirty(false);
+      setMarket(null);
+      setView(
+        window.location.pathname === "/admin-data-input" ? "admin" : "overview",
+      );
+    }
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, [busy, dirty, view]);
   useEffect(() => {
     let active = true;
     setError("");
@@ -134,7 +193,7 @@ export default function App() {
   useEffect(() => {
     setDraft(market ? structuredClone(current?.data ?? blank(market)) : null);
     setDirty(false);
-  }, [market, month, current, year]);
+  }, [market, month, current, year, view]);
   useEffect(() => {
     if (!dirty) return;
     const guard = (e: BeforeUnloadEvent) => {
@@ -220,7 +279,8 @@ export default function App() {
   }
   const totals = summarize(entries);
   const selected = markets.find((m) => m.id === market);
-  const activeData = draft ?? blank(market ?? "asia");
+  const activeData =
+    (canEdit ? draft : current?.data) ?? blank(market ?? "asia");
   const scoped = entries.filter(
     (e) =>
       (reportMarket === "all" || e.market_id === reportMarket) &&
@@ -230,7 +290,7 @@ export default function App() {
           : e.month === Number(period))),
   );
   async function save() {
-    if (!draft || !market) return;
+    if (!canEdit || !draft || !market) return;
     if (!validData(draft)) {
       setError(
         "Enter valid, non-negative numbers. Values must be below 1 trillion.",
@@ -272,7 +332,10 @@ export default function App() {
   async function refresh() {
     if (busy) return;
     navigate(() => {
-      if (demo) return;
+      if (demo) {
+        setDraft(structuredClone(current?.data ?? blank(market ?? "asia")));
+        return;
+      }
       setLoading(true);
       loadYear(year)
         .then(setEntries)
@@ -281,7 +344,7 @@ export default function App() {
     });
   }
   async function importFile(file?: File) {
-    if (!file || !market) return;
+    if (!canEdit || !file || !market) return;
     if (dirty) {
       setError("Save or discard your changes before importing.");
       return;
@@ -298,7 +361,7 @@ export default function App() {
     }
   }
   async function applyImport() {
-    if (!pending) return;
+    if (!canEdit || !pending) return;
     setBusy(true);
     try {
       if (!demo) await saveImport(pending);
@@ -331,7 +394,7 @@ export default function App() {
     }
   }
   function updateRow(index: number, next: Row) {
-    if (tab === "notes" || !draft) return;
+    if (!canEdit || tab === "notes" || !draft) return;
     setDraft({
       ...draft,
       [tab]: draft[tab].map((r, i) => (i === index ? next : r)),
@@ -403,7 +466,7 @@ export default function App() {
           {visibleMarkets.map((m) => (
             <button
               key={m.id}
-              className={market === m.id ? "active" : ""}
+              className={view === "overview" && market === m.id ? "active" : ""}
               onClick={() => openMarket(m.id)}
             >
               <span className="market-dot" style={{ background: m.color }} />
@@ -424,6 +487,20 @@ export default function App() {
           >
             <BarChart3 size={18} />
             Total Budget Review
+          </button>
+        </nav>
+        <nav className="admin-nav">
+          <button
+            className={view === "admin" ? "active" : ""}
+            onClick={() =>
+              navigate(() => {
+                setMarket(null);
+                setView("admin");
+              })
+            }
+          >
+            <LockKeyhole size={18} />
+            Admin Data Input
           </button>
         </nav>
         <div className="sidebar-bottom">
@@ -496,6 +573,7 @@ export default function App() {
                 {
                   overview: "Overview",
                   total: "Total Budget Review",
+                  admin: "Admin Data Input",
                   reports: "Reports",
                   activity: "Activity log",
                   setup: "Setup & access",
@@ -575,30 +653,34 @@ export default function App() {
                     : "COMMERCIAL WORKSPACE"}
               </div>
               <h1>
-                {selected
-                  ? selected.name
-                  : view === "total"
-                    ? "Total Budget Review"
-                    : view === "overview"
-                      ? "Every market. One clear view."
-                      : view === "reports"
-                        ? "Reports & insights"
-                        : view === "activity"
-                          ? "A record of every change."
-                          : "Make it your workspace."}
+                {view === "admin"
+                  ? "Admin Data Input"
+                  : selected
+                    ? selected.name
+                    : view === "total"
+                      ? "Total Budget Review"
+                      : view === "overview"
+                        ? "Every market. One clear view."
+                        : view === "reports"
+                          ? "Reports & insights"
+                          : view === "activity"
+                            ? "A record of every change."
+                            : "Make it your workspace."}
               </h1>
               <p>
-                {selected
-                  ? "Plan, track and take action on your market’s performance."
-                  : view === "total"
-                    ? "One automatic review of saved performance across the five markets."
-                    : view === "overview"
-                      ? "Keep your team aligned and your performance in focus."
-                      : view === "reports"
-                        ? "Turn market performance into clear, shareable reports."
-                        : view === "activity"
-                          ? "Traceable updates across your connected markets."
-                          : "Connect secure accounts and bring your spreadsheets to life."}
+                {view === "admin"
+                  ? "The only workspace for entering numbers, importing workbooks, and updating action plans."
+                  : selected
+                    ? "View saved performance. All data input is managed by an administrator."
+                    : view === "total"
+                      ? "One automatic review of saved performance across the five markets."
+                      : view === "overview"
+                        ? "Keep your team aligned and your performance in focus."
+                        : view === "reports"
+                          ? "Turn market performance into clear, shareable reports."
+                          : view === "activity"
+                            ? "Traceable updates across your connected markets."
+                            : "Connect secure accounts and bring your spreadsheets to life."}
               </p>
             </div>
             <div className="heading-actions">
@@ -617,25 +699,28 @@ export default function App() {
                   ))}
                 </select>
               </label>
-              {view !== "setup" && view !== "activity" && view !== "total" && (
-                <button
-                  className="button outline"
-                  disabled={busy || !entries.length}
-                  onClick={() =>
-                    download(
-                      selected
-                        ? entries.filter((e) => e.market_id === market)
-                        : view === "reports"
-                          ? scoped
-                          : entries,
-                      `KVM-${selected?.id ?? "all-markets"}-${year}`,
-                    )
-                  }
-                >
-                  <ArrowDownToLine size={16} />
-                  Export report
-                </button>
-              )}
+              {view !== "setup" &&
+                view !== "activity" &&
+                view !== "total" &&
+                view !== "admin" && (
+                  <button
+                    className="button outline"
+                    disabled={busy || !entries.length}
+                    onClick={() =>
+                      download(
+                        selected
+                          ? entries.filter((e) => e.market_id === market)
+                          : view === "reports"
+                            ? scoped
+                            : entries,
+                        `KVM-${selected?.id ?? "all-markets"}-${year}`,
+                      )
+                    }
+                  >
+                    <ArrowDownToLine size={16} />
+                    Export report
+                  </button>
+                )}
             </div>
           </div>
           {error && (
@@ -839,11 +924,81 @@ export default function App() {
               </div>
             </>
           )}
-          {view === "overview" && market && (
+          {view === "admin" && (
+            <section className="panel admin-access">
+              <h2>
+                {demo ? "Demo Admin Data Input" : "Administrator workspace"}
+              </h2>
+              {demo ? (
+                <div className="notice">
+                  Fictional demo only. This demonstrates admin entry without
+                  authentication; edits stay in this browser and do not grant
+                  live administrator access.
+                </div>
+              ) : !session ? (
+                <>
+                  <p>
+                    Sign in with an administrator account to enter data. Market
+                    manager accounts are view-only.
+                  </p>
+                  <button
+                    className="button primary"
+                    onClick={() => setLogin(true)}
+                  >
+                    Sign in as administrator
+                  </button>
+                </>
+              ) : !adminRole ? (
+                <p role="status">Verifying administrator access…</p>
+              ) : !isAdmin ? (
+                <p role="alert">
+                  {roleError ||
+                    "Administrator access required. You can view assigned markets and generate reports, but only an administrator may enter or import data."}
+                </p>
+              ) : (
+                <p>
+                  Administrator access verified. All changes are versioned and
+                  audit logged.
+                </p>
+              )}
+              {canEdit && (
+                <label className="admin-market-label">
+                  Market for data input
+                  <select
+                    aria-label="Admin market"
+                    value={market ?? ""}
+                    disabled={busy || loading}
+                    onChange={(e) =>
+                      navigate(() => {
+                        setMarket(e.target.value || null);
+                        setTab("commercial");
+                      })
+                    }
+                  >
+                    <option value="" disabled>
+                      Select a market
+                    </option>
+                    {markets.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+            </section>
+          )}
+          {((view === "overview" && market) ||
+            (view === "admin" && canEdit && market)) && (
             <>
               <button
                 className="back-link"
-                onClick={() => navigate(() => setMarket(null))}
+                onClick={() =>
+                  navigate(() => {
+                    setMarket(null);
+                    setView("overview");
+                  })
+                }
               >
                 <ArrowLeft size={14} />
                 All markets
@@ -895,9 +1050,9 @@ export default function App() {
                   </section>
                   {noAccess && (
                     <div className="notice">
-                      No saved data is available for this market and year. If
-                      you are assigned to it, save a month or import a workbook
-                      to begin. Unassigned writes will be rejected.
+                      No saved data is available for this market and year. An
+                      administrator must enter or import data through Admin Data
+                      Input. Missing data is not a confirmed zero budget.
                     </div>
                   )}
                   <section className="panel editor">
@@ -910,34 +1065,41 @@ export default function App() {
                             automatically.
                           </p>
                         </div>
-                        <div className="editor-actions">
-                          <button
-                            className="button outline"
-                            disabled={busy}
-                            onClick={() => fileRef.current?.click()}
-                          >
-                            <Upload size={15} />
-                            Import Excel
-                          </button>
-                          <input
-                            ref={fileRef}
-                            type="file"
-                            hidden
-                            accept=".xlsx"
-                            aria-label="Import market workbook"
-                            onChange={(e) =>
-                              void importFile(e.target.files?.[0])
-                            }
-                          />
-                          <button
-                            className="button primary"
-                            disabled={busy || !dirty || loading}
-                            onClick={save}
-                          >
-                            <Save size={15} />
-                            {busy ? "Working…" : "Save changes"}
-                          </button>
-                        </div>
+                        {canEdit ? (
+                          <div className="editor-actions">
+                            <button
+                              className="button outline"
+                              disabled={busy}
+                              onClick={() => fileRef.current?.click()}
+                            >
+                              <Upload size={15} />
+                              Import Excel
+                            </button>
+                            <input
+                              ref={fileRef}
+                              type="file"
+                              hidden
+                              accept=".xlsx"
+                              aria-label="Import market workbook"
+                              onChange={(e) =>
+                                void importFile(e.target.files?.[0])
+                              }
+                            />
+                            <button
+                              className="button primary"
+                              disabled={busy || !dirty || loading}
+                              onClick={save}
+                            >
+                              <Save size={15} />
+                              {busy ? "Working…" : "Save changes"}
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="read-only-badge">
+                            <LockKeyhole size={14} />
+                            Read-only · Admin Data Input manages all changes
+                          </span>
+                        )}
                       </div>
                       <div className="month-tabs">
                         {months.map((m, i) => (
@@ -972,11 +1134,13 @@ export default function App() {
                           ))}
                         </div>
                         <span className="save-status">
-                          {dirty
-                            ? "Unsaved changes"
-                            : current
-                              ? "Saved"
-                              : "Not yet saved"}
+                          {!canEdit
+                            ? "Read-only"
+                            : dirty
+                              ? "Unsaved changes"
+                              : current
+                                ? "Saved"
+                                : "Not yet saved"}
                         </span>
                       </div>
                       {tab === "notes" ? (
@@ -985,21 +1149,29 @@ export default function App() {
                             Performance review & corrective actions
                           </label>
                           <p>
-                            Record reasons for variance, next steps, and owners.
+                            {canEdit
+                              ? "Record reasons for variance, next steps, and owners."
+                              : "Saved by an administrator."}
                           </p>
-                          <textarea
-                            id="notes"
-                            maxLength={10000}
-                            value={activeData.notes}
-                            onChange={(e) => {
-                              setDraft({
-                                ...activeData,
-                                notes: e.target.value,
-                              });
-                              setDirty(true);
-                            }}
-                            placeholder="What will help this market reach its target?"
-                          />
+                          {canEdit ? (
+                            <textarea
+                              id="notes"
+                              maxLength={10000}
+                              value={activeData.notes}
+                              onChange={(e) => {
+                                setDraft({
+                                  ...activeData,
+                                  notes: e.target.value,
+                                });
+                                setDirty(true);
+                              }}
+                              placeholder="What will help this market reach its target?"
+                            />
+                          ) : (
+                            <p className="read-only-notes">
+                              {activeData.notes || "No action plan recorded."}
+                            </p>
+                          )}
                         </div>
                       ) : (
                         <>
@@ -1041,6 +1213,7 @@ export default function App() {
                                     <th>{r.label}</th>
                                     <td>
                                       <Numeric
+                                        editable={canEdit}
                                         label={`${r.label} budget`}
                                         value={r.budget}
                                         onChange={(v) =>
@@ -1050,6 +1223,7 @@ export default function App() {
                                     </td>
                                     <td>
                                       <Numeric
+                                        editable={canEdit}
                                         label={`${r.label} BOB`}
                                         value={r.bob}
                                         onChange={(v) =>
@@ -1072,6 +1246,7 @@ export default function App() {
                                         r={r}
                                         w={w}
                                         target={v}
+                                        editable={canEdit}
                                         update={(next) => updateRow(i, next)}
                                       />
                                     ))}
@@ -1111,7 +1286,7 @@ export default function App() {
                               </tbody>
                             </table>
                           </div>
-                          {tab !== "commercial" && (
+                          {canEdit && tab !== "commercial" && (
                             <div className="add-row">
                               <button
                                 className="text-button"
@@ -1145,14 +1320,18 @@ export default function App() {
                       <div className="editor-footer">
                         <span>
                           <LockKeyhole size={13} />
-                          {demo
-                            ? "Demo edits stay in your browser"
-                            : "Changes are versioned and audit logged"}{" "}
+                          {!canEdit
+                            ? "Read-only · Changes are made only in Admin Data Input"
+                            : demo
+                              ? "Demo admin edits stay in your browser"
+                              : "Admin changes are versioned and audit logged"}{" "}
                           · Currency: USD
                         </span>
-                        <button className="text-button" onClick={refresh}>
-                          Discard & reload
-                        </button>
+                        {canEdit && (
+                          <button className="text-button" onClick={refresh}>
+                            Discard & reload
+                          </button>
+                        )}
                       </div>
                     </fieldset>
                   </section>
@@ -1393,9 +1572,10 @@ export default function App() {
                 <li>
                   <strong>Import your market workbooks</strong>
                   <p>
-                    After signing in, open the matching market and year, then
-                    choose Import Excel. Preview and confirm all twelve months.
-                    FULL BUDGET is a reference workbook, not a market import.
+                    An administrator uses Admin Data Input to choose the
+                    matching market and year, then Import Excel. All other pages
+                    are read-only. FULL BUDGET is a reference workbook, not a
+                    market import.
                   </p>
                 </li>
               </ol>
@@ -1541,17 +1721,20 @@ function CellPair({
   r,
   w,
   target,
+  editable,
   update,
 }: {
   r: Row;
   w: number;
   target: number;
+  editable: boolean;
   update: (r: Row) => void;
 }) {
   return (
     <>
       <td>
         <Numeric
+          editable={editable}
           label={`${r.label} week ${w + 1} target`}
           value={target}
           onChange={(v) =>
@@ -1564,6 +1747,7 @@ function CellPair({
       </td>
       <td>
         <Numeric
+          editable={editable}
           label={`${r.label} week ${w + 1} BOB`}
           value={r.weekly[w]}
           onChange={(v) =>
@@ -1586,15 +1770,23 @@ function AdrPair({ data, w }: { data: MonthData; w: number }) {
     </>
   );
 }
-function Numeric({
+export function Numeric({
+  editable,
   label,
   value,
   onChange,
 }: {
+  editable: boolean;
   label: string;
   value: number;
   onChange: (n: number) => void;
 }) {
+  if (!editable)
+    return (
+      <span className="read-only-value" aria-label={label}>
+        {num(value)}
+      </span>
+    );
   return (
     <input
       type="number"

@@ -9,8 +9,8 @@ do $$ begin
  if public.can_access_market('russia') then raise exception 'Cross-market access allowed'; end if;
  if exists(select 1 from public.market_months where market_id='russia') then raise exception 'Cross-market read leaked'; end if;
  begin
-  perform public.save_market_month('russia',2027,1,'{}'::jsonb,0);
-  raise exception 'Unauthorized write allowed';
+  perform public.save_market_month('asia',2027,1,'{}'::jsonb,0);
+  raise exception 'Manager write allowed';
  exception when insufficient_privilege then null;
  end;
  begin

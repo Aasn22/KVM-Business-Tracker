@@ -33,6 +33,12 @@ alter table public.market_months enable row level security;
 alter table public.audit_log enable row level security;
 revoke all on public.app_admins, public.market_members, public.market_months, public.audit_log from anon, authenticated;
 grant select on public.market_members,public.market_months,public.audit_log to authenticated;
+create function public.is_app_admin() returns boolean
+language sql stable security definer set search_path = '' as $$
+ select auth.uid() is not null and exists(select 1 from public.app_admins where user_id=auth.uid());
+$$;
+revoke all on function public.is_app_admin() from public,anon;
+grant execute on function public.is_app_admin() to authenticated;
 create function public.can_access_market(p_market text) returns boolean
 language sql stable security definer set search_path = '' as $$
  select auth.uid() is not null and (
@@ -82,7 +88,7 @@ create function public.save_market_month(p_market text,p_year integer,p_month in
 returns integer language plpgsql security definer set search_path = '' as $$
 declare current_version integer; next_version integer;
 begin
- if not public.can_access_market(p_market) then raise exception 'You are not assigned to this market' using errcode='42501'; end if;
+ if not public.is_app_admin() then raise exception 'Administrator access required for data input' using errcode='42501'; end if;
  if p_version is null or p_version<0 then raise exception 'Invalid version'; end if;
  perform public.validate_month_data(p_data);
  -- Locks even missing rows, preventing simultaneous first-save overwrites.
@@ -100,6 +106,7 @@ grant execute on function public.save_market_month(text,integer,integer,jsonb,in
 create function public.import_market_months(p_entries jsonb) returns void language plpgsql security definer set search_path = '' as $$
 declare e jsonb; first_market text; first_year integer;
 begin
+ if not public.is_app_admin() then raise exception 'Administrator access required for imports' using errcode='42501'; end if;
  if jsonb_typeof(p_entries) is distinct from 'array' then raise exception 'Expected entries'; end if;
  if jsonb_array_length(p_entries)<>12 then raise exception 'Import requires all twelve months'; end if;
  first_market=p_entries->0->>'market_id';first_year=(p_entries->0->>'year')::integer;

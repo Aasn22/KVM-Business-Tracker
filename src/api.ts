@@ -37,3 +37,10 @@ export async function saveImport(entries: Entry[]) {
   });
   if (error) throw error;
 }
+
+export async function loadAdminRole(): Promise<boolean> {
+  if (!db) return false;
+  const { data, error } = await db.rpc("is_app_admin");
+  if (error) throw error;
+  return data === true;
+}

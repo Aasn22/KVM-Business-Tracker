@@ -1533,3 +1533,50 @@ fieldset {
 .sidebar {
   overflow-y: auto;
 }
+
+.admin-nav {
+  margin-top: 8px;
+}
+.admin-access {
+  padding: 22px;
+}
+.admin-access h2 {
+  margin-bottom: 12px;
+}
+.admin-access p {
+  color: #789080;
+  font-size: 12px;
+  line-height: 1.8;
+  margin-bottom: 14px;
+}
+.admin-market-label {
+  display: grid;
+  gap: 9px;
+  max-width: 320px;
+  font-size: 12px;
+}
+.admin-market-label select {
+  padding: 11px;
+  border: 1px solid #dce6d9;
+  border-radius: 6px;
+  background: white;
+  color: #36503d;
+}
+.read-only-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #688671;
+  font-size: 10px;
+}
+.read-only-value {
+  display: block;
+  min-width: 80px;
+  padding: 7px 6px;
+}
+.notes .read-only-notes {
+  white-space: pre-wrap;
+  color: #36503d;
+  font-size: 12px;
+  line-height: 1.9;
+}

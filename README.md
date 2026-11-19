@@ -13,13 +13,23 @@ A standalone market budget and commercial performance workspace for Kuda Villing
 - Responsive desktop/mobile layouts.
 - Historical viewing and reports for 2021–2025, alongside existing 2026–2030 years. Select **Budget year** on Overview, a market, or Reports; the same selection drives monthly/quarterly/annual views and Excel/PDF reports. Import each historical market workbook with its matching year selected. Real historical figures are not preloaded; demo mode remains fictional. Existing year-keyed storage and database tables keep each year separate; no database migration is required.
 
+## Admin Data Input and read-only views
+
+All manual entry, number changes (budgets, BOB and weekly values), category additions, Excel imports and action-plan edits are restricted to **Admin Data Input** at `/admin-data-input`. Choose a market there, then year/month and section. Market pages, Overview, Reports and Total Budget Review are read-only for everyone, including administrators. They show saved values only. Managers may still view authorized markets and export reports; they cannot change data through the client or RPCs.
+
+For a **fresh** database, the updated `supabase/schema.sql` includes these rules. For an **existing** database, a database administrator must run `supabase/migrations/20261119_admin_only_data_input.sql` before rollout. It replaces the two write RPCs with admin-only checks and adds a role lookup RPC without changing records, assignments, read policies, version checks or audit triggers. Existing manager sessions immediately lose RPC write access when the migration is applied. Apply the Europe migration too if that installation predates Europe. No migration is automatically applied to a live database by deploying this source.
+
+Admins are provisioned only through `public.app_admins` by a trusted database administrator. The client queries `is_app_admin()` (a protected, stable security-definer function) and fails closed while loading or if the migration/lookup fails. Market memberships alone never grant write access. Every save/import rechecks admin status in the database, including after role revocation. There is no client-side self-promotion. A stale open UI cannot bypass database rejection.
+
+The unconfigured **demo** provides a clearly labeled Demo Admin Data Input without sign-in for testing fictional data in local browser storage only. It does not create or imply live administrator privileges. Test `/admin-data-input` directly or via the sidebar, choose a market, save/import, then verify the corresponding market and total views. Do not place private budgets in a shared-device demo. Live role/login flows still need a configured Supabase project and real test accounts.
+
 ## Total Budget Review
 
-Use **Total Budget Review** below the market tabs for a read-only roll-up of saved records from the five markets. The global Budget year selector and review period (month/quarter/year) control the totals, breakdown tables and exports. Market edits appear in the review after saving; unsaved drafts are never included. No separate total record or FULL BUDGET workbook is imported, so totals cannot double-count a sixth dataset.
+Use **Total Budget Review** below the market tabs for a read-only roll-up of saved records from the five markets. The global Budget year selector and review period (month/quarter/year) control the totals, breakdown tables and exports. Admin Data Input edits appear in the review after saving; unsaved drafts are never included. No separate total record or FULL BUDGET workbook is imported, so totals cannot double-count a sixth dataset.
 
 Commercial, villa, country and meal-plan rows are summed by label, including all four weekly target/BOB pairs. ADR is calculated as total revenue divided by total room nights, including weekly ADR; it is never the sum or simple average of market ADRs. Weekly columns for annual/quarterly periods sum that week across the selected months. Weekly snapshots do not overwrite or add to monthly BOB. Different category spellings remain separate, and source breakdown units/independent reconciliation rules still apply.
 
-Coverage is shown as available versus expected market-month records, with a missing-period list and per-market contributions. Database permissions are unchanged: managers see only authorized saved records. Incomplete/access-limited results are labeled **Partial total**, not full resort totals; missing values are not estimated. To review the complete resort, an administrator needs access to all five markets and all selected months must have saved data.
+Coverage is shown as available versus expected market-month records, with a missing-period list and per-market contributions. Read permissions are unchanged: managers see only authorized saved records. Incomplete/access-limited results are labeled **Partial total**, not full resort totals; missing values are not estimated. To review the complete resort, an administrator needs access to all five markets and all selected months must have saved data.
 
 **Export total report** produces derived monthly Performance rows and detailed weekly Breakdowns for the selected period, with coverage warnings in the Action plan column. The five-market source rows are not mixed into the totals export. **Print / Save PDF** prints the selected review tab and contribution table with its year/period/coverage labels. Native PDF saving remains a browser action. This feature needs no new database table, permission or migration.
 
@@ -56,10 +66,10 @@ insert into public.app_admins(user_id) values ('<administrator-auth-user-uuid>')
 -- delete from public.market_members where user_id='<uuid>' and market_id='asia';
 ```
 
-Supported market IDs: `asia`, `america`, `middle-east`, `russia`, `europe`. Memberships/admin roles are not writable from the client. Ordinary managers can update both budgets and BOB for assigned markets; there is no approval/sign-off workflow in this version.
+Supported market IDs: `asia`, `america`, `middle-east`, `russia`, `europe`. Memberships/admin roles are not writable from the client. Ordinary managers have read-only access to assigned markets; only application administrators can save or import any data; there is no approval/sign-off workflow in this version.
 
 4. Configure `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` in the Vercel project's environment variables for the desired environments, then redeploy. For local development, copy `.env.example` to `.env.local` and enter values there yourself. These are browser configuration variables: **never use a Supabase secret or service-role key**. RLS, not key secrecy, protects the data. No server-side secret is needed for this application.
-5. Confirm **USD** is the correct reporting currency. The current version assumes USD; there is no automatic currency conversion. Choose the correct budget year, sign in, open a market, then import its matching workbook. Configure database backups and your retention policy before production use.
+5. Confirm **USD** is the correct reporting currency. The current version assumes USD; there is no automatic currency conversion. Choose the correct budget year, sign in as an administrator, open Admin Data Input, select a market, then import its matching workbook. Configure database backups and your retention policy before production use.
 
 ### Adding Europe to an existing database
 
@@ -72,20 +82,20 @@ Europe uses the same 2021–2030 year selector, monthly/weekly editor, report fi
 - Import `ASIA.xlsx`, `AMERICA.xlsx`, `MIDDLE EAST.xlsx`, `RUSSIA.xlsx`, or `EUROPE.xlsx` from the appropriate market. Files are parsed in the browser; no workbook is uploaded to Vercel. In live mode, confirmed parsed figures are stored in your Supabase database.
 - Requires JAN–DEC sheets using the supplied layout: market in B4, year in A1, commercial rows 8/9, followed by numbered villa/country/meal-plan sections. B/C = monthly budget/BOB; D/E, F/G, H/I, J/K = weekly target/BOB pairs. ADR is derived, not imported. Existing action-plan notes are preserved; free-form spreadsheet notes and sign-off cells are not imported.
 - `FULL BUDGET.xlsx` is a planning reference and is intentionally **not** imported as an additional market. Consolidated totals are calculated from authorized market records, avoiding double counting.
-- Import reviews the revenue totals before replacing all twelve months. A stale version, permission failure, or validation error aborts the entire live import. It does not silently merge another manager's changes. Reload and review before retrying.
+- Import reviews the revenue totals before replacing all twelve months. A stale version, permission failure, or validation error aborts the entire live import. It does not silently merge another administrator's changes. Reload and review before retrying.
 - Formula cells need cached numeric results: recalculate and save in Excel before importing. Spreadsheet errors, negative values, and unsupported layouts are rejected. Maximum file size: 10 MB. Use only trusted workbooks.
-- BOB is business on the books, not realized revenue. Weekly values are independently editable snapshots, not automatically summed into monthly BOB. Villa/country/meal-plan breakdowns are independent; managers must reconcile them to commercial totals. Fractional room-night targets are preserved.
+- BOB is business on the books, not realized revenue. Weekly values are independently editable snapshots, not automatically summed into monthly BOB. Villa/country/meal-plan breakdowns are independent; administrators must reconcile them to commercial totals. Fractional room-night targets are preserved.
 - Reports use saved data, not unsaved drafts. The annual dashboard shows all saved months for the selected year; it is not a date-sensitive actual/YTD report. No booking/PMS integration is included.
 
 ### Security and data integrity
 
-Read policies check the authenticated user's assignment on every query. No anonymous financial reads or direct authenticated writes are granted. Versioned RPCs validate nonnegative finite values, enforce assignments and commercial row order, serialize concurrent writes, and create audit snapshots in the same transaction. Audit records cannot be changed by client users. Actors appear by Auth user UUID rather than exposing manager email addresses. Removing an assignment removes subsequent data access but cannot retract exports already downloaded.
+Read policies check the authenticated user's assignment on every query. No anonymous financial reads or direct authenticated writes are granted. Versioned RPCs validate nonnegative finite values, enforce administrator-only writes and commercial row order, serialize concurrent writes, and create audit snapshots in the same transaction. Audit records cannot be changed by client users. Actors appear by Auth user UUID rather than exposing manager email addresses. Removing an assignment removes subsequent data access but cannot retract exports already downloaded.
 
 Before rollout, verify with two distinct manager accounts that cross-market reads and RPC writes are denied, and verify with an administrator that two concurrent saves produce a conflict. `supabase/security-check.sql` provides a rollback-only smoke test for a configured database. The database, delivery of invitations/password resets, and real sign-in are not configured by this source code alone.
 
 ## Preview verification
 
-The unconfigured preview is deliberately reachable signed out in fictional-data demo mode. Check overview, market edits/save/reload, category tabs, report filters, Excel import/export, and the mobile layout. Live mode requires configured Supabase tables and administrator-provisioned test accounts; a READY deployment alone does not verify those flows.
+The unconfigured preview is deliberately reachable signed out in fictional-data demo mode. Check overview, admin entry/save/reload and locked market viewing, category tabs, report filters, Excel import/export, and the mobile layout. Live mode requires configured Supabase tables and administrator-provisioned test accounts; a READY deployment alone does not verify those flows.
 
 ### Dependency review
 

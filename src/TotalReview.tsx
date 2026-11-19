@@ -130,8 +130,9 @@ export default function TotalReview({
           {loading ? "Loading market records…" : review.notice}
         </strong>
         <p>
-          <LockKeyhole size={13} /> Read-only roll-up. Update individual market
-          tabs to change these totals. FULL BUDGET.xlsx is not added again.
+          <LockKeyhole size={13} /> Read-only roll-up. Use Admin Data Input to
+          change market figures and these totals. FULL BUDGET.xlsx is not added
+          again.
         </p>
         {!loading && review.missing.length > 0 && (
           <details>

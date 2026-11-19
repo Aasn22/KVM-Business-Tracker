@@ -1783,7 +1783,7 @@ export function Numeric({
 }) {
   if (!editable)
     return (
-      <span className="read-only-value" aria-label={label}>
+      <span className="read-only-value" aria-label={`${label}: ${num(value)}`}>
         {num(value)}
       </span>
     );

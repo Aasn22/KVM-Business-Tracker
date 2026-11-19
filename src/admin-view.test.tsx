@@ -15,6 +15,7 @@ describe("read-only views and admin entry", () => {
       />,
     );
     expect(html).toContain("270,000");
+    expect(html).toContain('aria-label="Room Revenue budget: 270,000"');
     expect(html).not.toContain("<input");
     expect(html).not.toContain("spinbutton");
   });

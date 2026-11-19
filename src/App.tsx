@@ -632,12 +632,20 @@ export default function App({
         </nav>
 
         {publicDemo ? (
-          <nav className="admin-nav">
-            <a className="settings-nav" href="/admin-data-input">
-              <LockKeyhole size={17} />
-              PIN workspace
-            </a>
-          </nav>
+          <>
+            <nav className="property-nav">
+              <a className="settings-nav" href="/property-setup">
+                <Building2 size={18} />
+                Property Setup
+              </a>
+            </nav>
+            <nav className="admin-nav">
+              <a className="settings-nav" href="/admin-data-input">
+                <LockKeyhole size={18} />
+                Admin Data Input
+              </a>
+            </nav>
+          </>
         ) : (
           <>
             <nav className="property-nav">
@@ -706,7 +714,7 @@ export default function App({
                 ? "Public budget review"
                 : demo
                   ? localPin
-                    ? "PIN workspace"
+                    ? "Local workspace"
                     : "Demo workspace"
                   : (session?.user.email ?? "Guest")}
               <small>
@@ -824,7 +832,7 @@ export default function App({
             </span>
             {publicDemo ? (
               <a href="/admin-data-input">
-                PIN workspace <ArrowUpRight size={13} />
+                Admin Data Input <ArrowUpRight size={13} />
               </a>
             ) : localPin ? (
               <a href="/">Published dashboard</a>

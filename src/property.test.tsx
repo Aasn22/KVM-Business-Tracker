@@ -3,16 +3,20 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { defaultProperty, validProperty, inventoryTotal } from "./property";
 import PropertySetup from "./PropertySetup";
 describe("property profile", () => {
-  it("has safe defaults without inventing address or inventory", () => {
+  it("uses supplied 75-unit inventory without inventing address", () => {
     expect(validProperty(defaultProperty)).toBe(true);
     expect(defaultProperty.address).toBe("");
-    expect(inventoryTotal(defaultProperty)).toBe(0);
+    expect(inventoryTotal(defaultProperty)).toBe(75);
+    expect(defaultProperty.mealPlanCodes?.["Half Board with Beverage"]).toBe(
+      "HBR",
+    );
+    expect(defaultProperty.villaCategories[0].code).toBe("BVR");
   });
   it("sums inventory and rejects duplicate/invalid category values", () => {
     const d = structuredClone(defaultProperty);
     d.villaCategories[0].units = 4;
     d.villaCategories[1].units = 6;
-    expect(inventoryTotal(d)).toBe(10);
+    expect(inventoryTotal(d)).toBe(54);
     d.villaCategories[0].units = -1;
     expect(validProperty(d)).toBe(false);
     d.villaCategories[0].units = 1.5;

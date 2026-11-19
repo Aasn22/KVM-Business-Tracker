@@ -46,6 +46,7 @@ import { db, loadYear, loadAdminRole, saveImport, saveMonth } from "./api";
 import { exportWorkbook, importWorkbook } from "./workbooks";
 import TotalReview from "./TotalReview";
 import PropertySetup from "./PropertySetup";
+import CountryPerformance from "./CountryPerformance";
 const money = (n: number) =>
   new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -76,6 +77,9 @@ export default function App() {
     allowed: boolean;
   } | null>(null);
   const [roleError, setRoleError] = useState("");
+  const [financialScope, setFinancialScope] = useState<string | null>(null);
+  const countryOnly =
+    financialScope === "india" || financialScope === "kazakhstan";
   const isAdmin =
     !!session && adminRole?.userId === session.user.id && adminRole.allowed;
   const [view, setView] = useState<View>(
@@ -113,6 +117,7 @@ export default function App() {
     const { data } = db.auth.onAuthStateChange((_, s) => {
       setSession(s);
       setAdminRole(null);
+      setFinancialScope(null);
       setEntries([]);
       setDraft(null);
       setPending(null);
@@ -143,6 +148,27 @@ export default function App() {
       active = false;
     };
   }, [session]);
+  useEffect(() => {
+    let active = true;
+    setFinancialScope(null);
+    if (demo) {
+      setFinancialScope("all");
+      return;
+    }
+    if (!session || !db) return;
+    db.rpc("my_financial_scope").then(({ data, error }) => {
+      if (!active) return;
+      if (error) {
+        setError(
+          `Financial scope unavailable: ${error.message}. Apply team/country migration.`,
+        );
+        setFinancialScope("unavailable");
+      } else setFinancialScope(data);
+    });
+    return () => {
+      active = false;
+    };
+  }, [demo, session]);
   useEffect(() => {
     const path =
       view === "property"
@@ -804,6 +830,18 @@ export default function App() {
               Loading your market data…
             </div>
           )}
+          {countryOnly && ["overview", "reports", "total"].includes(view) && (
+            <CountryPerformance
+              key={`${session?.user.id}-${financialScope}`}
+              year={year}
+              scope={financialScope as "india" | "kazakhstan"}
+              editable={false}
+              demo={demo}
+            />
+          )}
+          {view === "admin" && canEdit && (
+            <CountryPerformance year={year} editable demo={demo} />
+          )}
           {view === "property" && (
             <PropertySetup
               key={session?.user.id ?? "demo"}
@@ -813,7 +851,7 @@ export default function App() {
               onBusyChange={setBusy}
             />
           )}
-          {view === "total" && (
+          {view === "total" && !countryOnly && (
             <TotalReview
               entries={entries}
               year={year}
@@ -821,7 +859,7 @@ export default function App() {
               demo={demo}
             />
           )}
-          {view === "overview" && !market && (
+          {view === "overview" && !market && !countryOnly && (
             <>
               <section className="stats-grid">
                 <Stat
@@ -1059,7 +1097,7 @@ export default function App() {
               )}
             </section>
           )}
-          {((view === "overview" && market) ||
+          {((view === "overview" && market && !countryOnly) ||
             (view === "admin" && canEdit && market)) && (
             <>
               <button
@@ -1410,7 +1448,7 @@ export default function App() {
               )}
             </>
           )}
-          {view === "reports" && (
+          {view === "reports" && !countryOnly && (
             <>
               <section className="panel report-filters">
                 <label>

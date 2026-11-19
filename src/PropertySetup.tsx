@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Building2, LockKeyhole, Plus, Save, Upload, X } from "lucide-react";
 import { db } from "./api";
+import TeamDirectory from "./TeamDirectory";
 import {
   defaultProperty,
   inventoryTotal,
@@ -26,6 +27,7 @@ export default function PropertySetup({
   );
   const [superAdmin, setSuperAdmin] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [teamEditing, setTeamEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -222,6 +224,7 @@ export default function PropertySetup({
         {canEdit && !editing && record && (
           <button
             className="button primary"
+            disabled={teamEditing}
             onClick={() => {
               setDraft(structuredClone(record.data));
               setEditing(true);
@@ -276,6 +279,22 @@ export default function PropertySetup({
         logo here do not rewrite existing market records or application
         branding.
       </div>
+      {editing && (
+        <button
+          className="button outline"
+          disabled={busy}
+          onClick={() =>
+            update({
+              ...draft,
+              villaCategories: structuredClone(defaultProperty.villaCategories),
+              mealPlans: [...defaultProperty.mealPlans],
+              mealPlanCodes: { ...defaultProperty.mealPlanCodes },
+            })
+          }
+        >
+          Use supplied villa & meal plan configuration (75 units)
+        </button>
+      )}
       <fieldset disabled={busy}>
         <div className="property-details-grid">
           <div className="property-logo">
@@ -390,6 +409,7 @@ export default function PropertySetup({
             <thead>
               <tr>
                 <th>Villa category</th>
+                <th>Code</th>
                 <th>Units</th>
                 {editing && <th>Remove</th>}
               </tr>
@@ -417,6 +437,28 @@ export default function PropertySetup({
                       c.name
                     )}
                   </th>
+                  <td>
+                    {editing ? (
+                      <input
+                        aria-label={`Villa code ${i + 1}`}
+                        value={c.code ?? ""}
+                        maxLength={10}
+                        onChange={(e) =>
+                          update({
+                            ...draft,
+                            villaCategories: draft.villaCategories.map(
+                              (v, j) =>
+                                j === i
+                                  ? { ...v, code: e.target.value.toUpperCase() }
+                                  : v,
+                            ),
+                          })
+                        }
+                      />
+                    ) : (
+                      c.code || "Not configured"
+                    )}
+                  </td>
                   <td>
                     {editing ? (
                       <input
@@ -487,6 +529,23 @@ export default function PropertySetup({
         <ul className="property-meals">
           {data.mealPlans.map((p, i) => (
             <li key={i}>
+              {editing && (
+                <input
+                  aria-label={`Meal plan code ${i + 1}`}
+                  value={draft.mealPlanCodes?.[p] ?? ""}
+                  maxLength={10}
+                  placeholder="Code"
+                  onChange={(e) =>
+                    update({
+                      ...draft,
+                      mealPlanCodes: {
+                        ...draft.mealPlanCodes,
+                        [p]: e.target.value.toUpperCase(),
+                      },
+                    })
+                  }
+                />
+              )}
               {editing ? (
                 <>
                   <input
@@ -496,6 +555,12 @@ export default function PropertySetup({
                     onChange={(e) =>
                       update({
                         ...draft,
+                        mealPlanCodes: Object.fromEntries([
+                          ...Object.entries(draft.mealPlanCodes ?? {}).filter(
+                            ([key]) => key !== p,
+                          ),
+                          [e.target.value, draft.mealPlanCodes?.[p] ?? "NEW"],
+                        ]),
                         mealPlans: draft.mealPlans.map((v, j) =>
                           j === i ? e.target.value : v,
                         ),
@@ -515,12 +580,23 @@ export default function PropertySetup({
                   </button>
                 </>
               ) : (
-                p
+                <>
+                  {p}{" "}
+                  <strong>{data.mealPlanCodes?.[p] || "Not configured"}</strong>
+                </>
               )}
             </li>
           ))}
         </ul>
       </fieldset>
+      <TeamDirectory
+        demo={demo}
+        userId={userId}
+        canEdit={canEdit && !editing}
+        onEditingChange={setTeamEditing}
+        onDirtyChange={onDirtyChange}
+        onBusyChange={onBusyChange}
+      />
       <footer className="editor-footer">
         {record?.version
           ? `Version ${record.version} · Last saved ${record.updated_at ? new Date(record.updated_at).toLocaleString() : "previously"}`

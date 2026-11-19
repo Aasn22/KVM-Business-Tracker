@@ -1693,3 +1693,9 @@ fieldset {
     animation: none;
   }
 }
+
+@media (max-width: 800px) {
+  .sidebar {
+    padding-top: 80px;
+  }
+}

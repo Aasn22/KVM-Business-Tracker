@@ -13,6 +13,16 @@ A standalone market budget and commercial performance workspace for Kuda Villing
 - Responsive desktop/mobile layouts.
 - Historical viewing and reports for 2021–2025, alongside existing 2026–2030 years. Select **Budget year** on Overview, a market, or Reports; the same selection drives monthly/quarterly/annual views and Excel/PDF reports. Import each historical market workbook with its matching year selected. Real historical figures are not preloaded; demo mode remains fictional. Existing year-keyed storage and database tables keep each year separate; no database migration is required.
 
+## Total Budget Review
+
+Use **Total Budget Review** below the market tabs for a read-only roll-up of saved records from the five markets. The global Budget year selector and review period (month/quarter/year) control the totals, breakdown tables and exports. Market edits appear in the review after saving; unsaved drafts are never included. No separate total record or FULL BUDGET workbook is imported, so totals cannot double-count a sixth dataset.
+
+Commercial, villa, country and meal-plan rows are summed by label, including all four weekly target/BOB pairs. ADR is calculated as total revenue divided by total room nights, including weekly ADR; it is never the sum or simple average of market ADRs. Weekly columns for annual/quarterly periods sum that week across the selected months. Weekly snapshots do not overwrite or add to monthly BOB. Different category spellings remain separate, and source breakdown units/independent reconciliation rules still apply.
+
+Coverage is shown as available versus expected market-month records, with a missing-period list and per-market contributions. Database permissions are unchanged: managers see only authorized saved records. Incomplete/access-limited results are labeled **Partial total**, not full resort totals; missing values are not estimated. To review the complete resort, an administrator needs access to all five markets and all selected months must have saved data.
+
+**Export total report** produces derived monthly Performance rows and detailed weekly Breakdowns for the selected period, with coverage warnings in the Action plan column. The five-market source rows are not mixed into the totals export. **Print / Save PDF** prints the selected review tab and contribution table with its year/period/coverage labels. Native PDF saving remains a browser action. This feature needs no new database table, permission or migration.
+
 ## Demo versus live
 
 Without both Supabase environment variables, the application explicitly runs in **demo mode** with fictional sample numbers. Demo edits are saved only in the current browser's local storage. There is no mock login and demo access does not grant real access. Do not import confidential workbooks on a shared device; demo imports are local but persist in browser storage. Clear site storage to remove them.

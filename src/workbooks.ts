@@ -153,7 +153,7 @@ export async function exportWorkbook(entries: Entry[], name: string) {
     (["commercial", "villas", "countries", "meals"] as const).forEach((k) =>
       e.data[k].forEach((r) =>
         detail.addRow([
-          markets.find((m) => m.id === e.market_id)?.name,
+          markets.find((m) => m.id === e.market_id)?.name ?? e.market_id,
           e.year,
           months[e.month - 1],
           k,

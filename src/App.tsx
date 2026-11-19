@@ -45,6 +45,7 @@ import {
 } from "./model";
 import { db, loadYear, saveImport, saveMonth } from "./api";
 import { exportWorkbook, importWorkbook } from "./workbooks";
+import TotalReview from "./TotalReview";
 const money = (n: number) =>
   new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -55,7 +56,7 @@ const num = (n: number) =>
   new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 }).format(n);
 const compact = (n: number) =>
   n >= 1e6 ? `$${(n / 1e6).toFixed(2)}m` : money(n);
-type View = "overview" | "reports" | "activity" | "setup";
+type View = "overview" | "reports" | "activity" | "setup" | "total";
 type Tab = "commercial" | "villas" | "countries" | "meals" | "notes";
 export default function App() {
   const demo = !db;
@@ -411,6 +412,20 @@ export default function App() {
             </button>
           ))}
         </nav>
+        <nav className="total-nav">
+          <button
+            className={view === "total" ? "active" : ""}
+            onClick={() =>
+              navigate(() => {
+                setMarket(null);
+                setView("total");
+              })
+            }
+          >
+            <BarChart3 size={18} />
+            Total Budget Review
+          </button>
+        </nav>
         <div className="sidebar-bottom">
           <div className="secure">
             <ShieldCheck size={20} />
@@ -480,6 +495,7 @@ export default function App() {
               {selected?.name ??
                 {
                   overview: "Overview",
+                  total: "Total Budget Review",
                   reports: "Reports",
                   activity: "Activity log",
                   setup: "Setup & access",
@@ -561,24 +577,28 @@ export default function App() {
               <h1>
                 {selected
                   ? selected.name
-                  : view === "overview"
-                    ? "Every market. One clear view."
-                    : view === "reports"
-                      ? "Reports & insights"
-                      : view === "activity"
-                        ? "A record of every change."
-                        : "Make it your workspace."}
+                  : view === "total"
+                    ? "Total Budget Review"
+                    : view === "overview"
+                      ? "Every market. One clear view."
+                      : view === "reports"
+                        ? "Reports & insights"
+                        : view === "activity"
+                          ? "A record of every change."
+                          : "Make it your workspace."}
               </h1>
               <p>
                 {selected
                   ? "Plan, track and take action on your market’s performance."
-                  : view === "overview"
-                    ? "Keep your team aligned and your performance in focus."
-                    : view === "reports"
-                      ? "Turn market performance into clear, shareable reports."
-                      : view === "activity"
-                        ? "Traceable updates across your connected markets."
-                        : "Connect secure accounts and bring your spreadsheets to life."}
+                  : view === "total"
+                    ? "One automatic review of saved performance across the five markets."
+                    : view === "overview"
+                      ? "Keep your team aligned and your performance in focus."
+                      : view === "reports"
+                        ? "Turn market performance into clear, shareable reports."
+                        : view === "activity"
+                          ? "Traceable updates across your connected markets."
+                          : "Connect secure accounts and bring your spreadsheets to life."}
               </p>
             </div>
             <div className="heading-actions">
@@ -597,7 +617,7 @@ export default function App() {
                   ))}
                 </select>
               </label>
-              {view !== "setup" && view !== "activity" && (
+              {view !== "setup" && view !== "activity" && view !== "total" && (
                 <button
                   className="button outline"
                   disabled={busy || !entries.length}
@@ -636,6 +656,14 @@ export default function App() {
             <div role="status" className="loading">
               Loading your market data…
             </div>
+          )}
+          {view === "total" && (
+            <TotalReview
+              entries={entries}
+              year={year}
+              loading={loading}
+              demo={demo}
+            />
           )}
           {view === "overview" && !market && (
             <>

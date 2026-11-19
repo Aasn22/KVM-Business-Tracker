@@ -1490,3 +1490,46 @@ fieldset {
     color: #8a4532;
   }
 }
+
+.total-nav {
+  margin-top: 16px;
+  border-top: 1px solid #294348;
+  padding-top: 12px;
+}
+.total-controls {
+  flex-wrap: wrap;
+}
+.total-controls .button {
+  margin-left: 0;
+}
+.total-controls label {
+  margin-right: auto;
+}
+.total-coverage p {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-top: 8px;
+}
+.total-coverage details {
+  margin-top: 10px;
+}
+.total-coverage summary {
+  cursor: pointer;
+}
+.total-coverage li {
+  margin-top: 4px;
+}
+.total-table-note {
+  font-size: 10px;
+  color: #819080;
+  padding: 0 22px 15px;
+  line-height: 1.8;
+}
+.total-table th,
+.total-table td {
+  padding: 13px 14px;
+}
+.sidebar {
+  overflow-y: auto;
+}

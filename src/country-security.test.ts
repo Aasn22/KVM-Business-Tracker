@@ -27,7 +27,10 @@ function profile(scope: string, role = "Read-Only") {
 async function member(id: string, scope: string, role = "Read-Only") {
   return db.query("select public.save_team_member(null,$1,$2::jsonb,0) id", [
     id,
-    JSON.stringify(profile(scope, role)),
+    JSON.stringify({
+      ...profile(scope, role),
+      username: `TEST_${id.slice(0, 8)}`,
+    }),
   ]);
 }
 beforeAll(async () => {

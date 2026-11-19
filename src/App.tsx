@@ -47,6 +47,7 @@ import { exportWorkbook, importWorkbook } from "./workbooks";
 import TotalReview from "./TotalReview";
 import PropertySetup from "./PropertySetup";
 import CountryPerformance from "./CountryPerformance";
+import { usernameLogin } from "./usernameLogin";
 const money = (n: number) =>
   new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -1944,7 +1945,7 @@ function Stat({
   );
 }
 function Login({ onSuccess }: { onSuccess: () => void }) {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -1954,8 +1955,7 @@ function Login({ onSuccess }: { onSuccess: () => void }) {
     setBusy(true);
     setError("");
     try {
-      const { error } = await db.auth.signInWithPassword({ email, password });
-      if (error) throw error;
+      await usernameLogin(username, password);
       onSuccess();
     } catch (e) {
       setError((e as Error).message);
@@ -1966,13 +1966,13 @@ function Login({ onSuccess }: { onSuccess: () => void }) {
   return (
     <form onSubmit={submit}>
       <label>
-        Email address
+        Username
         <input
-          type="email"
+          type="text"
           required
           autoComplete="username"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
         />
       </label>
       <label>

@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from "react";
 import { db } from "./api";
+import { usernameLogin } from "./usernameLogin";
 export default function SignInPage() {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -11,11 +12,7 @@ export default function SignInPage() {
     setBusy(true);
     setError("");
     try {
-      const result = await db.auth.signInWithPassword({
-        email: email.trim(),
-        password,
-      });
-      if (result.error) throw result.error;
+      await usernameLogin(username, password);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -40,14 +37,14 @@ export default function SignInPage() {
         </p>
         <form onSubmit={submit}>
           <label>
-            Email address
+            Username
             <input
-              aria-label="Sign-in email"
-              type="email"
+              aria-label="Sign-in username"
+              type="text"
               autoComplete="username"
               required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
             />
           </label>
           <label>

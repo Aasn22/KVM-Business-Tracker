@@ -73,6 +73,11 @@ export default function PasswordPage({
         }
         const { error } = await db.auth.updateUser({ password });
         if (error) throw error;
+        const completed = await db.rpc("complete_password_change");
+        if (completed.error)
+          throw Error(
+            "Password was updated, but setup confirmation failed. Contact your administrator; do not keep retrying the old password.",
+          );
         setPassword("");
         setConfirm("");
         setCurrent("");

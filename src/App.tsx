@@ -13,7 +13,6 @@ import {
   Clock3,
   FileSpreadsheet,
   Globe2,
-  LayoutDashboard,
   LockKeyhole,
   LogOut,
   Menu,
@@ -429,7 +428,17 @@ export default function App() {
             BUSINESS TRACKER<small>Commercial intelligence</small>
           </span>
         </a>
-        <div className="workspace">
+        <button
+          className={`workspace ${view === "overview" && !market ? "active" : ""}`}
+          aria-label="Kuda Villingili Overview"
+          aria-current={view === "overview" && !market ? "page" : undefined}
+          onClick={() =>
+            navigate(() => {
+              setMarket(null);
+              setView("overview");
+            })
+          }
+        >
           <img
             className="workspace-icon"
             src="/kuda-villingili-logo.png"
@@ -437,16 +446,13 @@ export default function App() {
             width={38}
             height={38}
           />
-          <div>
-            Kuda Villingili<small>Resort Maldives</small>
-          </div>
+          <div>Kuda Villingili Overview</div>
           <ChevronRight size={14} />
-        </div>
+        </button>
         <div className="nav-label">WORKSPACE</div>
         <nav>
           {(
             [
-              ["overview", LayoutDashboard, "Overview"],
               ["reports", BarChart3, "Reports"],
               ["activity", Clock3, "Activity log"],
             ] as const
@@ -463,7 +469,6 @@ export default function App() {
             >
               <Icon size={18} />
               {label}
-              {id === "overview" && <span className="nav-dot" />}
             </button>
           ))}
         </nav>
@@ -579,7 +584,7 @@ export default function App() {
             <strong>
               {selected?.name ??
                 {
-                  overview: "Overview",
+                  overview: "Kuda Villingili Overview",
                   total: "Total Budget Review",
                   admin: "Admin Data Input",
                   reports: "Reports",

@@ -14,6 +14,20 @@ describe("read-only views and admin entry", () => {
     );
     expect(html.match(/src="\/kuda-villingili-logo.png"/g)).toHaveLength(2);
   });
+  it("merges the resort card and duplicate overview into one current-page button", () => {
+    vi.stubGlobal("window", { location: { pathname: "/" } });
+    const html = renderToStaticMarkup(<App />);
+    expect(html.match(/aria-label="Kuda Villingili Overview"/g)).toHaveLength(
+      1,
+    );
+    expect(html).toContain('aria-current="page"');
+    expect(html).not.toContain(">Overview</button>");
+    expect(html).not.toContain("Resort Maldives</small>");
+  });
+  it("does not mark the overview card current on the admin page", () => {
+    vi.stubGlobal("window", { location: { pathname: "/admin-data-input" } });
+    expect(renderToStaticMarkup(<App />)).not.toContain('aria-current="page"');
+  });
   it("renders numbers as non-interactive text outside admin entry", () => {
     const html = renderToStaticMarkup(
       <Numeric

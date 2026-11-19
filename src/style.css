@@ -133,11 +133,22 @@ h3 {
   object-fit: contain;
   display: block;
 }
-.workspace small {
-  display: block;
-  font-size: 10px;
-  color: #8da6a7;
-  margin-top: 4px;
+.workspace {
+  width: 100%;
+  text-align: left;
+}
+.workspace > div {
+  flex: 1;
+  min-width: 0;
+  line-height: 1.6;
+}
+.workspace.active {
+  background: #23464a;
+  border-color: #3a6968;
+  color: #fff;
+}
+.workspace:hover {
+  background: #24464a;
 }
 .nav-label {
   font-size: 9px;
@@ -167,13 +178,6 @@ h3 {
 .sidebar nav button.active {
   background: #23464a;
   color: #fff;
-}
-.nav-dot {
-  margin-left: auto;
-  background: #69b5a2;
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
 }
 .market-label {
   display: flex;

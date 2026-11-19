@@ -1628,29 +1628,29 @@ fieldset {
   width: max-content;
   max-width: calc(100vw - 40px);
   padding: 16px 24px;
-  color: #fff;
+  color: #ff6666;
   font-size: 12px;
   font-weight: 800;
   line-height: 1.6;
   text-align: center;
   letter-spacing: 0.05em;
-  border: 2px solid #ff7777;
+  border: 2px solid transparent;
   border-radius: 12px;
-  background: #b91c1c;
-  box-shadow: 0 0 24px #ef44444d;
-  animation: entrance-notice-zoom-out 2.8s ease-out both;
+  background: transparent;
+  text-shadow: 0 0 18px #ef444480;
+  animation: entrance-notice-zoom-in 2.8s ease-out both;
 }
 .entrance-skip:hover {
-  background: #991b1b;
-  border-color: #fff;
+  background: transparent;
+  border-color: #ff6666;
 }
 .entrance-skip:focus-visible {
   outline: 3px solid #fff;
   outline-offset: 5px;
 }
-@keyframes entrance-notice-zoom-out {
+@keyframes entrance-notice-zoom-in {
   from {
-    transform: scale(1.03);
+    transform: scale(0.85);
   }
   to {
     transform: scale(1);
@@ -1659,7 +1659,7 @@ fieldset {
 @keyframes entrance-zoom {
   0% {
     opacity: 0;
-    transform: scale(1.15);
+    transform: scale(0.76);
     filter: blur(5px);
   }
   32% {

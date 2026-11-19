@@ -1,11 +1,59 @@
 import { useEffect, useState, type ReactNode } from "react";
-export const entranceDuration = 3600;
+export const entranceDuration = 2400;
+export function ConfidentialityNotice({
+  onContinue,
+}: {
+  onContinue: () => void;
+}) {
+  return (
+    <div className="entrance-notice">
+      <svg
+        className="entrance-notice-icon"
+        viewBox="0 0 48 48"
+        fill="none"
+        aria-hidden="true"
+      >
+        <path
+          d="M24 5 40 12v12c0 10-16 19-16 19S8 34 8 24V12L24 5Z"
+          stroke="currentColor"
+          strokeWidth="1.5"
+        />
+        <rect
+          x="17"
+          y="21"
+          width="14"
+          height="11"
+          rx="2"
+          stroke="currentColor"
+          strokeWidth="1.5"
+        />
+        <path
+          d="M20 21v-4a4 4 0 0 1 8 0v4"
+          stroke="currentColor"
+          strokeWidth="1.5"
+        />
+      </svg>
+      <p className="entrance-notice-eyebrow">BUSINESS EYE</p>
+      <h1>Private &amp; Confidential</h1>
+      <span className="entrance-rule" aria-hidden="true" />
+      <p>
+        Information on this platform is confidential and intended for authorized
+        business use only. Please do not copy, distribute or share it without
+        permission.
+      </p>
+      <button className="entrance-continue" autoFocus onClick={onContinue}>
+        Continue to platform <span aria-hidden="true">→</span>
+      </button>
+    </div>
+  );
+}
 export default function Entrance({ children }: { children: ReactNode }) {
-  const [visible, setVisible] = useState(true);
+  const [stage, setStage] = useState<"logo" | "notice" | "done">("logo");
+  const visible = stage !== "done";
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
     const timer = window.setTimeout(
-      () => setVisible(false),
+      () => setStage("notice"),
       media.matches ? 700 : entranceDuration,
     );
     return () => window.clearTimeout(timer);
@@ -14,13 +62,8 @@ export default function Entrance({ children }: { children: ReactNode }) {
     if (!visible) return;
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setVisible(false);
-    };
-    window.addEventListener("keydown", onKey);
     return () => {
       document.body.style.overflow = previous;
-      window.removeEventListener("keydown", onKey);
     };
   }, [visible]);
   return (
@@ -31,28 +74,27 @@ export default function Entrance({ children }: { children: ReactNode }) {
       {visible && (
         <section
           className="entrance-screen"
-          aria-label="Welcome to Kuda Villingili"
+          aria-label={
+            stage === "logo"
+              ? "Welcome to Kuda Villingili"
+              : "Confidentiality notice"
+          }
         >
           <div className="entrance-halo" aria-hidden="true" />
-          <div className="entrance-brand">
-            <img
-              className="entrance-logo"
-              src="/kuda-villingili-logo.png"
-              alt="Kuda Villingili"
-              width="840"
-              height="840"
-              fetchPriority="high"
-            />
-            <p>BUSINESS EYE</p>
-            <span className="entrance-rule" aria-hidden="true" />
-          </div>
-          <button
-            className="entrance-skip"
-            autoFocus
-            onClick={() => setVisible(false)}
-          >
-            DATA ON THIS PLATFORM IS PRIVATE AND CONFIDENTIAL - DO NOT SHARE
-          </button>
+          {stage === "logo" ? (
+            <div className="entrance-brand">
+              <img
+                className="entrance-logo"
+                src="/kuda-villingili-logo.png"
+                alt="Kuda Villingili"
+                width="840"
+                height="840"
+                fetchPriority="high"
+              />
+            </div>
+          ) : (
+            <ConfidentialityNotice onContinue={() => setStage("done")} />
+          )}
         </section>
       )}
     </>

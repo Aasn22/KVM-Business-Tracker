@@ -1585,7 +1585,6 @@ fieldset {
     #0b1930 52%,
     #071323 100%
   );
-  animation: entrance-exit 0.55s ease-in 3.05s both;
 }
 .entrance-halo {
   position: absolute;
@@ -1622,39 +1621,57 @@ fieldset {
   height: 1px;
   background: #bda09480;
 }
-.entrance-skip {
-  position: absolute;
-  bottom: max(35px, env(safe-area-inset-bottom));
-  width: max-content;
-  max-width: calc(100vw - 40px);
-  padding: 16px 24px;
-  color: #ff6666;
-  font-size: 12px;
-  font-weight: 800;
-  line-height: 1.6;
+.entrance-notice {
+  position: relative;
+  width: min(560px, calc(100vw - 48px));
+  max-height: calc(100dvh - 48px);
+  overflow-y: auto;
+  padding: 24px 12px;
+  color: #d4c0b7;
   text-align: center;
-  letter-spacing: 0.05em;
-  border: 2px solid transparent;
-  border-radius: 12px;
-  background: transparent;
-  text-shadow: 0 0 18px #ef444480;
-  animation: entrance-notice-zoom-in 2.8s ease-out both;
+  animation: entrance-zoom 0.8s ease-out both;
 }
-.entrance-skip:hover {
-  background: transparent;
-  border-color: #ff6666;
+.entrance-notice-icon {
+  width: 58px;
+  height: 58px;
+  color: #bea095;
+  margin-bottom: 24px;
 }
-.entrance-skip:focus-visible {
-  outline: 3px solid #fff;
+.entrance-notice .entrance-notice-eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.35em;
+  margin: 0 0 24px;
+}
+.entrance-notice h1 {
+  color: #bea095;
+  font-size: clamp(26px, 5vw, 38px);
+  line-height: 1.25;
+  margin: 0 0 24px;
+}
+.entrance-notice p {
+  color: #d4c0b7;
+  font-size: 15px;
+  line-height: 1.85;
+  margin: 24px 0;
+}
+.entrance-continue {
+  margin-top: 12px;
+  padding: 14px 22px;
+  background: transparent;
+  border: 1px solid #bea09580;
+  border-radius: 28px;
+  color: #d4c0b7;
+}
+.entrance-continue span {
+  margin-left: 12px;
+}
+.entrance-continue:hover {
+  background: #bea09515;
+  border-color: #bea095;
+}
+.entrance-continue:focus-visible {
+  outline: 2px solid #d4c0b7;
   outline-offset: 5px;
-}
-@keyframes entrance-notice-zoom-in {
-  from {
-    transform: scale(0.85);
-  }
-  to {
-    transform: scale(1);
-  }
 }
 @keyframes entrance-zoom {
   0% {
@@ -1705,7 +1722,7 @@ fieldset {
   .entrance-screen,
   .entrance-brand,
   .entrance-halo,
-  .entrance-skip {
+  .entrance-notice {
     animation: none;
   }
 }

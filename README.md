@@ -1,4 +1,4 @@
-# KVM Business Tracker
+# KVM COMMERCIAL EYE
 
 A standalone market budget and commercial performance workspace for Kuda Villingili. Built with React, TypeScript, Vite, and Supabase. No original workbooks, employee details, or real budget figures are included in this public repository.
 

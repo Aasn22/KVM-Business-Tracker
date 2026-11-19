@@ -1888,3 +1888,9 @@ fieldset {
     display: table-header-group;
   }
 }
+
+/* Keep the full system name readable in narrow desktop and mobile sidebars. */
+.brand > span:last-child {
+  letter-spacing: 0.8px;
+  line-height: 1.5;
+}

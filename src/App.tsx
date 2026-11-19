@@ -425,7 +425,7 @@ export default function App() {
             height={46}
           />
           <span>
-            BUSINESS TRACKER<small>Commercial intelligence</small>
+            KVM COMMERCIAL EYE<small>Commercial intelligence</small>
           </span>
         </a>
         <button

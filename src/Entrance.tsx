@@ -43,7 +43,7 @@ export default function Entrance({ children }: { children: ReactNode }) {
               height="840"
               fetchPriority="high"
             />
-            <p>BUSINESS TRACKER</p>
+            <p>KVM COMMERCIAL EYE</p>
             <span className="entrance-rule" aria-hidden="true" />
           </div>
           <button

@@ -48,6 +48,7 @@ import TotalReview from "./TotalReview";
 import PropertySetup from "./PropertySetup";
 import CountryPerformance from "./CountryPerformance";
 import SignInPage from "./SignInPage";
+import { loadPublicBudgets } from "./publicBudgets";
 const money = (n: number) =>
   new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -68,7 +69,10 @@ type View =
   | "property";
 type Tab = "commercial" | "villas" | "countries" | "meals" | "notes";
 export default function App({ publicDemo = false }: { publicDemo?: boolean }) {
-  const demo = publicDemo || !db;
+  const demo = !publicDemo && !db;
+  const [publicNotice, setPublicNotice] = useState(
+    "Loading published real budget figures…",
+  );
   const [year, setYear] = useState(2027);
   const [entries, setEntries] = useState<Entry[]>([]);
   const [session, setSession] = useState<Session | null>(null);
@@ -210,11 +214,36 @@ export default function App({ publicDemo = false }: { publicDemo?: boolean }) {
   useEffect(() => {
     let active = true;
     setError("");
-    if (demo) {
-      if (publicDemo) {
-        setEntries(makeDemo(year));
-        return;
+    if (publicDemo) {
+      setEntries([]);
+      setLoading(true);
+      setPublicNotice("Loading published real budget figures…");
+      async function refreshPublic() {
+        try {
+          const result = await loadPublicBudgets(year);
+          if (active) {
+            setEntries(result.entries);
+            setPublicNotice(result.notice);
+          }
+        } catch (e) {
+          if (active) {
+            setError((e as Error).message);
+            setPublicNotice(
+              "Real figures unavailable. No demo values are shown.",
+            );
+          }
+        } finally {
+          if (active) setLoading(false);
+        }
       }
+      void refreshPublic();
+      const timer = setInterval(() => void refreshPublic(), 60000);
+      return () => {
+        active = false;
+        clearInterval(timer);
+      };
+    }
+    if (demo) {
       try {
         const stored = localStorage.getItem(`kvm-demo-${year}`);
         const data = stored ? JSON.parse(stored) : null;
@@ -329,7 +358,7 @@ export default function App({ publicDemo = false }: { publicDemo?: boolean }) {
       setMarket(id);
       setView("overview");
       setTab("commercial");
-      if (!demo && !session) setLogin(true);
+      if (!publicDemo && !demo && !session) setLogin(true);
     });
   }
   const totals = summarize(entries);
@@ -624,16 +653,26 @@ export default function App({ publicDemo = false }: { publicDemo?: boolean }) {
           )}
           <div className="profile">
             <span>
-              {demo ? "D" : (session?.user.email?.[0] ?? "G").toUpperCase()}
+              {publicDemo
+                ? "P"
+                : demo
+                  ? "D"
+                  : (session?.user.email?.[0] ?? "G").toUpperCase()}
             </span>
             <div>
-              {demo ? "Demo workspace" : (session?.user.email ?? "Guest")}
+              {publicDemo
+                ? "Public budget review"
+                : demo
+                  ? "Demo workspace"
+                  : (session?.user.email ?? "Guest")}
               <small>
-                {demo
-                  ? "Sample data only"
-                  : session
-                    ? "Signed in securely"
-                    : "Sign in to your market"}
+                {publicDemo
+                  ? "Read-only real figures"
+                  : demo
+                    ? "Sample data only"
+                    : session
+                      ? "Signed in securely"
+                      : "Sign in to your market"}
               </small>
             </div>
             {session && (
@@ -711,7 +750,11 @@ export default function App({ publicDemo = false }: { publicDemo?: boolean }) {
           <div className={`mode-banner ${demo ? "" : "live"}`}>
             <span>
               <ShieldCheck size={15} />
-              {demo ? (
+              {publicDemo ? (
+                <>
+                  <strong>Public real-budget review</strong> · {publicNotice}
+                </>
+              ) : demo ? (
                 <>
                   <strong>
                     {publicDemo ? "Public read-only demo" : "Interactive demo"}
@@ -990,7 +1033,11 @@ export default function App({ publicDemo = false }: { publicDemo?: boolean }) {
                             className="tiny-dot"
                             style={{ background: m.color }}
                           />
-                          {demo ? "Demo market" : "Secure market"}
+                          {publicDemo
+                            ? "Published budget"
+                            : demo
+                              ? "Demo market"
+                              : "Secure market"}
                         </span>
                         <span>
                           View market <ChevronRight size={13} />
@@ -1139,7 +1186,7 @@ export default function App({ publicDemo = false }: { publicDemo?: boolean }) {
                 <ArrowLeft size={14} />
                 All markets
               </button>
-              {!demo && !session ? (
+              {!publicDemo && !demo && !session ? (
                 <section className="panel empty">
                   <LockKeyhole size={30} />
                   <h2>Your market, securely managed.</h2>

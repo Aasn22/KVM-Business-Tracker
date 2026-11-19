@@ -13,7 +13,7 @@ describe("branded entrance", () => {
     expect(html).toContain('inert=""');
     expect(html).toContain('aria-hidden="true"');
     expect(html).toContain("Enter workspace");
-    expect(html).toContain("KVM COMMERCIAL EYE");
+    expect(html).toContain("BUSINESS EYE");
   });
   it("uses a short finite welcome duration", () => {
     expect(entranceDuration).toBe(3600);

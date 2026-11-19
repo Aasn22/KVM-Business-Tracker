@@ -425,7 +425,7 @@ export default function App() {
             height={46}
           />
           <span>
-            KVM COMMERCIAL EYE<small>Commercial intelligence</small>
+            BUSINESS EYE<small>Commercial intelligence</small>
           </span>
         </a>
         <button

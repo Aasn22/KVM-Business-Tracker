@@ -13,7 +13,7 @@ describe("read-only views and admin entry", () => {
       /class="workspace-icon"[^>]*src="\/kuda-villingili-logo.png"[^>]*alt=""/,
     );
     expect(html.match(/src="\/kuda-villingili-logo.png"/g)).toHaveLength(2);
-    expect(html).toContain("KVM COMMERCIAL EYE");
+    expect(html).toContain("BUSINESS EYE");
     expect(html).not.toContain("BUSINESS TRACKER");
   });
   it("merges the resort card and duplicate overview into one current-page button", () => {

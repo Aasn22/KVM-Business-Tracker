@@ -36,11 +36,11 @@ export default function SignInPage() {
           width={70}
           height={70}
         />
-        <div className="eyebrow">BUSINESS EYE</div>
+        <div className="eyebrow">BUSINESS LENSE</div>
         <h1>Sign in without a password.</h1>
         <p>
           Enter your account email. We’ll send a private, one-time link to open
-          BUSINESS EYE. No password is needed.
+          BUSINESS LENSE. No password is needed.
         </p>
         <form onSubmit={submit}>
           <label>

@@ -552,7 +552,7 @@ export default function App({
             height={46}
           />
           <span>
-            BUSINESS EYE<small>Commercial intelligence</small>
+            BUSINESS LENSE<small>Commercial intelligence</small>
           </span>
         </a>
         <button

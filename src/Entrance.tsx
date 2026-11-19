@@ -33,7 +33,7 @@ export function ConfidentialityNotice({
           strokeWidth="1.5"
         />
       </svg>
-      <p className="entrance-notice-eyebrow">BUSINESS EYE</p>
+      <p className="entrance-notice-eyebrow">BUSINESS LENSE</p>
       <h1>Private &amp; Confidential</h1>
       <span className="entrance-rule" aria-hidden="true" />
       <p>

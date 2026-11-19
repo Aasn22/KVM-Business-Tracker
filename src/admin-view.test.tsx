@@ -13,7 +13,7 @@ describe("read-only views and admin entry", () => {
       /class="workspace-icon"[^>]*src="\/kuda-villingili-logo.png"[^>]*alt=""/,
     );
     expect(html.match(/src="\/kuda-villingili-logo.png"/g)).toHaveLength(2);
-    expect(html).toContain("BUSINESS EYE");
+    expect(html).toContain("BUSINESS LENSE");
     expect(html).toContain("EYE on every market. One clear view.");
     expect(html).not.toContain("BUSINESS TRACKER");
   });

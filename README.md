@@ -100,3 +100,7 @@ The unconfigured preview is deliberately reachable signed out in fictional-data 
 ### Dependency review
 
 The ExcelJS UUID dependency is overridden to patched v11.1.1 and covered by workbook tests. At initial creation, `npm audit` still flags a picomatch ReDoS advisory (GHSA-fc5q-39xc-vjpf) in the **development/build** Vite/Vitest globbing chain; the latest available picomatch is also in the advisory range. No dev server or glob API is shipped in the static production app. Do not expose the development server to untrusted networks; revisit the advisory when an upstream patch is available. `npm audit --omit=dev` is clean.
+
+## Branded entrance
+
+Every full page entry (including the direct admin URL or reload) opens with a navy-blue Kuda Villingili entrance screen, using the supplied logo with its white matte removed to transparent PNG. A soft rose-gold glow and single zoom-in animation automatically dismiss after 3.6 seconds. It does not repeat on in-app tab/market/year navigation. Enter workspace or Escape skips immediately. Reduced-motion preferences disable the animation and shorten the screen to 0.7 seconds. The underlying app is inert/hidden from assistive technology until dismissal; the entrance does not change authentication or permissions. The dashboard retains its existing colors after the navy entrance fades.

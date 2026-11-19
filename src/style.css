@@ -1580,3 +1580,130 @@ fieldset {
   font-size: 12px;
   line-height: 1.9;
 }
+
+.entrance-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  isolation: isolate;
+  color: #bea095;
+  background: radial-gradient(
+    ellipse at 50% 43%,
+    #172c49 0%,
+    #0b1930 52%,
+    #071323 100%
+  );
+  animation: entrance-exit 0.55s ease-in 3.05s both;
+}
+.entrance-halo {
+  position: absolute;
+  width: min(85vw, 750px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ba998d19, transparent 65%);
+  filter: blur(30px);
+  animation: entrance-halo 3s ease-in-out both;
+}
+.entrance-brand {
+  width: min(57vw, 420px);
+  text-align: center;
+  animation: entrance-zoom 2.8s cubic-bezier(0.2, 0.65, 0.3, 1) both;
+}
+.entrance-logo {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: contain;
+  filter: drop-shadow(0 0 14px #c6a69b55) drop-shadow(0 0 45px #c6a69b22);
+}
+.entrance-brand p {
+  font-family: Manrope, Arial, sans-serif;
+  letter-spacing: 0.38em;
+  font-size: 10px;
+  margin: 30px 0 22px;
+  color: #d4c0b7;
+}
+.entrance-rule {
+  display: block;
+  margin: auto;
+  width: 58px;
+  height: 1px;
+  background: #bda09480;
+}
+.entrance-skip {
+  position: absolute;
+  bottom: max(35px, env(safe-area-inset-bottom));
+  padding: 14px 20px;
+  color: #c6b0a5;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  border: 1px solid #ba998d40;
+  border-radius: 30px;
+  background: #ffffff04;
+}
+.entrance-skip span {
+  margin-left: 14px;
+}
+.entrance-skip:hover {
+  background: #ba998d15;
+  border-color: #ba998d90;
+}
+.entrance-skip:focus-visible {
+  outline: 2px solid #d5beb0;
+  outline-offset: 5px;
+}
+@keyframes entrance-zoom {
+  0% {
+    opacity: 0;
+    transform: scale(0.76);
+    filter: blur(5px);
+  }
+  32% {
+    opacity: 1;
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1.04);
+    filter: blur(0);
+  }
+}
+@keyframes entrance-halo {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.7;
+    transform: scale(1.15);
+  }
+}
+@keyframes entrance-exit {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@media (max-width: 600px) {
+  .entrance-brand {
+    width: min(72vw, 340px);
+  }
+  .entrance-brand p {
+    font-size: 9px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .entrance-screen,
+  .entrance-brand,
+  .entrance-halo {
+    animation: none;
+  }
+}

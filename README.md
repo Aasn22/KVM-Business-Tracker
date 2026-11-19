@@ -23,6 +23,25 @@ Admins are provisioned only through `public.app_admins` by a trusted database ad
 
 The unconfigured **demo** provides a clearly labeled Demo Admin Data Input without sign-in for testing fictional data in local browser storage only. It does not create or imply live administrator privileges. Test `/admin-data-input` directly or via the sidebar, choose a market, save/import, then verify the corresponding market and total views. Do not place private budgets in a shared-device demo. Live role/login flows still need a configured Supabase project and real test accounts.
 
+## Property Setup
+
+Open **Property Setup** in the sidebar or `/property-setup`. Every signed-in system user (including unassigned users, market managers, and regular admins) can view the shared property profile. Anonymous financial/property database access remains denied. **Only Super Admin** can edit property name, address, logo, three-letter property currency code, villa categories/unit inventory, and meal plans. Inventory total is calculated from category units. Default address is unset and inventory is zero rather than invented.
+
+For existing installations, run `supabase/migrations/20261119_property_setup.sql` as database administrator. Fresh installs include it in `schema.sql`. Assign a Super Admin from a trusted database administrator session only:
+
+```sql
+insert into public.app_super_admins(user_id) values ('<super-admin-auth-user-uuid>');
+-- Revoke with: delete from public.app_super_admins where user_id='<uuid>';
+```
+
+Super Admin is a **separate** role: existing `app_admins` are not promoted, and Super Admin membership does not automatically grant budget-entry rights. Add an account to both tables if it needs both permissions. There is no browser role-assignment feature. RLS permits authenticated reads; no direct client writes are granted. A security-definer RPC rechecks Super Admin on every save, validates content, uses optimistic version checks, and writes immutable before/after audit snapshots. Audit rows/role memberships are not exposed to client users. Changes or revoked roles in another session may leave stale UI until reload, but the database rejects unauthorized writes immediately.
+
+Logos accept PNG/JPEG/WebP up to 200 KB, are decoded in the browser, and saved as bounded image data URLs in the property record. SVG, script URLs and external/tracking image URLs are rejected. Configuration load or role errors fail closed and do not show an editor. Existing database migrations have not been applied live by this source update.
+
+**Scope:** these are property-profile settings, not a destructive migration of saved financial history. Changing currency does not convert or relabel historical USD budgets; inventory is a reference rather than historical occupancy; villa/meal-plan changes do not rewrite existing market categories; property logo/name are displayed on this page without replacing the fixed resort branding across reports/entrance. This avoids silently altering budgets and past reports.
+
+Unconfigured demo mode opens the page **read-only** with “Try Super Admin editing” for explicitly simulated local-only editing. No real privilege is granted. Demo settings persist separately from market budgets in browser local storage. Save, Cancel, unsaved-navigation warning and reload behave independently from Admin Data Input. Live configuration requires migration and real accounts.
+
 ## Management Review
 
 Use **Management Review** directly below KVM-OVERVIEW for an automatic, read-only spreadsheet-style report based on saved authorized market records. There is no separate input, full-budget import or stored management dataset. Admin saves update the shared records used by market views and the management report in the same app session. Reload to pick up changes from other sessions; no realtime database subscription is configured.

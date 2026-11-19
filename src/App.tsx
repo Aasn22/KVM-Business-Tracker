@@ -45,6 +45,7 @@ import {
 import { db, loadYear, loadAdminRole, saveImport, saveMonth } from "./api";
 import { exportWorkbook, importWorkbook } from "./workbooks";
 import TotalReview from "./TotalReview";
+import PropertySetup from "./PropertySetup";
 const money = (n: number) =>
   new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -55,7 +56,14 @@ const num = (n: number) =>
   new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 }).format(n);
 const compact = (n: number) =>
   n >= 1e6 ? `$${(n / 1e6).toFixed(2)}m` : money(n);
-type View = "overview" | "reports" | "activity" | "setup" | "total" | "admin";
+type View =
+  | "overview"
+  | "reports"
+  | "activity"
+  | "setup"
+  | "total"
+  | "admin"
+  | "property";
 type Tab = "commercial" | "villas" | "countries" | "meals" | "notes";
 export default function App() {
   const demo = !db;
@@ -71,7 +79,11 @@ export default function App() {
   const isAdmin =
     !!session && adminRole?.userId === session.user.id && adminRole.allowed;
   const [view, setView] = useState<View>(
-    window.location.pathname === "/admin-data-input" ? "admin" : "overview",
+    window.location.pathname === "/property-setup"
+      ? "property"
+      : window.location.pathname === "/admin-data-input"
+        ? "admin"
+        : "overview",
   );
   const canEdit = view === "admin" && (demo || isAdmin);
   const [market, setMarket] = useState<string | null>(null);
@@ -132,7 +144,12 @@ export default function App() {
     };
   }, [session]);
   useEffect(() => {
-    const path = view === "admin" ? "/admin-data-input" : "/";
+    const path =
+      view === "property"
+        ? "/property-setup"
+        : view === "admin"
+          ? "/admin-data-input"
+          : "/";
     if (window.location.pathname !== path)
       window.history.pushState(null, "", path);
   }, [view]);
@@ -142,14 +159,22 @@ export default function App() {
         window.history.pushState(
           null,
           "",
-          view === "admin" ? "/admin-data-input" : "/",
+          view === "property"
+            ? "/property-setup"
+            : view === "admin"
+              ? "/admin-data-input"
+              : "/",
         );
         return;
       }
       setDirty(false);
       setMarket(null);
       setView(
-        window.location.pathname === "/admin-data-input" ? "admin" : "overview",
+        window.location.pathname === "/property-setup"
+          ? "property"
+          : window.location.pathname === "/admin-data-input"
+            ? "admin"
+            : "overview",
       );
     }
     window.addEventListener("popstate", onPop);
@@ -504,6 +529,20 @@ export default function App() {
           ))}
         </nav>
 
+        <nav className="property-nav">
+          <button
+            className={view === "property" ? "active" : ""}
+            onClick={() =>
+              navigate(() => {
+                setMarket(null);
+                setView("property");
+              })
+            }
+          >
+            <Building2 size={18} />
+            Property Setup
+          </button>
+        </nav>
         <nav className="admin-nav">
           <button
             className={view === "admin" ? "active" : ""}
@@ -589,6 +628,7 @@ export default function App() {
                   overview: "KVM-OVERVIEW",
                   total: "Management Review",
                   admin: "Admin Data Input",
+                  property: "Property Setup",
                   reports: "Reports",
                   activity: "Activity log",
                   setup: "Setup & access",
@@ -668,56 +708,63 @@ export default function App() {
                     : "COMMERCIAL WORKSPACE"}
               </div>
               <h1>
-                {view === "admin"
-                  ? "Admin Data Input"
-                  : selected
-                    ? selected.name
-                    : view === "total"
-                      ? "Management Review"
-                      : view === "overview"
-                        ? "EYE on every market. One clear view."
-                        : view === "reports"
-                          ? "Reports & insights"
-                          : view === "activity"
-                            ? "A record of every change."
-                            : "Make it your workspace."}
+                {view === "property"
+                  ? "Property Setup"
+                  : view === "admin"
+                    ? "Admin Data Input"
+                    : selected
+                      ? selected.name
+                      : view === "total"
+                        ? "Management Review"
+                        : view === "overview"
+                          ? "EYE on every market. One clear view."
+                          : view === "reports"
+                            ? "Reports & insights"
+                            : view === "activity"
+                              ? "A record of every change."
+                              : "Make it your workspace."}
               </h1>
               <p>
-                {view === "admin"
-                  ? "The only workspace for entering numbers, importing workbooks, and updating action plans."
-                  : selected
-                    ? "View saved performance. All data input is managed by an administrator."
-                    : view === "total"
-                      ? "One automatic review of saved performance across the five markets."
-                      : view === "overview"
-                        ? "Keep your team aligned and your performance in focus."
-                        : view === "reports"
-                          ? "Turn market performance into clear, shareable reports."
-                          : view === "activity"
-                            ? "Traceable updates across your connected markets."
-                            : "Connect secure accounts and bring your spreadsheets to life."}
+                {view === "property"
+                  ? "Property profile and configuration. Viewable by all signed-in users; editable only by Super Admin."
+                  : view === "admin"
+                    ? "The only workspace for entering numbers, importing workbooks, and updating action plans."
+                    : selected
+                      ? "View saved performance. All data input is managed by an administrator."
+                      : view === "total"
+                        ? "One automatic review of saved performance across the five markets."
+                        : view === "overview"
+                          ? "Keep your team aligned and your performance in focus."
+                          : view === "reports"
+                            ? "Turn market performance into clear, shareable reports."
+                            : view === "activity"
+                              ? "Traceable updates across your connected markets."
+                              : "Connect secure accounts and bring your spreadsheets to life."}
               </p>
             </div>
             <div className="heading-actions">
-              <label className="year-control">
-                <span>Budget year</span>
-                <select
-                  aria-label="Budget year"
-                  disabled={busy}
-                  value={year}
-                  onChange={(e) =>
-                    navigate(() => setYear(Number(e.target.value)))
-                  }
-                >
-                  {budgetYears.map((y) => (
-                    <option key={y}>{y}</option>
-                  ))}
-                </select>
-              </label>
+              {view !== "property" && (
+                <label className="year-control">
+                  <span>Budget year</span>
+                  <select
+                    aria-label="Budget year"
+                    disabled={busy}
+                    value={year}
+                    onChange={(e) =>
+                      navigate(() => setYear(Number(e.target.value)))
+                    }
+                  >
+                    {budgetYears.map((y) => (
+                      <option key={y}>{y}</option>
+                    ))}
+                  </select>
+                </label>
+              )}
               {view !== "setup" &&
                 view !== "activity" &&
                 view !== "total" &&
-                view !== "admin" && (
+                view !== "admin" &&
+                view !== "property" && (
                   <button
                     className="button outline"
                     disabled={busy || !entries.length}
@@ -756,6 +803,15 @@ export default function App() {
             <div role="status" className="loading">
               Loading your market data…
             </div>
+          )}
+          {view === "property" && (
+            <PropertySetup
+              key={session?.user.id ?? "demo"}
+              demo={demo}
+              userId={session?.user.id ?? null}
+              onDirtyChange={setDirty}
+              onBusyChange={setBusy}
+            />
           )}
           {view === "total" && (
             <TotalReview

@@ -1894,3 +1894,132 @@ fieldset {
   letter-spacing: 0.8px;
   line-height: 1.5;
 }
+
+.property-nav {
+  margin-top: 14px;
+}
+.property-setup {
+  padding: 24px;
+}
+.property-setup-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+.property-setup-heading p {
+  margin-top: 8px;
+  font-size: 11px;
+  color: #849587;
+}
+.property-details-grid {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 30px;
+  padding: 14px 0 25px;
+}
+.property-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.property-logo img {
+  width: 150px;
+  height: 150px;
+  object-fit: contain;
+  background: #112d32;
+  border-radius: 12px;
+  padding: 12px;
+}
+.property-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+}
+.property-fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  font-size: 11px;
+  color: #7b8e80;
+}
+.property-fields strong {
+  color: #2e4d3e;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.property-fields small {
+  font-size: 10px;
+  line-height: 1.7;
+}
+.property-address {
+  white-space: pre-wrap;
+  color: #46624e;
+}
+.property-setup input,
+.property-setup textarea {
+  border: 1px solid #dce6d9;
+  padding: 10px;
+  border-radius: 5px;
+  background: #fff;
+  color: #36503d;
+  max-width: 100%;
+}
+.property-setup textarea {
+  min-height: 90px;
+}
+.property-setup td input[type="number"] {
+  width: 100px;
+}
+.property-setup .section-heading {
+  margin-top: 22px;
+}
+.property-meals {
+  display: grid;
+  gap: 12px;
+  padding: 0;
+  list-style: none;
+}
+.property-meals li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  background: #f4f7f2;
+  border-radius: 5px;
+  font-size: 12px;
+}
+.property-meals input {
+  flex: 1;
+  min-width: 0;
+}
+.property-setup .editor-footer {
+  margin: 24px -24px -24px;
+  line-height: 1.8;
+}
+@media (max-width: 800px) {
+  .property-setup {
+    padding: 18px;
+  }
+  .property-setup-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .property-details-grid {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+  .property-fields {
+    grid-template-columns: 1fr;
+  }
+  .property-setup .editor-footer {
+    margin: 20px -18px -18px;
+  }
+  .property-setup-heading .editor-actions {
+    flex-wrap: wrap;
+  }
+}

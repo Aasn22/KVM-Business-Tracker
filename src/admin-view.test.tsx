@@ -46,6 +46,13 @@ describe("read-only views and admin entry", () => {
     expect(sidebar).not.toContain("Total Budget Review");
     expect(sidebar).not.toContain("Kuda Villingili Overview");
   });
+  it("provides a dedicated Property Setup route and visible navigation", () => {
+    vi.stubGlobal("window", { location: { pathname: "/property-setup" } });
+    const html = renderToStaticMarkup(<App />);
+    expect(html).toContain("Property Setup");
+    expect(html).not.toContain("Demo Admin Data Input");
+    expect(html).not.toContain("Export report");
+  });
   it("renders numbers as non-interactive text outside admin entry", () => {
     const html = renderToStaticMarkup(
       <Numeric

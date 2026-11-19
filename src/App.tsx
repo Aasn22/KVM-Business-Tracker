@@ -675,7 +675,7 @@ export default function App() {
                     : view === "total"
                       ? "Management Review"
                       : view === "overview"
-                        ? "Every market. One clear view."
+                        ? "EYE on every market. One clear view."
                         : view === "reports"
                           ? "Reports & insights"
                           : view === "activity"

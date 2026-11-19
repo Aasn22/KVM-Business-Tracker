@@ -14,6 +14,7 @@ describe("read-only views and admin entry", () => {
     );
     expect(html.match(/src="\/kuda-villingili-logo.png"/g)).toHaveLength(2);
     expect(html).toContain("BUSINESS EYE");
+    expect(html).toContain("EYE on every market. One clear view.");
     expect(html).not.toContain("BUSINESS TRACKER");
   });
   it("merges the resort card and duplicate overview into one current-page button", () => {

@@ -1597,7 +1597,7 @@ fieldset {
   animation: entrance-halo 3s ease-in-out both;
 }
 .entrance-brand {
-  width: min(57vw, 420px);
+  width: min(42vw, 270px);
   text-align: center;
   animation: entrance-zoom 2.8s cubic-bezier(0.2, 0.65, 0.3, 1) both;
 }
@@ -1683,7 +1683,7 @@ fieldset {
 }
 @media (max-width: 600px) {
   .entrance-brand {
-    width: min(72vw, 340px);
+    width: min(58vw, 220px);
   }
   .entrance-brand p {
     font-size: 9px;

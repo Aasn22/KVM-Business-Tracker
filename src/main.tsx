@@ -6,10 +6,10 @@ import AuthShell from "./AuthShell";
 import "./style.css";
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <AuthShell>
-      <Entrance>
+    <Entrance>
+      <AuthShell>
         <App />
-      </Entrance>
-    </AuthShell>
+      </AuthShell>
+    </Entrance>
   </React.StrictMode>,
 );

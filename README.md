@@ -153,3 +153,9 @@ The ExcelJS UUID dependency is overridden to patched v11.1.1 and covered by work
 ## Branded entrance
 
 Every full page entry (including the direct admin URL or reload) opens with a navy-blue Kuda Villingili entrance screen, using the supplied logo with its white matte removed to transparent PNG. A soft rose-gold glow and single zoom-in animation automatically dismiss after 3.6 seconds. It does not repeat on in-app tab/market/year navigation. Enter workspace or Escape skips immediately. Reduced-motion preferences disable the animation and shorten the screen to 0.7 seconds. The underlying app is inert/hidden from assistive technology until dismissal; the entrance does not change authentication or permissions. The dashboard retains its existing colors after the navy entrance fades.
+
+## Connected Supabase deployment
+
+The Vite build accepts an exact allowlist of provider-managed public names (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, and equivalent non-secret URL/publishable aliases), in addition to explicit VITE variables. No broad environment prefix is enabled; database passwords, JWT secrets and service keys are never embedded. Every full page entry shows the smaller 270px desktop / 220px mobile maximum entrance before the authentication gate. Configured deployments require sign-in before any platform view. Login currently uses email/password; no insecure username-only account claiming is offered. Username-only accounts with privately set temporary passwords are not provisioned by this source change.
+
+Do not publish as ready until the schema is applied, the owner Auth account is privately created and activated as Super Admin, allowed redirects/provider password policy are configured, and live role tests pass. Connection alone does not create database tables or accounts. The existing production alias must not be assumed to serve the latest PR code.

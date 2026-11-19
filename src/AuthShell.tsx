@@ -3,6 +3,7 @@ import type { Session } from "@supabase/supabase-js";
 import { db } from "./api";
 import { isPasswordRoute, passwordMode } from "./password";
 import PasswordPage from "./PasswordPage";
+import SignInPage from "./SignInPage";
 export default function AuthShell({ children }: { children: ReactNode }) {
   const initial = window.location.pathname;
   const [path, setPath] = useState(initial);
@@ -159,5 +160,6 @@ export default function AuthShell({ children }: { children: ReactNode }) {
       />
     );
   }
+  if (db && !session) return <SignInPage />;
   return children;
 }

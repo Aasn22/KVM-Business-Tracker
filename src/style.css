@@ -1625,29 +1625,41 @@ fieldset {
 .entrance-skip {
   position: absolute;
   bottom: max(35px, env(safe-area-inset-bottom));
-  padding: 14px 20px;
-  color: #c6b0a5;
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  border: 1px solid #ba998d40;
-  border-radius: 30px;
-  background: #ffffff04;
-}
-.entrance-skip span {
-  margin-left: 14px;
+  width: max-content;
+  max-width: calc(100vw - 40px);
+  padding: 16px 24px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.6;
+  text-align: center;
+  letter-spacing: 0.05em;
+  border: 2px solid #ff7777;
+  border-radius: 12px;
+  background: #b91c1c;
+  box-shadow: 0 0 24px #ef44444d;
+  animation: entrance-notice-zoom-out 2.8s ease-out both;
 }
 .entrance-skip:hover {
-  background: #ba998d15;
-  border-color: #ba998d90;
+  background: #991b1b;
+  border-color: #fff;
 }
 .entrance-skip:focus-visible {
-  outline: 2px solid #d5beb0;
+  outline: 3px solid #fff;
   outline-offset: 5px;
+}
+@keyframes entrance-notice-zoom-out {
+  from {
+    transform: scale(1.03);
+  }
+  to {
+    transform: scale(1);
+  }
 }
 @keyframes entrance-zoom {
   0% {
     opacity: 0;
-    transform: scale(0.76);
+    transform: scale(1.15);
     filter: blur(5px);
   }
   32% {
@@ -1656,7 +1668,7 @@ fieldset {
   }
   100% {
     opacity: 1;
-    transform: scale(1.04);
+    transform: scale(1);
     filter: blur(0);
   }
 }
@@ -1692,7 +1704,8 @@ fieldset {
 @media (prefers-reduced-motion: reduce) {
   .entrance-screen,
   .entrance-brand,
-  .entrance-halo {
+  .entrance-halo,
+  .entrance-skip {
     animation: none;
   }
 }

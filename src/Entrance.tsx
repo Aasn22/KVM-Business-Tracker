@@ -51,7 +51,7 @@ export default function Entrance({ children }: { children: ReactNode }) {
             autoFocus
             onClick={() => setVisible(false)}
           >
-            Enter workspace <span aria-hidden="true">→</span>
+            DATA ON THIS PLATFORM IS PRIVATE AND CONFIDENTIAL - DO NOT SHARE
           </button>
         </section>
       )}

@@ -12,7 +12,10 @@ describe("branded entrance", () => {
     expect(html).toContain('alt="Kuda Villingili"');
     expect(html).toContain('inert=""');
     expect(html).toContain('aria-hidden="true"');
-    expect(html).toContain("Enter workspace");
+    expect(html).toContain(
+      "DATA ON THIS PLATFORM IS PRIVATE AND CONFIDENTIAL - DO NOT SHARE",
+    );
+    expect(html).not.toContain("Enter workspace");
     expect(html).toContain("BUSINESS EYE");
   });
   it("uses a short finite welcome duration", () => {

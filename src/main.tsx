@@ -7,7 +7,11 @@ import "./style.css";
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <Entrance>
-      <AuthShell>
+      <AuthShell
+        publicDashboard={
+          window.location.pathname === "/" ? <App publicDemo /> : undefined
+        }
+      >
         <App />
       </AuthShell>
     </Entrance>

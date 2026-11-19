@@ -67,8 +67,8 @@ type View =
   | "admin"
   | "property";
 type Tab = "commercial" | "villas" | "countries" | "meals" | "notes";
-export default function App() {
-  const demo = !db;
+export default function App({ publicDemo = false }: { publicDemo?: boolean }) {
+  const demo = publicDemo || !db;
   const [year, setYear] = useState(2027);
   const [entries, setEntries] = useState<Entry[]>([]);
   const [session, setSession] = useState<Session | null>(null);
@@ -90,7 +90,7 @@ export default function App() {
         ? "admin"
         : "overview",
   );
-  const canEdit = view === "admin" && (demo || isAdmin);
+  const canEdit = !publicDemo && view === "admin" && (demo || isAdmin);
   const [market, setMarket] = useState<string | null>(null);
   const [month, setMonth] = useState(1);
   const [tab, setTab] = useState<Tab>("commercial");
@@ -109,7 +109,7 @@ export default function App() {
   const [period, setPeriod] = useState("year");
   const fileRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
-    if (!db) return;
+    if (publicDemo || !db) return;
     db.auth.getSession().then(({ data, error }) => {
       if (error) setError(error.message);
       setSession(data.session);
@@ -126,7 +126,7 @@ export default function App() {
       setDirty(false);
     });
     return () => data.subscription.unsubscribe();
-  }, []);
+  }, [publicDemo]);
   useEffect(() => {
     let active = true;
     setAdminRole(null);
@@ -211,6 +211,10 @@ export default function App() {
     let active = true;
     setError("");
     if (demo) {
+      if (publicDemo) {
+        setEntries(makeDemo(year));
+        return;
+      }
       try {
         const stored = localStorage.getItem(`kvm-demo-${year}`);
         const data = stored ? JSON.parse(stored) : null;
@@ -236,7 +240,7 @@ export default function App() {
     return () => {
       active = false;
     };
-  }, [demo, session, year]);
+  }, [demo, session, year, publicDemo]);
   const current = entries.find(
     (e) => e.market_id === market && e.month === month,
   );
@@ -556,34 +560,45 @@ export default function App() {
           ))}
         </nav>
 
-        <nav className="property-nav">
-          <button
-            className={view === "property" ? "active" : ""}
-            onClick={() =>
-              navigate(() => {
-                setMarket(null);
-                setView("property");
-              })
-            }
-          >
-            <Building2 size={18} />
-            Property Setup
-          </button>
-        </nav>
-        <nav className="admin-nav">
-          <button
-            className={view === "admin" ? "active" : ""}
-            onClick={() =>
-              navigate(() => {
-                setMarket(null);
-                setView("admin");
-              })
-            }
-          >
-            <LockKeyhole size={18} />
-            Admin Data Input
-          </button>
-        </nav>
+        {publicDemo ? (
+          <nav className="admin-nav">
+            <a className="settings-nav" href="/admin-data-input">
+              <LockKeyhole size={17} />
+              Protected admin access
+            </a>
+          </nav>
+        ) : (
+          <>
+            <nav className="property-nav">
+              <button
+                className={view === "property" ? "active" : ""}
+                onClick={() =>
+                  navigate(() => {
+                    setMarket(null);
+                    setView("property");
+                  })
+                }
+              >
+                <Building2 size={18} />
+                Property Setup
+              </button>
+            </nav>
+            <nav className="admin-nav">
+              <button
+                className={view === "admin" ? "active" : ""}
+                onClick={() =>
+                  navigate(() => {
+                    setMarket(null);
+                    setView("admin");
+                  })
+                }
+              >
+                <LockKeyhole size={18} />
+                Admin Data Input
+              </button>
+            </nav>
+          </>
+        )}
         <div className="sidebar-bottom">
           <div className="secure">
             <ShieldCheck size={20} />
@@ -591,18 +606,22 @@ export default function App() {
               One source of truth<small>Built for your commercial team</small>
             </div>
           </div>
-          <button
-            className="settings-nav"
-            onClick={() =>
-              navigate(() => {
-                setMarket(null);
-                setView("setup");
-              })
-            }
-          >
-            <Settings2 size={17} />
-            Setup & access
-          </button>
+          {!publicDemo && (
+            <>
+              <button
+                className="settings-nav"
+                onClick={() =>
+                  navigate(() => {
+                    setMarket(null);
+                    setView("setup");
+                  })
+                }
+              >
+                <Settings2 size={17} />
+                Setup & access
+              </button>
+            </>
+          )}
           <div className="profile">
             <span>
               {demo ? "D" : (session?.user.email?.[0] ?? "G").toUpperCase()}
@@ -694,8 +713,11 @@ export default function App() {
               <ShieldCheck size={15} />
               {demo ? (
                 <>
-                  <strong>Interactive demo</strong> · Fictional figures. Changes
-                  stay in this browser. No real budgets are published.
+                  <strong>
+                    {publicDemo ? "Public read-only demo" : "Interactive demo"}
+                  </strong>{" "}
+                  · Fictional figures. No real budgets are published.
+                  {!publicDemo && " Changes stay in this browser."}
                 </>
               ) : (
                 <>
@@ -706,7 +728,11 @@ export default function App() {
                 </>
               )}
             </span>
-            {demo ? (
+            {publicDemo ? (
+              <a href="/admin-data-input">
+                Protected live access <ArrowUpRight size={13} />
+              </a>
+            ) : demo ? (
               <button
                 onClick={() =>
                   navigate(() => {
@@ -840,10 +866,10 @@ export default function App() {
               demo={demo}
             />
           )}
-          {view === "admin" && canEdit && (
+          {!publicDemo && view === "admin" && canEdit && (
             <CountryPerformance year={year} editable demo={demo} />
           )}
-          {view === "property" && (
+          {!publicDemo && view === "property" && (
             <PropertySetup
               key={session?.user.id ?? "demo"}
               demo={demo}
@@ -1034,7 +1060,7 @@ export default function App() {
               </div>
             </>
           )}
-          {view === "admin" && (
+          {!publicDemo && view === "admin" && (
             <section className="panel admin-access">
               <h2>
                 {demo ? "Demo Admin Data Input" : "Administrator workspace"}
@@ -1638,7 +1664,7 @@ export default function App() {
               )}
             </section>
           )}
-          {view === "setup" && (
+          {!publicDemo && view === "setup" && (
             <section className="panel setup">
               <div className="setup-icon">
                 <ShieldCheck size={27} />

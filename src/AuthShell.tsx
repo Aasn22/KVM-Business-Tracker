@@ -3,7 +3,13 @@ import type { Session } from "@supabase/supabase-js";
 import { db } from "./api";
 import SignInPage from "./SignInPage";
 import { callbackType, hasCallback } from "./magicLink";
-export default function AuthShell({ children }: { children: ReactNode }) {
+export default function AuthShell({
+  children,
+  publicDashboard,
+}: {
+  children: ReactNode;
+  publicDashboard?: ReactNode;
+}) {
   const [session, setSession] = useState<Session | null>(null);
   const [ready, setReady] = useState(!db);
   const [error, setError] = useState("");
@@ -104,6 +110,6 @@ export default function AuthShell({ children }: { children: ReactNode }) {
         </section>
       </main>
     );
-  if (db && !session) return <SignInPage />;
+  if (db && !session) return publicDashboard ?? <SignInPage />;
   return children;
 }

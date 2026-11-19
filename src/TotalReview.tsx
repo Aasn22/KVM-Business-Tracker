@@ -1,23 +1,17 @@
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { ArrowDownToLine, LockKeyhole, Printer } from "lucide-react";
+import { markets, months, type Entry } from "./model";
 import {
-  adr,
-  markets,
-  months,
-  percentage,
-  summarize,
-  type Entry,
-} from "./model";
-import { totalReview, type ReviewSection } from "./totals";
-import { exportWorkbook } from "./workbooks";
-const number = (value: number) =>
-  new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(value);
-const money = (value: number) =>
-  new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(value);
+  managementReport,
+  unavailable,
+  type ManagementReport,
+  type Metric,
+} from "./management";
+import { exportManagementReport } from "./managementExport";
+const n = (v: number | null) =>
+  v === null
+    ? "—"
+    : new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(v);
 export default function TotalReview({
   entries,
   year,
@@ -29,40 +23,28 @@ export default function TotalReview({
   loading: boolean;
   demo: boolean;
 }) {
-  const [period, setPeriod] = useState("year");
-  const [section, setSection] = useState<ReviewSection>("commercial");
+  const [market, setMarket] = useState("all");
+  const [quarter, setQuarter] = useState(1);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const review = totalReview(entries, year, period);
-  const totals = summarize(review.sources);
-  const revenue = review.data.commercial.find(
-    (r) => r.label === "Room Revenue",
-  );
-  const nights = review.data.commercial.find((r) => r.label === "Room Nights");
-  const periodLabel =
-    period === "year"
-      ? "Full year"
-      : period.startsWith("q")
-        ? `Quarter ${period[1]}`
-        : months[Number(period) - 1];
+  const report = managementReport(entries, year, market);
+  const periods = [
+    ...report.periods.filter(
+      (p) =>
+        Number(p.key) >= (quarter - 1) * 3 + 1 && Number(p.key) <= quarter * 3,
+    ),
+    ...report.periods.filter((p) => p.key.startsWith("q") || p.key === "year"),
+  ];
+  const annual = report.annual;
   async function download() {
     setBusy(true);
-    setMessage("");
     setError("");
+    setMessage("");
     try {
-      await exportWorkbook(
-        review.monthly.map((e) => ({
-          ...e,
-          data: {
-            ...e.data,
-            notes: `${demo ? "Fictional demo data. " : ""}${e.data.notes}`,
-          },
-        })),
-        `KVM-total-budget-${year}-${period}`,
-      );
+      await exportManagementReport(report, demo);
       setMessage(
-        `Management Review Excel report generated for ${year} · ${periodLabel}.`,
+        `Management Review Excel report generated for ${year} · ${report.scope}.`,
       );
     } catch (e) {
       setError((e as Error).message);
@@ -70,44 +52,173 @@ export default function TotalReview({
       setBusy(false);
     }
   }
+  const matrix = (
+    section: "commercial" | "villas" | "meals" | "countries",
+    labels: string[],
+  ) => (
+    <div className="table-scroll">
+      <table className="management-matrix">
+        <thead>
+          <tr>
+            <th rowSpan={3}>KPI / Category</th>
+            <th rowSpan={3}>
+              Annual ADR
+              <br />
+              (Budget / BOB)
+            </th>
+            <th colSpan={6}>Quarter {quarter} · Monthly detail</th>
+            {[1, 2, 3, 4].map((q) => (
+              <th key={q} colSpan={3}>
+                Quarter {q}
+              </th>
+            ))}
+            <th colSpan={3}>Full year {year}</th>
+          </tr>
+          <tr>
+            {periods.map((p) => (
+              <th
+                key={p.key}
+                colSpan={p.key.startsWith("q") || p.key === "year" ? 3 : 2}
+              >
+                {p.label}
+                <small>
+                  {p.count}/{p.expected}
+                  {!p.complete ? " · Partial" : ""}
+                </small>
+              </th>
+            ))}
+          </tr>
+          <tr className="matrix-subhead">
+            {periods.map((p) => (
+              <Fragment key={p.key}>
+                <th>Budgeted</th>
+                <th>BOB</th>
+                {(p.key.startsWith("q") || p.key === "year") && <th>Gap</th>}
+              </Fragment>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {labels.map((label) => (
+            <tr key={label}>
+              <th>{label}</th>
+              <td>
+                {section === "commercial"
+                  ? `${n(report.commercial("year", "ADR").budget)} / ${n(report.commercial("year", "ADR").bob)}`
+                  : unavailable}
+              </td>
+              {periods.map((p) => {
+                const v =
+                  section === "commercial"
+                    ? report.commercial(p.key, label)
+                    : report.values(p.key, section, label);
+                return (
+                  <Fragment key={p.key}>
+                    <td>{n(v.budget)}</td>
+                    <td>{n(v.bob)}</td>
+                    {(p.key.startsWith("q") || p.key === "year") && (
+                      <td
+                        className={
+                          v.bob !== null &&
+                          v.budget !== null &&
+                          v.bob >= v.budget
+                            ? "positive"
+                            : "negative"
+                        }
+                      >
+                        {n(
+                          v.budget !== null && v.bob !== null
+                            ? v.bob - v.budget
+                            : null,
+                        )}
+                      </td>
+                    )}
+                  </Fragment>
+                );
+              })}
+            </tr>
+          ))}
+          {section !== "commercial" && labels.length > 0 && (
+            <tr className="derived">
+              <th>Category total</th>
+              <td>{unavailable}</td>
+              {periods.map((p) => {
+                const values = labels.map((label) =>
+                  report.values(p.key, section, label),
+                );
+                const budget = values.some((v) => v.budget !== null)
+                  ? values.reduce((sum, v) => sum + (v.budget ?? 0), 0)
+                  : null;
+                const bob = values.some((v) => v.bob !== null)
+                  ? values.reduce((sum, v) => sum + (v.bob ?? 0), 0)
+                  : null;
+                return (
+                  <Fragment key={p.key}>
+                    <td>{n(budget)}</td>
+                    <td>{n(bob)}</td>
+                    {(p.key.startsWith("q") || p.key === "year") && (
+                      <td>
+                        {n(
+                          budget !== null && bob !== null ? bob - budget : null,
+                        )}
+                      </td>
+                    )}
+                  </Fragment>
+                );
+              })}
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
   return (
     <>
-      <section className="panel report-filters total-controls">
+      <section className="panel report-filters management-controls">
         <label>
-          Review period
+          Market scope
           <select
-            aria-label="Total review period"
-            value={period}
-            disabled={busy || loading}
+            aria-label="Management market"
+            value={market}
+            disabled={busy}
             onChange={(e) => {
-              setPeriod(e.target.value);
+              setMarket(e.target.value);
               setMessage("");
             }}
           >
-            <option value="year">Full year</option>
-            {[1, 2, 3, 4].map((q) => (
-              <option key={q} value={`q${q}`}>
-                Quarter {q}
+            <option value="all">All five markets</option>
+            {markets.map((m) => (
+              <option value={m.id} key={m.id}>
+                {m.name}
               </option>
             ))}
-            {months.map((m, i) => (
-              <option key={m} value={i + 1}>
-                {m}
+          </select>
+        </label>
+        <label>
+          Monthly detail
+          <select
+            aria-label="Management detail quarter"
+            value={quarter}
+            onChange={(e) => setQuarter(Number(e.target.value))}
+          >
+            {[1, 2, 3, 4].map((q) => (
+              <option key={q} value={q}>
+                Quarter {q}
               </option>
             ))}
           </select>
         </label>
         <button
           className="button outline"
-          disabled={busy || loading || !review.sources.length}
+          disabled={busy || loading || !annual.count}
           onClick={download}
         >
           <ArrowDownToLine size={16} />
-          {busy ? "Generating…" : "Export total report"}
+          {busy ? "Generating…" : "Export management report"}
         </button>
         <button
           className="button outline"
-          disabled={busy || loading || !review.sources.length}
+          disabled={loading || !annual.count}
           onClick={() => window.print()}
         >
           <Printer size={16} />
@@ -115,265 +226,358 @@ export default function TotalReview({
         </button>
       </section>
       {error && (
-        <div className="error" role="alert">
+        <div role="alert" className="error">
           {error}
         </div>
       )}
       {message && (
-        <div className="notice" role="status">
+        <div role="status" className="notice">
           {message}
         </div>
       )}
-      <div className="notice total-coverage">
-        <strong>
-          {demo ? "Fictional demo data · " : ""}
-          {loading ? "Loading market records…" : review.notice}
-        </strong>
-        <p>
-          <LockKeyhole size={13} /> Read-only roll-up. Use Admin Data Input to
-          change market figures and these totals. FULL BUDGET.xlsx is not added
-          again.
-        </p>
-        {!loading && review.missing.length > 0 && (
-          <details>
-            <summary>
-              View missing market-month records ({review.missing.length})
-            </summary>
-            <ul>
-              {markets.map((m) => {
-                const missing = review.missing.filter(
-                  (item) => item.market === m.name,
-                );
-                return missing.length ? (
-                  <li key={m.id}>
-                    {m.name}:{" "}
-                    {missing.map((item) => months[item.month - 1]).join(", ")}
-                  </li>
-                ) : null;
-              })}
-            </ul>
-          </details>
-        )}
+      <div className="notice management-coverage">
+        <LockKeyhole size={14} />
+        <div>
+          <strong>
+            {loading
+              ? "Loading saved market records…"
+              : `${demo ? "Fictional demo data · " : ""}${annual.complete ? "Complete coverage" : "Partial — missing or inaccessible records"} · ${annual.count}/${annual.expected} market-month records`}
+          </strong>
+          <p>
+            Automatic, read-only report. All figures come from saved market
+            records; changes are made only in Admin Data Input. BOB is business
+            on the books, not MTD actuals. Gap = BOB − budget.
+          </p>
+          {annual.missing.length > 0 && (
+            <details>
+              <summary>Missing records ({annual.missing.length})</summary>
+              <p>{annual.missing.join("; ")}</p>
+            </details>
+          )}
+        </div>
       </div>
-      <section className="stats-grid">
-        <TotalStat title="Total revenue budget" value={money(totals.budget)} />
-        <TotalStat title="Total BOB revenue" value={money(totals.bob)} />
-        <TotalStat
-          title="Revenue variance"
-          value={money(totals.bob - totals.budget)}
-        />
-        <TotalStat
-          title="Budget achievement"
-          value={`${percentage(totals.bob, totals.budget).toFixed(1)}%`}
-        />
-      </section>
-      <section className="panel total-review-report">
-        <div className="section-heading">
+      <article className="management-sheet">
+        <header className="management-title">
           <div>
-            <h2>
-              Management Review · {year} · {periodLabel}
-            </h2>
-            <p>
-              {review.complete
-                ? "Five-market total"
-                : "Partial accessible-market total"}{" "}
-              · {review.coverage} · USD ·{" "}
-              {demo ? "Fictional figures" : "Saved figures only"}
-            </p>
+            <strong>KUDA VILLINGILI RESORT MALDIVES — {year}</strong>
+            <span>MANAGEMENT REVIEW · {report.scope}</span>
           </div>
-        </div>
-        {!review.sources.length ? (
-          <div className="empty">
-            No saved market records are available for this period. Sign in with
-            the appropriate access or import data through the market tabs.
-          </div>
-        ) : (
-          <>
-            <div className="editor-subheader">
-              <div className="detail-tabs">
-                {(
-                  [
-                    ["commercial", "Commercial targets"],
-                    ["villas", "Villa types"],
-                    ["countries", "Countries"],
-                    ["meals", "Meal plans"],
-                  ] as const
-                ).map(([key, label]) => (
-                  <button
-                    key={key}
-                    className={section === key ? "active" : ""}
-                    onClick={() => setSection(key)}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-              <span className="save-status">Calculated · read-only</span>
-            </div>
-            <p className="total-table-note">
-              {period === "year" || period.startsWith("q")
-                ? "Weekly columns sum the same week across the selected months. "
-                : "Weekly figures reflect the selected month. "}
-              BOB snapshots are not added to monthly BOB. Breakdown figures
-              retain their source units and do not automatically reconcile to
-              commercial totals.
-            </p>
-            <div className="table-scroll">
-              <table className="total-table">
-                <thead>
-                  <tr>
-                    <th>
-                      {section === "commercial"
-                        ? "KPI"
-                        : section === "villas"
-                          ? "Villa category"
-                          : section === "countries"
-                            ? "Country"
-                            : "Meal plan"}
-                    </th>
-                    <th>Budget</th>
-                    <th>BOB</th>
-                    <th>Variance</th>
-                    {[1, 2, 3, 4].map((w) => (
-                      <th key={w} colSpan={2}>
-                        Week {w === 4 ? "4/5" : w}
-                      </th>
-                    ))}
-                  </tr>
-                  <tr className="subhead">
-                    <th />
-                    <th />
-                    <th />
-                    <th />
-                    {[1, 2, 3, 4].map((w) => (
-                      <WeekHead key={w} />
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {review.data[section].map((r) => (
-                    <tr key={r.label}>
-                      <th>{r.label}</th>
-                      <td>{number(r.budget)}</td>
-                      <td>{number(r.bob)}</td>
-                      <td
-                        className={r.bob < r.budget ? "negative" : "positive"}
-                      >
-                        {number(r.bob - r.budget)}
-                      </td>
-                      {r.targets.map((target, i) => (
-                        <WeekValues key={i} target={target} bob={r.weekly[i]} />
-                      ))}
-                    </tr>
-                  ))}
-                  {section === "commercial" && revenue && nights && (
-                    <tr className="derived">
-                      <th>ADR (weighted)</th>
-                      <td>{number(adr(revenue.budget, nights.budget))}</td>
-                      <td>{number(adr(revenue.bob, nights.bob))}</td>
-                      <td>
-                        {number(
-                          adr(revenue.bob, nights.bob) -
-                            adr(revenue.budget, nights.budget),
-                        )}
-                      </td>
-                      {revenue.targets.map((v, i) => (
-                        <WeekValues
-                          key={i}
-                          target={adr(v, nights.targets[i])}
-                          bob={adr(revenue.weekly[i], nights.weekly[i])}
-                        />
-                      ))}
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </>
-        )}
-      </section>
-      <section className="panel">
-        <div className="section-heading">
           <div>
-            <h2>Market contributions</h2>
-            <p>
-              Each saved market record is counted once. Missing or inaccessible
-              records are not assumed to be zero.
-            </p>
+            Automatic market consolidation
+            <small>
+              {demo
+                ? "Fictional demonstration"
+                : "Saved authorized records only"}
+            </small>
           </div>
-        </div>
+        </header>
+        <p className="management-subtitle">
+          Commercial team budget & performance review · Read-only · USD · Market
+          contributions shown below
+        </p>
         <div className="table-scroll">
-          <table>
+          <table className="management-summary">
             <thead>
               <tr>
-                <th>Market</th>
-                <th>Available months</th>
-                <th>Revenue budget</th>
-                <th>Revenue BOB</th>
-                <th>Variance</th>
-                <th>BOB nights</th>
+                <th>Budget details</th>
+                <th>{year} full year</th>
+                <th>ADR budget / BOB</th>
+                <th>Room revenue budget / BOB</th>
+                <th>F&B revenue</th>
+                <th>Other revenue</th>
+                <th>Total revenue</th>
               </tr>
             </thead>
             <tbody>
-              {markets.map((m) => {
-                const records = review.sources.filter(
-                  (e) => e.market_id === m.id,
-                );
-                const t = summarize(records);
-                return (
-                  <tr key={m.id}>
-                    <th>{m.name}</th>
-                    <td>
-                      {records.length}/{review.expectedMonths.length}
-                    </td>
-                    <td>
-                      {records.length ? money(t.budget) : "Not available"}
-                    </td>
-                    <td>{records.length ? money(t.bob) : "—"}</td>
-                    <td>{records.length ? money(t.bob - t.budget) : "—"}</td>
-                    <td>{records.length ? number(t.booked) : "—"}</td>
-                  </tr>
-                );
-              })}
-              <tr className="derived">
-                <th>{review.complete ? "Total" : "Partial total"}</th>
-                <td>{review.coverage}</td>
-                <td>{money(totals.budget)}</td>
-                <td>{money(totals.bob)}</td>
-                <td>{money(totals.bob - totals.budget)}</td>
-                <td>{number(totals.booked)}</td>
+              <tr>
+                <th>Occupancy %</th>
+                <td>{unavailable}</td>
+                <td rowSpan={2}>
+                  {n(report.commercial("year", "ADR").budget)} /{" "}
+                  {n(report.commercial("year", "ADR").bob)}
+                </td>
+                <td rowSpan={2}>
+                  {n(report.commercial("year", "Room Revenue").budget)} /{" "}
+                  {n(report.commercial("year", "Room Revenue").bob)}
+                </td>
+                <td rowSpan={2}>{unavailable}</td>
+                <td rowSpan={2}>{unavailable}</td>
+                <td rowSpan={2}>{unavailable}</td>
+              </tr>
+              <tr>
+                <th>Room nights (budget / BOB)</th>
+                <td>
+                  {n(report.commercial("year", "Room Nights").budget)} /{" "}
+                  {n(report.commercial("year", "Room Nights").bob)}
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
-      </section>
+        <SheetSection title="1. MONTHLY COMMERCIAL TARGETS & BOB">
+          {matrix("commercial", ["Room Revenue", "Room Nights", "ADR"])}
+        </SheetSection>
+        <SheetSection title="2. VILLA TYPE TARGETS & PERFORMANCE BY ROOM NIGHTS">
+          {matrix("villas", report.labels("villas"))}
+          <p className="management-footnote">
+            Category ADR is not stored by the market pages. Villa figures
+            preserve the source units; no revenue or ADR is inferred for
+            individual categories.
+          </p>
+        </SheetSection>
+        <SheetSection title="3. QUARTERLY TARGETS, BOB & CORRECTIVE ACTION">
+          <div className="table-scroll">
+            <table className="quarter-review">
+              <thead>
+                <tr>
+                  <th rowSpan={2}>Quarter / Period</th>
+                  <th rowSpan={2}>ADR budget / BOB</th>
+                  <th colSpan={3}>Room nights</th>
+                  <th colSpan={3}>Room revenue</th>
+                  <th rowSpan={2}>Saved market action plans</th>
+                </tr>
+                <tr>
+                  <th>Budgeted</th>
+                  <th>BOB</th>
+                  <th>Forecast</th>
+                  <th>Budgeted</th>
+                  <th>BOB</th>
+                  <th>Forecast</th>
+                </tr>
+              </thead>
+              <tbody>
+                {report.periods
+                  .filter((p) => p.key.startsWith("q") || p.key === "year")
+                  .map((p) => (
+                    <tr key={p.key}>
+                      <th>
+                        {p.label}
+                        <small>
+                          {p.count}/{p.expected}
+                          {!p.complete ? " · Partial" : ""}
+                        </small>
+                      </th>
+                      <td>
+                        {n(report.commercial(p.key, "ADR").budget)} /{" "}
+                        {n(report.commercial(p.key, "ADR").bob)}
+                      </td>
+                      <MetricCells
+                        metric={report.commercial(p.key, "Room Nights")}
+                      />
+                      <MetricCells
+                        metric={report.commercial(p.key, "Room Revenue")}
+                      />
+                      <td className="management-notes">
+                        {p.key === "year"
+                          ? "See saved action plans below."
+                          : report.notes
+                              .filter(
+                                (note) => note.quarter === Number(p.key[1]),
+                              )
+                              .map(
+                                (note) =>
+                                  `${note.market} · ${months[note.month - 1]}: ${note.text}`,
+                              )
+                              .join("\n") || unavailable}
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        </SheetSection>
+        <SheetSection title="4. MEAL PLAN BOOKING CONTROL">
+          {matrix("meals", report.labels("meals"))}
+          <p className="management-footnote">
+            Meal-plan ADR and MTD actuals are not stored. Source market booking
+            targets and BOB are shown without relabeling them as realized
+            revenue.
+          </p>
+        </SheetSection>
+        <SheetSection title="5. MARKET PERFORMANCE & ACTION PLAN">
+          <MarketPerformance report={report} />
+          <div className="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Market / Month</th>
+                  <th>Saved corrective action</th>
+                  <th>Forecast / Director feedback</th>
+                </tr>
+              </thead>
+              <tbody>
+                {report.notes.length ? (
+                  report.notes.map((note, i) => (
+                    <tr key={i}>
+                      <th>
+                        {note.market} · {months[note.month - 1]}
+                      </th>
+                      <td className="management-notes">{note.text}</td>
+                      <td>{unavailable}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={3}>
+                      No saved action plans available for this scope.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </SheetSection>
+        <SheetSection title="6. SIGN-OFF">
+          <div className="management-signoffs">
+            {[
+              "Revenue Director",
+              "Commercial Director",
+              "General Manager",
+              "Owner’s Representative",
+            ].map((role) => (
+              <div key={role}>
+                <strong>{role}</strong>
+                <span>{unavailable}</span>
+              </div>
+            ))}
+          </div>
+          <p className="management-footnote">
+            No approval or signature records exist in the source data.
+            Occupancy, MTD actuals, forecasts, F&B/other/total revenue and
+            category ADR are not supplied; none are invented or entered here.
+          </p>
+        </SheetSection>
+      </article>
     </>
   );
 }
-function TotalStat({ title, value }: { title: string; value: string }) {
+function SheetSection({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
-    <article className="stat">
-      <div>
-        <span>{title}</span>
-      </div>
-      <strong>{value}</strong>
-      <small>Selected period · accessible saved records</small>
-    </article>
+    <section className="management-section">
+      <h2>{title}</h2>
+      {children}
+    </section>
   );
 }
-function WeekHead() {
+function MetricCells({ metric }: { metric: Metric }) {
   return (
     <>
-      <th>Target</th>
-      <th>BOB</th>
+      <td>{n(metric.budget)}</td>
+      <td>{n(metric.bob)}</td>
+      <td>{unavailable}</td>
     </>
   );
 }
-function WeekValues({ target, bob }: { target: number; bob: number }) {
+function MarketPerformance({ report }: { report: ManagementReport }) {
   return (
-    <>
-      <td>{number(target)}</td>
-      <td>{number(bob)}</td>
-    </>
+    <div className="table-scroll">
+      <table className="market-performance">
+        <thead>
+          <tr>
+            <th rowSpan={2}>Market</th>
+            {[1, 2, 3, 4].map((q) => (
+              <th key={q} colSpan={3}>
+                Quarter {q} · Revenue
+              </th>
+            ))}
+            <th colSpan={5}>Full year {report.year}</th>
+          </tr>
+          <tr>
+            {[1, 2, 3, 4].map((q) => (
+              <Fragment key={q}>
+                <th>Budgeted</th>
+                <th>BOB</th>
+                <th>Gap</th>
+              </Fragment>
+            ))}
+            <th>Budgeted</th>
+            <th>BOB</th>
+            <th>Gap</th>
+            <th>Room nights BOB</th>
+            <th>ADR BOB</th>
+          </tr>
+        </thead>
+        <tbody>
+          {markets
+            .filter((m) => report.market === "all" || m.id === report.market)
+            .map((m) => {
+              const r = managementReport(report.sources, report.year, m.id);
+              return (
+                <tr key={m.id}>
+                  <th>
+                    {m.name}
+                    <small>{r.annual.count}/12 months</small>
+                  </th>
+                  {[1, 2, 3, 4].map((q) => {
+                    const v = r.commercial(`q${q}`, "Room Revenue");
+                    return (
+                      <Fragment key={q}>
+                        <td>{n(v.budget)}</td>
+                        <td>{n(v.bob)}</td>
+                        <td>
+                          {n(
+                            v.budget !== null && v.bob !== null
+                              ? v.bob - v.budget
+                              : null,
+                          )}
+                        </td>
+                      </Fragment>
+                    );
+                  })}
+                  <td>{n(r.commercial("year", "Room Revenue").budget)}</td>
+                  <td>{n(r.commercial("year", "Room Revenue").bob)}</td>
+                  <td>
+                    {n(
+                      r.annual.count
+                        ? r.commercial("year", "Room Revenue").bob! -
+                            r.commercial("year", "Room Revenue").budget!
+                        : null,
+                    )}
+                  </td>
+                  <td>{n(r.commercial("year", "Room Nights").bob)}</td>
+                  <td>{n(r.commercial("year", "ADR").bob)}</td>
+                </tr>
+              );
+            })}
+          <tr className="derived">
+            <th>{report.annual.complete ? "Total" : "Partial total"}</th>
+            {[1, 2, 3, 4].map((q) => {
+              const v = report.commercial(`q${q}`, "Room Revenue");
+              return (
+                <Fragment key={q}>
+                  <td>{n(v.budget)}</td>
+                  <td>{n(v.bob)}</td>
+                  <td>
+                    {n(
+                      v.budget !== null && v.bob !== null
+                        ? v.bob - v.budget
+                        : null,
+                    )}
+                  </td>
+                </Fragment>
+              );
+            })}
+            <td>{n(report.commercial("year", "Room Revenue").budget)}</td>
+            <td>{n(report.commercial("year", "Room Revenue").bob)}</td>
+            <td>
+              {n(
+                report.annual.count
+                  ? report.commercial("year", "Room Revenue").bob! -
+                      report.commercial("year", "Room Revenue").budget!
+                  : null,
+              )}
+            </td>
+            <td>{n(report.commercial("year", "Room Nights").bob)}</td>
+            <td>{n(report.commercial("year", "ADR").bob)}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   );
 }

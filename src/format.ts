@@ -28,3 +28,14 @@ export function formatCompact(value: number | null): string {
 export function isMoneyMetric(label: string): boolean {
   return /revenue|\bADR\b/i.test(label);
 }
+
+// Business Insight only: compact national receipt figures, rounded to whole K/M.
+export function formatInsightMoney(value: number | null): string {
+  if (value === null || !Number.isFinite(value)) return "—";
+  const amount = new Intl.NumberFormat("en-US", {
+    notation: "compact",
+    compactDisplay: "short",
+    maximumFractionDigits: 0,
+  }).format(Math.abs(value));
+  return value < 0 ? `($${amount})` : `$${amount}`;
+}

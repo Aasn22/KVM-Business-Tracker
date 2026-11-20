@@ -1,6 +1,11 @@
 import { afterEach, describe, it, expect, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
-import { formatMoney, formatCompact, formatNumber } from "./format";
+import {
+  formatMoney,
+  formatCompact,
+  formatNumber,
+  formatInsightMoney,
+} from "./format";
 import App, { Numeric } from "./App";
 import BusinessInsight from "./BusinessInsight";
 import { makeDemo } from "./model";
@@ -55,13 +60,20 @@ describe("consistent currency and compact numbers", () => {
     expect(review).toContain("$");
     expect(review).not.toContain("US$");
   });
-  it("shows full dollar receipts and uppercase arrival counts without changing source units", () => {
+  it("shows compact dollar receipts and uppercase arrival counts without changing source units", () => {
     const html = renderToStaticMarkup(<BusinessInsight />);
-    expect(html).toContain("$400,100,000");
+    expect(html).toContain("$400M");
     expect(html).toContain("1.9M");
     expect(html).toContain("690M");
     expect(html).not.toContain("US$");
     expect(html).not.toContain("690m");
-    expect(html).toContain("$843,830,000");
+    expect(html).toContain("$844M");
+  });
+  it("isolates compact currency to Business Insight without changing full-dollar formatting", () => {
+    expect(formatInsightMoney(400100000)).toBe("$400M");
+    expect(formatInsightMoney(1500)).toBe("$2K");
+    expect(formatInsightMoney(-400100000)).toBe("($400M)");
+    expect(formatInsightMoney(null)).toBe("—");
+    expect(formatMoney(400100000)).toBe("$400,100,000");
   });
 });

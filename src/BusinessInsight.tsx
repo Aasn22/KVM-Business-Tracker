@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { formatCompact, formatMoney } from "./format";
+import { formatCompact, formatInsightMoney } from "./format";
 import { Globe2, ExternalLink, AlertTriangle, TrendingUp } from "lucide-react";
 import {
   insightReviewed,
@@ -43,11 +43,14 @@ export function InsightChart({
 }) {
   const max = Math.max(...rows.map((r) => Math.abs(r.value)), 1);
   const display = (value: number) =>
-    unit === "$ amounts" ? formatMoney(value) : number(value);
+    unit === "$ amounts" ? formatInsightMoney(value) : number(value);
   return (
     <section className="panel insight-card">
       <h2>{title}</h2>
-      <p className="insight-unit">{unit}</p>
+      <p className="insight-unit">
+        {unit}
+        {unit === "$ amounts" ? " · rounded K/M" : ""}
+      </p>
       <div
         className="insight-bars"
         role="img"
@@ -166,7 +169,7 @@ export default function BusinessInsight() {
         </article>
         <article>
           <span>Maldives travel receipts</span>
-          <strong>{formatMoney(400100000)}</strong>
+          <strong>{formatInsightMoney(400100000)}</strong>
           <small>Aug 2026 · +10.2% YoY (reported)</small>
           <Source id="receipts" />
         </article>

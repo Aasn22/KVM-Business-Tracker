@@ -95,7 +95,9 @@ describe("PIN entry", () => {
         <div>SECRET_EDITOR</div>
       </PinShell>,
     );
-    expect(html).toContain("Enter your PIN");
+    expect(html).toContain("Enter access PIN");
+    expect(html).toContain("Restricted access only for admins.");
+    expect(html).toContain("CHECKING ACCESS…");
     expect(html).not.toContain("SECRET_EDITOR");
     expect(html).not.toContain('type="email"');
   });

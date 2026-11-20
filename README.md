@@ -243,3 +243,9 @@ Daily eligibility is per browser/origin via `kvm-menu-introduction-day`, not per
 ## Display formatting refinement
 
 Only the Reports welcome panel's navy fill is removed (transparent); its text, logo, controls and all other palettes remain unchanged as requested. Revenue/ADR now use one shared en-US dollar formatter: `$1,234,567` with comma grouping, whole-dollar rounding for display, and `($1,234,567)` for negatives. Source values and calculations keep full precision. Counts/percentages/independent category-unit figures are not relabeled as dollars. Compact count displays use uppercase K/M, while revenue stays full-length rather than abbreviated. Business Insight MMA receipts are converted from source millions to dollar units for display, with source arrays unchanged. Excel keeps numeric values and uses dollar number formats only on identified revenue/ADR cells. Numeric input controls remain raw editable numbers; read-only figures and reports carry the formatted amounts. Property currency code configuration remains USD; no conversion is performed.
+
+## Minimal admin PIN and compact Insight amounts
+
+Admin PIN entry now uses an isolated minimal navy/gold design: Kuda Villingili logo above a PIN field, Unlock button and “Restricted access only for admins.” Existing endpoint validation, cookie expiry, errors, locked-child behavior and browser-local editor limitations are unchanged; this label is not a new per-user role check. Detailed local-save notices remain inside the unlocked workspace and documentation.
+
+Business Insight alone uses compact dollar amounts rounded to whole K/M (e.g. `$400M`); this applies to its cards, charts, accessible descriptions and expanded chart tables. Source amounts are unchanged, and all financial/platform/report pages elsewhere still use full `$400,100,000` style. Compact Insight figures are rounded displays, not revised data.

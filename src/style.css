@@ -3388,3 +3388,89 @@ fieldset {
     grid-template-columns: 80px minmax(0, 1fr) minmax(70px, max-content);
   }
 }
+
+/* Minimal admin entry, isolated from legacy account forms and public pages. */
+.admin-pin-page {
+  min-height: 100dvh;
+  max-width: none;
+  width: 100%;
+  margin: 0;
+  padding: 40px 20px;
+  background: #0b1930;
+  display: grid;
+  place-items: center;
+}
+.admin-pin-entry {
+  width: min(100%, 480px);
+}
+.admin-pin-logo {
+  display: block;
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+  margin: 0 auto 34px;
+}
+.admin-pin-box {
+  background: #17283a;
+  border: 1px solid #d4bd9120;
+  border-radius: 18px;
+  padding: 32px;
+}
+.admin-pin-box label {
+  display: block;
+  color: #b8c1ca;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+}
+.admin-pin-box input {
+  display: block;
+  width: 100%;
+  padding: 15px 16px;
+  background: #213143;
+  color: #fff;
+  border: 1px solid #8b99a544;
+  border-radius: 4px;
+  min-height: 52px;
+}
+.admin-pin-box input::placeholder {
+  color: #a0adba;
+  opacity: 1;
+}
+.admin-pin-box button {
+  width: 100%;
+  min-height: 50px;
+  margin-top: 24px;
+  background: #a28b61;
+  color: #fff;
+  font-weight: 700;
+  border-radius: 4px;
+}
+.admin-pin-box button:hover {
+  background: #b49c70;
+}
+.admin-pin-box input:focus-visible,
+.admin-pin-box button:focus-visible {
+  outline: 2px solid #e7d4b1;
+  outline-offset: 3px;
+}
+.admin-pin-restriction {
+  margin-top: 22px;
+  text-align: center;
+  font-size: 11px;
+  line-height: 1.7;
+  color: #a6b1bd;
+}
+.admin-pin-error {
+  color: #ffd0c5;
+  margin-top: 12px;
+  font-size: 12px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 500px) {
+  .admin-pin-box {
+    padding: 24px;
+  }
+}

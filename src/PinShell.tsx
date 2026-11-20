@@ -73,52 +73,43 @@ export default function PinShell({ children }: { children: ReactNode }) {
       </>
     );
   return (
-    <main className="password-page">
-      <section className="password-card">
+    <main className="admin-pin-page">
+      <section
+        className="admin-pin-entry"
+        aria-label="Administrator PIN access"
+      >
         <img
+          className="admin-pin-logo"
           src="/kuda-villingili-logo.png"
           alt="Kuda Villingili"
-          width={70}
-          height={70}
+          width={100}
+          height={100}
         />
-        <div className="eyebrow">KVM BUSINESS LENSE</div>
-        <h1>Enter your PIN</h1>
-        <p>
-          No username, password or email link. Unlock budget entry and property
-          settings on this browser.
-        </p>
-        <form onSubmit={submit}>
-          <label>
-            PIN
-            <input
-              aria-label="Access PIN"
-              type="password"
-              autoComplete="off"
-              maxLength={128}
-              required
-              value={pin}
-              onChange={(e) => setPin(e.target.value)}
-            />
-          </label>
+        <form className="admin-pin-box" onSubmit={submit}>
+          <label htmlFor="admin-access-pin">PIN</label>
+          <input
+            id="admin-access-pin"
+            aria-label="Access PIN"
+            type="password"
+            autoComplete="off"
+            placeholder="Enter access PIN"
+            maxLength={128}
+            required
+            value={pin}
+            onChange={(e) => setPin(e.target.value)}
+          />
           {error && (
-            <p className="error" role="alert">
+            <p className="admin-pin-error" role="alert">
               {error}
             </p>
           )}
-          <button className="button primary" disabled={!ready || busy}>
-            {!ready
-              ? "Checking access…"
-              : busy
-                ? "Unlocking…"
-                : "Enter workspace"}
+          <button disabled={!ready || busy}>
+            {!ready ? "CHECKING ACCESS…" : busy ? "UNLOCKING…" : "UNLOCK"}
           </button>
+          <p className="admin-pin-restriction">
+            Restricted access only for admins.
+          </p>
         </form>
-        <p className="password-help">
-          Browser-local editing only. Clearing browser data removes local edits.
-          This PIN is a convenience gate, not encryption of local data.
-          Published budgets remain publicly viewable.
-        </p>
-        <a href="/">View published dashboard</a>
       </section>
     </main>
   );

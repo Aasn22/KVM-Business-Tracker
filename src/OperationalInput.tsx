@@ -1,3 +1,4 @@
+import DatePicker from "./DatePicker";
 import { useEffect, useState } from "react";
 import { Upload, Save, X } from "lucide-react";
 import { parseOperationFile } from "./operationParser";
@@ -120,21 +121,11 @@ function InputBox({
       <fieldset disabled={busy || !!pending}>
         <label>
           {kind === "cancellations" ? "Cancel" : "Booked"} From date
-          <input
-            aria-label={`${kind} from`}
-            type="date"
-            value={from}
-            onChange={(e) => setFrom(e.target.value)}
-          />
+          <DatePicker label={`${kind} from`} value={from} onChange={setFrom} />
         </label>
         <label>
           {kind === "cancellations" ? "Cancel" : "Booked"} To date
-          <input
-            aria-label={`${kind} to`}
-            type="date"
-            value={to}
-            onChange={(e) => setTo(e.target.value)}
-          />
+          <DatePicker label={`${kind} to`} value={to} onChange={setTo} />
         </label>
         <label className="operation-file">
           <Upload size={16} />

@@ -1,3 +1,4 @@
+import DatePicker from "./DatePicker";
 import { useEffect, useState } from "react";
 import { Download, Printer, X } from "lucide-react";
 import { formatMoney, formatNumber } from "./format";
@@ -87,7 +88,6 @@ export default function OperationalReports({
     return () => window.removeEventListener(operationChanged, refresh);
   }, [kind]);
   const rows = report?.rows ?? [],
-    totals = operationTotals(rows),
     grouped = Array.from(new Set(rows.map((r) => r.roomType))).map((label) => ({
       label,
       value: rows
@@ -116,7 +116,7 @@ export default function OperationalReports({
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
   return (
-    <section className="operational-report">
+    <section className="operational-report print-report">
       <div className="report-toolbar">
         <button className="report-outline-button" onClick={onClose}>
           <X size={16} />
@@ -142,21 +142,15 @@ export default function OperationalReports({
       <div className="report-controls">
         <label>
           From date
-          <input
-            type="date"
-            aria-label="Activity report from"
+          <DatePicker
+            label="Activity report from"
             value={from}
-            onChange={(e) => setFrom(e.target.value)}
+            onChange={setFrom}
           />
         </label>
         <label>
           To date
-          <input
-            type="date"
-            aria-label="Activity report to"
-            value={to}
-            onChange={(e) => setTo(e.target.value)}
-          />
+          <DatePicker label="Activity report to" value={to} onChange={setTo} />
         </label>
         <button
           className="report-gold-button"
@@ -197,33 +191,7 @@ export default function OperationalReports({
           <p>
             Snapshot generated {report.at} · {report.from} to {report.to}
           </p>
-          <div className="visual-kpis">
-            <section>
-              <span>Source rows</span>
-              <strong>{totals.rows}</strong>
-            </section>
-            <section>
-              <span>
-                {kind === "cancellations"
-                  ? "Revenue loss"
-                  : "Room revenue entered"}
-              </span>
-              <strong>{formatMoney(totals.amount)}</strong>
-            </section>
-            <section>
-              <span>
-                {kind === "cancellations"
-                  ? "Cancelled stay nights"
-                  : "Non-sharer stay nights (not room nights)"}
-              </span>
-              <strong>{formatNumber(totals.stayNights)}</strong>
-            </section>
-          </div>
-          <p>
-            Sharer rows excluded from stay-night total: {totals.sharers}. Room
-            quantities were not approved for capture, so occupied room nights
-            are not calculated. Cancellation country is unavailable.
-          </p>
+          <CancellationSummary kind={kind} rows={rows} />
           <section className="visual-panel">
             <h3>
               {kind === "cancellations" ? "Revenue loss" : "Entered revenue"} by
@@ -259,5 +227,65 @@ export default function OperationalReports({
         </>
       )}
     </section>
+  );
+}
+
+export function CancellationSummary({
+  kind,
+  rows,
+}: {
+  kind: OperationKind;
+  rows: OperationRow[];
+}) {
+  const totals = operationTotals(rows);
+  return (
+    <>
+      <div className="visual-kpis">
+        <section>
+          <span>
+            {kind === "cancellations"
+              ? "Cancelled Room Nights Total"
+              : "Source rows"}
+          </span>
+          <strong>
+            {kind === "cancellations"
+              ? formatNumber(totals.stayNights)
+              : totals.rows}
+          </strong>
+          {kind === "cancellations" && (
+            <small>Sum of source Nts.; room quantities unavailable</small>
+          )}
+        </section>
+        <section>
+          <span>
+            {kind === "cancellations"
+              ? "Room Revenue Loss"
+              : "Room revenue entered"}
+          </span>
+          <strong>{formatMoney(totals.amount)}</strong>
+        </section>
+        <section>
+          <span>
+            {kind === "cancellations"
+              ? "Highest Cancellation Country"
+              : "Non-sharer stay nights"}
+          </span>
+          <strong>
+            {kind === "cancellations"
+              ? "Not available"
+              : formatNumber(totals.stayNights)}
+          </strong>
+          {kind === "cancellations" && (
+            <small>Country not supplied; no ranking inferred</small>
+          )}
+        </section>
+      </div>
+      <p className="operation-definition">
+        {totals.rows} source rows · {totals.sharers} SHARER rows excluded from
+        the nights total. Nights are summed from the source Nts. column, not
+        multiplied by room quantities. Country information can be supplied in a
+        future source format; it is not guessed.
+      </p>
+    </>
   );
 }

@@ -3672,3 +3672,189 @@ fieldset {
     display: none !important;
   }
 }
+
+.calendar-control {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+  min-width: 0;
+}
+.calendar-control input {
+  flex: 1;
+  min-width: 0;
+}
+.calendar-open {
+  flex: 0 0 44px;
+  min-height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #d4bd9160;
+  border-radius: 6px;
+  color: inherit;
+  background: transparent;
+}
+.operation-input .calendar-open {
+  color: #17375c;
+  border-color: #b7c9be;
+}
+/* Printing is a paginated document, not a screenshot of the interactive page. */
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 12mm;
+  }
+  html,
+  body {
+    width: auto !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    background: white !important;
+  }
+  .app,
+  .main,
+  .main > main,
+  .report-library {
+    display: block !important;
+    width: auto !important;
+    max-width: none !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .page-heading,
+  .report-controls,
+  .report-toolbar,
+  .calendar-control,
+  .report-error,
+  .toast,
+  .mode-banner,
+  .sidebar,
+  .topbar,
+  .heading-actions,
+  .report-library-head,
+  .report-selection {
+    display: none !important;
+  }
+  .print-report {
+    page: executive-report;
+    display: block !important;
+    width: 100% !important;
+    padding: 0 !important;
+    color: #111 !important;
+    background: white !important;
+    font-size: 10pt;
+  }
+  @page executive-report {
+    size: A4 landscape;
+    margin: 12mm;
+  }
+  .print-report h2,
+  .print-report h3,
+  .print-report p,
+  .print-report small,
+  .print-report span,
+  .print-report strong,
+  .print-report b {
+    color: #111 !important;
+  }
+  .print-report h2 {
+    font-size: 19pt !important;
+    margin: 0 0 5mm;
+  }
+  .print-report h3 {
+    font-size: 12pt !important;
+    margin: 0 0 3mm;
+  }
+  .print-report p {
+    font-size: 9pt !important;
+    line-height: 1.5 !important;
+    margin: 2mm 0 4mm;
+  }
+  .print-report .visual-kpis {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 4mm;
+    margin: 4mm 0;
+    break-inside: avoid;
+  }
+  .print-report .visual-kpis section {
+    padding: 4mm;
+    border: 1px solid #aaa;
+    background: white !important;
+  }
+  .print-report .visual-kpis strong {
+    font-size: 18pt !important;
+    margin: 2mm 0;
+  }
+  .print-report .visual-panel {
+    break-inside: avoid;
+    padding: 4mm;
+    margin: 4mm 0;
+    border: 1px solid #aaa;
+    background: white !important;
+  }
+  .print-report .table-scroll {
+    display: block;
+    overflow: visible !important;
+    max-height: none !important;
+    width: 100%;
+  }
+  .print-report table {
+    width: 100% !important;
+    table-layout: fixed;
+    white-space: normal !important;
+    font-size: 8pt !important;
+    border-collapse: collapse;
+  }
+  .print-report table caption {
+    font-size: 8pt;
+    color: #333;
+    text-align: left;
+    margin: 3mm 0;
+  }
+  .print-report thead {
+    display: table-header-group !important;
+  }
+  .print-report tfoot {
+    display: table-footer-group !important;
+  }
+  .print-report tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .print-report th,
+  .print-report td {
+    color: #111 !important;
+    background: white !important;
+    border: 1px solid #bbb !important;
+    padding: 2mm !important;
+    overflow-wrap: anywhere;
+    font-weight: normal;
+  }
+  .print-report th {
+    font-weight: 700;
+  }
+  .print-report .operation-bar {
+    display: grid;
+    grid-template-columns: 16mm minmax(0, 1fr) 35mm;
+    gap: 3mm;
+    margin: 3mm 0;
+  }
+  .print-report .operation-bar > div {
+    min-height: 3mm;
+  }
+  .print-report .operation-bar i {
+    background: #695334 !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .print-report .visual-budget {
+    background: #695334 !important;
+  }
+  .print-report .visual-bob {
+    background: #365f59 !important;
+  }
+  .print-report .visual-trend {
+    max-height: 65mm;
+  }
+}

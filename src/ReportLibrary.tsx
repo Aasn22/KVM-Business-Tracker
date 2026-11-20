@@ -416,7 +416,7 @@ export function VisualReport({ report }: { report: ReportSnapshot }) {
     .sort((a, b) => b.bob! - a.bob!)[0];
   const gap = report.revenue.budget! - report.revenue.bob!;
   return (
-    <article className="generated-report">
+    <article className="generated-report print-report">
       <header className="visual-report-head">
         <div className="eyebrow">KVM BUSINESS LENSE · REPORT SNAPSHOT</div>
         <h2>{report.title}</h2>

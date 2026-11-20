@@ -271,3 +271,9 @@ Browser-local `kvm-operations-v1` is separate from market/month budgets. Saving 
 ### Quick Reports first
 
 After Explore Report Library, Quick Reports is the default. Filters and Build your report are hidden behind Generate Your Own Report; the button exposes/collapses that section. Report year is inside that custom section, not in the Reports header or welcome. The active year/market/period is still summarized so shortcut output is not ambiguous. Hiding the builder restores all Quick Reports (category filtering only affects the open-builder view). Data Input uploads and rose-gold welcome typography are included in the same release; BOB/market totals and local-only persistence are unchanged.
+
+### Print and cancellation presentation
+
+Generated report print sheets now request A4 landscape with 12mm margins, black-on-white readable text, repeated detail-table headers, non-splitting rows/KPI blocks and visible bar ink. Interactive date/filter/action controls are excluded. Large detail tables flow across pages; a one-page output is not forced by shrinking text. Browser print settings can override CSS paper/margins; background graphics may still be needed in some engines for filled charts. Native print/PDF output must be checked in the user's browser.
+
+Date inputs have explicit calendar-icon buttons calling the browser's date picker where supported, with focus fallback (keyboard text entry remains available for accessibility). Cancellation KPIs are Cancelled Room Nights Total (source Nts. sum; room quantities unavailable), Room Revenue Loss, Highest Cancellation Country (Not available until supplied). No guessed country ranking or currency/data changes.

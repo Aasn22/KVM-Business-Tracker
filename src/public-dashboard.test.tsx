@@ -6,10 +6,13 @@ describe("public read-only dashboard", () => {
   it("opens the dashboard with clear real-data labels and no login form", () => {
     vi.stubGlobal("window", { location: { pathname: "/" } });
     const html = renderToStaticMarkup(<App publicDemo />);
-    expect(html).toContain("Data maintained by Director of Revenue");
-    expect(html).toContain("Opera PMS: not connected");
-    expect(html).toContain("LAST UPDATE BY TEAM: DATE/TIME NOT AVAILABLE");
+    expect(html).toContain("Maintained by Revenue Director");
+    expect(html).toContain("Opera PMS not connected");
+    expect(html).toContain("Last update: Not available");
     expect(html).not.toContain("Live database from Opera");
+    expect(html).not.toContain("Data source details");
+    expect(html).not.toContain("WORKBOOK SNAPSHOT");
+    expect(html).toContain("compact-status");
     expect(html).not.toContain("Fictional figures");
     expect(html).toContain(
       "Commercial performance, from historical benchmarks to future targets.",

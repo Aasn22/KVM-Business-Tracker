@@ -2292,17 +2292,8 @@ fieldset {
   flex-shrink: 0;
   box-shadow: 0 0 0 3px #b423181a;
 }
-.update-indicator.available {
+.update-indicator.animated {
   animation: update-pulse 2s ease-in-out infinite;
-}
-.source-details {
-  margin-top: 4px;
-  color: #5f756c;
-  line-height: 1.6;
-}
-.source-details summary {
-  cursor: pointer;
-  text-decoration: underline;
 }
 @keyframes update-pulse {
   50% {
@@ -2310,7 +2301,7 @@ fieldset {
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .update-indicator.available {
+  .update-indicator.animated {
     animation: none;
   }
 }
@@ -2333,4 +2324,42 @@ fieldset {
 .mode-copy > svg {
   vertical-align: middle;
   margin-right: 6px;
+}
+
+/* One compact, truthful status line; wraps naturally on small screens. */
+.mode-banner.compact-status {
+  padding: 6px 10px;
+  gap: 4px 14px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  font-size: 10px;
+}
+.compact-status .mode-copy {
+  flex: 1 1 300px;
+  line-height: 1.5;
+}
+.compact-status .mode-copy > svg {
+  width: 12px;
+  height: 12px;
+}
+.compact-status > .last-update {
+  flex: 0 1 auto;
+  margin-left: auto;
+  font-size: 10px;
+  line-height: 1.5;
+  font-weight: 600;
+  text-transform: none;
+  gap: 6px;
+}
+.compact-status .update-indicator {
+  width: 6px;
+  height: 6px;
+}
+@media (max-width: 600px) {
+  .compact-status > .last-update {
+    margin-left: 0;
+    justify-content: flex-start;
+    text-align: left;
+  }
 }

@@ -8,7 +8,7 @@ export function lastSavedUpdate(entries: Entry[]) {
   return new Date(Math.max(...values)).toISOString();
 }
 export function formatUpdate(iso: string | null, local = false) {
-  const unavailable = `LAST UPDATE BY ${local ? "THIS BROWSER" : "TEAM"}: DATE/TIME NOT AVAILABLE`;
+  const unavailable = `Last update${local ? " (local)" : ""}: Not available`;
   if (!iso) return unavailable;
   const date = new Date(iso);
   if (!Number.isFinite(date.getTime())) return unavailable;
@@ -16,8 +16,6 @@ export function formatUpdate(iso: string | null, local = false) {
     dateStyle: "medium",
     timeStyle: "short",
     timeZone: "UTC",
-  })
-    .format(date)
-    .toUpperCase();
-  return `LAST UPDATE BY ${local ? "THIS BROWSER" : "TEAM"}: ${stamp} UTC`;
+  }).format(date);
+  return `Last update${local ? " (local)" : ""}: ${stamp} UTC`;
 }

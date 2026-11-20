@@ -77,9 +77,6 @@ export default function App({
   localPin?: boolean;
 }) {
   const demo = localPin || (!publicDemo && !db);
-  const [publicNotice, setPublicNotice] = useState(
-    "Loading published real budget figures…",
-  );
   const [publicUpdatedAt, setPublicUpdatedAt] = useState<string | null>(null);
   const [publicFeed, setPublicFeed] = useState(false);
   const [year, setYear] = useState(2027);
@@ -226,7 +223,6 @@ export default function App({
     if (publicDemo) {
       setEntries([]);
       setLoading(true);
-      setPublicNotice("Loading published real budget figures…");
       setPublicUpdatedAt(null);
       setPublicFeed(false);
       async function refreshPublic() {
@@ -234,16 +230,12 @@ export default function App({
           const result = await loadPublicBudgets(year);
           if (active) {
             setEntries(result.entries);
-            setPublicNotice(result.notice);
             setPublicUpdatedAt(result.lastUpdatedAt);
             setPublicFeed(result.databaseAvailable);
           }
         } catch (e) {
           if (active) {
             setError((e as Error).message);
-            setPublicNotice(
-              "Real figures unavailable. No demo values are shown.",
-            );
           }
         } finally {
           if (active) setLoading(false);
@@ -810,19 +802,15 @@ export default function App({
           </div>
         </header>
         <main>
-          <div className={`mode-banner ${demo ? "" : "live"}`}>
+          <div
+            className={`mode-banner ${demo ? "" : "live"} ${publicDemo || localPin ? "compact-status" : ""}`}
+          >
             <div className="mode-copy">
               <ShieldCheck size={15} />
               {publicDemo ? (
                 <>
-                  <strong>
-                    Data maintained by Director of Revenue &amp; Team.
-                  </strong>{" "}
-                  Opera PMS: not connected.
-                  <details className="source-details">
-                    <summary>Data source details</summary>
-                    {publicNotice}
-                  </details>
+                  Maintained by Revenue Director &amp; Team · Opera PMS not
+                  connected.
                 </>
               ) : localPin ? (
                 <>
@@ -849,21 +837,23 @@ export default function App({
             {publicDemo ? (
               <span className="last-update" role="status">
                 <span
-                  className={`update-indicator ${publicFeed ? "available" : ""}`}
+                  className="update-indicator animated"
+                  title={
+                    publicFeed
+                      ? "Saved database status; not an Opera live feed"
+                      : "Workbook snapshot; no live connection"
+                  }
                   aria-hidden="true"
                 />
                 {formatUpdate(publicUpdatedAt)}
-                <small>
-                  {publicFeed
-                    ? "SAVED DATA CHECKED EVERY 60 SECONDS · NOT OPERA LIVE"
-                    : "WORKBOOK SNAPSHOT · NOT A LIVE FEED"}
-                </small>
               </span>
             ) : localPin ? (
               <span className="last-update" role="status">
-                <span className="update-indicator" aria-hidden="true" />
+                <span
+                  className="update-indicator animated"
+                  aria-hidden="true"
+                />
                 {formatUpdate(lastSavedUpdate(entries), true)}
-                <small>LOCAL EDITS ONLY · NOT SHARED</small>
               </span>
             ) : demo ? (
               <button
@@ -1200,7 +1190,7 @@ export default function App({
               <div className="footer-note">
                 <ShieldCheck size={14} />{" "}
                 {publicDemo
-                  ? "Published real workbook figures. Database source status is shown above."
+                  ? "Published workbook figures; no Opera PMS connection."
                   : localPin
                     ? "Real workbook figures plus browser-local edits. Not a shared live feed."
                     : demo

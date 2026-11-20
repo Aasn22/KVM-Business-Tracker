@@ -21,11 +21,9 @@ describe("truthful update status and Other Markets", () => {
         entry(2, "2026-11-20T08:00:00Z"),
       ]),
     ).toBe("2026-11-20T08:00:00.000Z");
-    expect(formatUpdate(null)).toContain("NOT AVAILABLE");
-    expect(formatUpdate("2026-11-20T08:00:00Z")).toContain("20 NOV 2026");
-    expect(formatUpdate("2026-11-20T08:00:00Z", true)).toContain(
-      "THIS BROWSER",
-    );
+    expect(formatUpdate(null)).toContain("Not available");
+    expect(formatUpdate("2026-11-20T08:00:00Z")).toContain("20 Nov 2026");
+    expect(formatUpdate("2026-11-20T08:00:00Z", true)).toContain("(local)");
   });
   it("places Other Markets after Europe, initializes blank and aggregates entered data", () => {
     expect(markets.at(-1)?.id).toBe("other-markets");

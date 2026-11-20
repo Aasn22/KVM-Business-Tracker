@@ -102,3 +102,18 @@ export default function Entrance({ children }: { children: ReactNode }) {
     </>
   );
 }
+
+// The report route owns its single branded welcome; do not stack confidentiality before it.
+export function RouteEntrance({
+  pathname,
+  children,
+}: {
+  pathname: string;
+  children: ReactNode;
+}) {
+  return pathname === "/reports" ? (
+    <>{children}</>
+  ) : (
+    <Entrance>{children}</Entrance>
+  );
+}

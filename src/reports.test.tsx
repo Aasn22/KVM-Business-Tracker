@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { Workbook } from "exceljs";
 import { readFileSync } from "node:fs";
-import ReportLibrary, { VisualReport } from "./ReportLibrary";
+import ReportLibrary, { QuickReports, VisualReport } from "./ReportLibrary";
 import { blank, type Entry } from "./model";
 import {
   calculateReport,
@@ -15,6 +15,7 @@ import {
   type ReportRequest,
 } from "./reportEngine";
 import App from "./App";
+import { quickReports, quickReportPeriod } from "./quickReports";
 const request: ReportRequest = {
   type: "executive",
   year: 2027,
@@ -192,8 +193,8 @@ describe("executive saved-data reports", () => {
       />,
     );
     expect(html).toContain("report-welcome-logo");
-    expect(html).toContain("owners, leadership");
-    expect(html).toContain("Explore report library");
+    expect(html).not.toMatch(/owners|ownership/i);
+    expect(html).toContain("Explore Report Library");
     expect(reportTypes).toHaveLength(7);
     vi.stubGlobal("window", { location: { pathname: "/reports" } });
     const app = renderToStaticMarkup(<App publicDemo />);
@@ -223,5 +224,56 @@ describe("executive saved-data reports", () => {
     expect(w.getWorksheet("Snapshot")!.getCell("B3").value).toBe(
       "Test saved input",
     );
+  });
+  it("renders the twelve supplied reports as compact icon shortcuts without oversized cards", () => {
+    const expected = [
+      "Hotel Performance Reports",
+      "Business Pace Reports",
+      "Market Segment Reports",
+      "Sales Performance Reports",
+      "Meal Plan Reports",
+      "Villa Type Performance Reports",
+      "Market Performance Reports",
+      "Country Performance Reports",
+      "Cancellation Reports",
+      "Monthly Reports",
+      "Quarterly Reports",
+      "Yearly Reports",
+    ];
+    expect(quickReports.map((r) => r.title)).toEqual(expected);
+    const html = renderToStaticMarkup(
+      <QuickReports group="All" loading={false} onSelect={() => {}} />,
+    );
+    expect(html).toContain("QUICK REPORTS");
+    expect(html.match(/class="quick-report-button"/g)).toHaveLength(12);
+    expect(html.match(/<svg/g)).toHaveLength(12);
+    expect(html).not.toContain("report-category-card");
+    for (const name of expected) expect(html).toContain(name);
+  });
+  it("discloses unavailable inputs and does not map segment, sales or cancellation to fabricated data", () => {
+    for (const id of ["segment", "sales", "cancellation"]) {
+      const r = quickReports.find((q) => q.id === id)!;
+      expect(r.type).toBeUndefined();
+      expect(r.unavailable).toContain("not collected");
+    }
+    const pace = quickReports.find((q) => q.id === "pace")!;
+    expect(pace.limitation).toContain("true pickup");
+    const report = calculateReport([entry()], {
+      ...request,
+      limitation: pace.limitation,
+    });
+    expect(renderToStaticMarkup(<VisualReport report={report} />)).toContain(
+      "true pickup",
+    );
+    expect(reportTables(report)[0].rows.flat()).toContain(pace.limitation);
+  });
+  it("applies month/quarter/year shortcuts without confusing annual and monthly periods", () => {
+    expect(quickReportPeriod("month", "year")).toBe("1");
+    expect(quickReportPeriod("month", "8")).toBe("8");
+    expect(quickReportPeriod("quarter", "8")).toBe("q3");
+    expect(quickReportPeriod("quarter", "q4")).toBe("q4");
+    expect(quickReportPeriod("quarter", "year")).toBe("q1");
+    expect(quickReportPeriod("year", "8")).toBe("year");
+    expect(quickReportPeriod(undefined, "q2")).toBe("q2");
   });
 });

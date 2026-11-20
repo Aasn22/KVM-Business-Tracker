@@ -1,6 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
-import Entrance, { ConfidentialityNotice, entranceDuration } from "./Entrance";
+import Entrance, {
+  ConfidentialityNotice,
+  entranceDuration,
+  RouteEntrance,
+} from "./Entrance";
 describe("branded entrance", () => {
   it("renders transparent logo on entrance and makes underlying content inert", () => {
     const html = renderToStaticMarkup(
@@ -27,5 +31,22 @@ describe("branded entrance", () => {
   });
   it("uses a short finite welcome duration", () => {
     expect(entranceDuration).toBe(2400);
+  });
+  it("does not stack the platform confidentiality gate before the report welcome", () => {
+    const html = renderToStaticMarkup(
+      <RouteEntrance pathname="/reports">
+        <p>Report welcome</p>
+      </RouteEntrance>,
+    );
+    expect(html).toContain("Report welcome");
+    expect(html).not.toContain("entrance-screen");
+    expect(html).not.toContain("inert");
+    const root = renderToStaticMarkup(
+      <RouteEntrance pathname="/">
+        <p>Dashboard</p>
+      </RouteEntrance>,
+    );
+    expect(root).toContain("entrance-screen");
+    expect(root).toContain('inert=""');
   });
 });

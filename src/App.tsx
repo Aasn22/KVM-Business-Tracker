@@ -956,7 +956,7 @@ export default function App({
                           : view === "overview"
                             ? "A unified executive view of property budgets, market pace, and revenue forecasts."
                             : view === "reports"
-                              ? "Visual intelligence for owners, leadership and revenue teams."
+                              ? "Visual intelligence for leadership and revenue teams."
                               : view === "activity"
                                 ? "Traceable updates across your connected markets."
                                 : "Connect secure accounts and bring your spreadsheets to life."}

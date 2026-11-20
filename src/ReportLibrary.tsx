@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
-  ArrowUpRight,
   BarChart3,
   Building2,
   CalendarDays,
@@ -11,11 +10,16 @@ import {
   Globe2,
   Layers,
   PieChart,
+  BriefcaseBusiness,
+  ChartNoAxesCombined,
+  CircleX,
+  Hotel,
   Play,
   Printer,
   X,
 } from "lucide-react";
 import { markets, months, type Entry } from "./model";
+import { quickReports, quickReportPeriod } from "./quickReports";
 import {
   reportTypes,
   generateReport,
@@ -26,15 +30,67 @@ import {
   type ReportSnapshot,
   type ReportMetric,
 } from "./reportEngine";
-const icons = {
-  executive: PieChart,
-  markets: Globe2,
-  monthly: CalendarDays,
-  nights: BarChart3,
-  villas: Building2,
-  countries: Globe2,
-  meals: Layers,
-};
+const quickIcons = [
+  Hotel,
+  ChartNoAxesCombined,
+  Layers,
+  BriefcaseBusiness,
+  Layers,
+  Building2,
+  BarChart3,
+  Globe2,
+  CircleX,
+  CalendarDays,
+  PieChart,
+  FileChartColumn,
+];
+export function QuickReports({
+  group,
+  loading,
+  onSelect,
+}: {
+  group: string;
+  loading: boolean;
+  onSelect: (id: string) => void;
+}) {
+  return (
+    <section className="quick-reports" aria-labelledby="quick-reports-heading">
+      <h3 id="quick-reports-heading">QUICK REPORTS</h3>
+      <p>
+        Select a shortcut. Period reports use your selected month/quarter;
+        otherwise January or Quarter 1. Yearly uses the full year.
+      </p>
+      <div className="quick-report-grid">
+        {quickReports
+          .filter((r) => {
+            if (group === "All") return true;
+            const type = reportTypes.find((t) => t.id === r.type);
+            return group === "Unavailable inputs"
+              ? !!r.unavailable
+              : type?.group === group;
+          })
+          .map((r) => {
+            const Icon = quickIcons[quickReports.indexOf(r)];
+            return (
+              <button
+                className="quick-report-button"
+                key={r.id}
+                disabled={loading}
+                onClick={() => onSelect(r.id)}
+                title={r.unavailable ? `${r.title}: inputs required` : r.title}
+              >
+                <Icon size={21} aria-hidden="true" />
+                <span>
+                  {r.title}
+                  {r.unavailable && <small>Inputs required</small>}
+                </span>
+              </button>
+            );
+          })}
+      </div>
+    </section>
+  );
+}
 const colors = [
   "#c5a46d",
   "#69b4aa",
@@ -404,6 +460,11 @@ export function VisualReport({ report }: { report: ReportSnapshot }) {
         BOB means bookings on the books, not realized revenue. This report does
         not estimate forecasts.
       </div>
+      {report.limitation && (
+        <div className="report-source-note">
+          <strong>Report scope:</strong> {report.limitation}
+        </div>
+      )}
       <div className="visual-kpis">
         {[report.revenue, report.nights, report.adr].map((r, i) => (
           <section key={r.label}>
@@ -433,7 +494,7 @@ export function VisualReport({ report }: { report: ReportSnapshot }) {
         <p>
           ADR is weighted revenue divided by room nights, not an average of
           market ADRs. Coverage and source definitions should be reviewed before
-          making ownership or pricing decisions.
+          making commercial or pricing decisions.
         </p>
       </section>
       <div className="visual-chart-grid">
@@ -520,6 +581,7 @@ export default function ReportLibrary({
     [snapshot, setSnapshot] = useState<ReportSnapshot | null>(null),
     [recent, setRecent] = useState<ReportSnapshot[]>([]),
     [exporting, setExporting] = useState(false);
+  const [inputNotice, setInputNotice] = useState<string | null>(null);
   const controller = useRef<AbortController | null>(null);
   useEffect(() => () => controller.current?.abort(), []);
   useEffect(() => {
@@ -528,8 +590,13 @@ export default function ReportLibrary({
     setStage(null);
     setSnapshot(null);
     setError("");
+    setInputNotice(null);
   }, [year]);
-  async function generate(selected: ReportType, custom = false) {
+  async function generate(
+    selected: ReportType,
+    custom = false,
+    quick?: { title: string; period: string; limitation?: string },
+  ) {
     if (stage !== null || loading) return;
     const current = new AbortController();
     controller.current = current;
@@ -540,11 +607,12 @@ export default function ReportLibrary({
         entries,
         {
           type: selected,
-          title: custom ? title : undefined,
+          title: quick?.title ?? (custom ? title : undefined),
           year,
           market,
-          period,
+          period: quick?.period ?? period,
           source,
+          limitation: quick?.limitation,
         },
         current.signal,
         setStage,
@@ -575,12 +643,12 @@ export default function ReportLibrary({
         <div className="eyebrow">KVM BUSINESS LENSE · EXECUTIVE REPORTING</div>
         <h2>Clarity for every commercial decision.</h2>
         <p>
-          Generate a visual snapshot of your saved performance. Designed for
-          owners, leadership and revenue teams.
+          Generate a visual snapshot of your saved performance. Clear
+          intelligence for leadership and revenue teams.
         </p>
         <button className="report-gold-button" onClick={() => setEntered(true)}>
           <Play size={16} />
-          Explore report library
+          Explore Report Library
         </button>
         <small>
           Budgets · market pace · room nights · category performance
@@ -718,7 +786,13 @@ export default function ReportLibrary({
                 value={group}
                 onChange={(e) => setGroup(e.target.value)}
               >
-                {["All", "Executive", "Revenue", "Breakdowns"].map((g) => (
+                {[
+                  "All",
+                  "Executive",
+                  "Revenue",
+                  "Breakdowns",
+                  "Unavailable inputs",
+                ].map((g) => (
                   <option key={g}>{g}</option>
                 ))}
               </select>
@@ -740,7 +814,7 @@ export default function ReportLibrary({
               <input
                 aria-label="Custom report title"
                 maxLength={100}
-                placeholder="e.g. Ownership commercial review"
+                placeholder="e.g. Monthly commercial review"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
               />
@@ -770,31 +844,37 @@ export default function ReportLibrary({
           {loading && (
             <p role="status">Loading saved data before generation…</p>
           )}
-          <div className="report-card-grid">
-            {reportTypes
-              .filter((t) => group === "All" || t.group === group)
-              .map((t) => {
-                const Icon = icons[t.id];
-                return (
-                  <button
-                    className="report-category-card"
-                    key={t.id}
-                    disabled={loading}
-                    onClick={() => void generate(t.id)}
-                  >
-                    <span className="report-category-icon">
-                      <Icon size={30} />
-                    </span>
-                    <small>{t.group}</small>
-                    <h3>{t.title}</h3>
-                    <p>{t.description}</p>
-                    <span className="report-card-action">
-                      Generate snapshot <ArrowUpRight size={16} />
-                    </span>
-                  </button>
-                );
-              })}
-          </div>
+          <QuickReports
+            group={group}
+            loading={loading}
+            onSelect={(id) => {
+              const quick = quickReports.find((r) => r.id === id)!;
+              if (quick.unavailable) {
+                setInputNotice(`${quick.title}: ${quick.unavailable}`);
+                return;
+              }
+              setInputNotice(null);
+              const quickPeriod = quickReportPeriod(quick.periodMode, period);
+              setPeriod(quickPeriod);
+              void generate(quick.type!, false, {
+                title: quick.title,
+                period: quickPeriod,
+                limitation: quick.limitation,
+              });
+            }}
+          />
+          {inputNotice && (
+            <section className="report-input-notice" role="status">
+              <h3>Additional inputs required</h3>
+              <p>{inputNotice}</p>
+              <button
+                className="report-outline-button"
+                onClick={() => setInputNotice(null)}
+              >
+                Dismiss
+              </button>
+            </section>
+          )}
           {recent.length > 0 && (
             <section className="report-recent">
               <h3>Generated this visit</h3>

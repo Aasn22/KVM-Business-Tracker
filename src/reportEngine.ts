@@ -68,6 +68,7 @@ export type ReportSnapshot = {
   market: string;
   period: string;
   source: string;
+  limitation?: string;
   generatedAt: string;
   lastUpdatedAt: string | null;
   entries: Entry[];
@@ -88,6 +89,7 @@ export type ReportRequest = {
   market: string;
   period: string;
   source: string;
+  limitation?: string;
 };
 export function captureReport(entries: Entry[], request: ReportRequest) {
   if (
@@ -282,6 +284,7 @@ export function reportTables(report: ReportSnapshot) {
         [report.title],
         ["Generated (UTC)", report.generatedAt],
         ["Source", report.source],
+        ["Report scope", report.limitation ?? "Saved source figures only"],
         ["Year", report.year],
         ["Market", report.market],
         ["Period", periodLabel(report.period)],

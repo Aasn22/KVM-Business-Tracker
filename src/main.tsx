@@ -1,21 +1,22 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
-import Entrance from "./Entrance";
+import { RouteEntrance } from "./Entrance";
 import PinShell from "./PinShell";
 import "./style.css";
+const platform = ["/", "/business-insight", "/reports"].includes(
+  window.location.pathname,
+) ? (
+  <App publicDemo />
+) : (
+  <PinShell>
+    <App localPin />
+  </PinShell>
+);
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <Entrance>
-      {["/", "/business-insight", "/reports"].includes(
-        window.location.pathname,
-      ) ? (
-        <App publicDemo />
-      ) : (
-        <PinShell>
-          <App localPin />
-        </PinShell>
-      )}
-    </Entrance>
+    <RouteEntrance pathname={window.location.pathname}>
+      {platform}
+    </RouteEntrance>
   </React.StrictMode>,
 );

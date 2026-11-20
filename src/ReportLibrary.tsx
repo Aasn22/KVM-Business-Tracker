@@ -555,10 +555,8 @@ export default function ReportLibrary({
   year,
   source,
   loading,
-  localDataEnabled = false,
   onYearChange,
 }: {
-  localDataEnabled?: boolean;
   onYearChange?: (year: number) => void;
   entries: Entry[];
   year: number;
@@ -892,12 +890,6 @@ export default function ReportLibrary({
             onSelect={(id) => {
               const quick = quickReports.find((r) => r.id === id)!;
               if (quick.operational) {
-                if (!localDataEnabled) {
-                  setInputNotice(
-                    "These uploads are browser-local and PIN protected. Open Data Input, enter your name and PIN, then use Reports Library inside that session. No uploaded private rows are read on this public page.",
-                  );
-                  return;
-                }
                 setOperational(quick.operational);
                 return;
               }

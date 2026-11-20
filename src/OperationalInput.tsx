@@ -1,9 +1,9 @@
+import { publishOperationBatch } from "./sharedOperations";
 import DatePicker from "./DatePicker";
 import { useEffect, useState } from "react";
 import { Upload, Save, X } from "lucide-react";
 import { parseOperationFile } from "./operationParser";
 import {
-  saveOperationBatch,
   readOperations,
   operationChanged,
   operationTotals,
@@ -63,11 +63,13 @@ function InputBox({
       onBusyChange(false);
     }
   }
-  function save() {
+  async function save() {
     if (!pending || !actor) return;
     setError("");
+    setBusy(true);
+    onBusyChange(true);
     try {
-      saveOperationBatch(localStorage, {
+      await publishOperationBatch({
         ...pending,
         savedAt: new Date().toISOString(),
       });
@@ -83,11 +85,14 @@ function InputBox({
           "Data saved, but the browser activity log could not be updated.",
         );
       setMessage(
-        `${pending.rows.length} source rows saved in this browser. Separate activity reports are updated; BOB and market totals unchanged.`,
+        `${pending.rows.length} source rows published. Anyone can generate related activity reports. BOB and market totals unchanged.`,
       );
       setPending(null);
     } catch (e) {
       setError((e as Error).message);
+    } finally {
+      setBusy(false);
+      onBusyChange(false);
     }
   }
   function template() {
@@ -164,15 +169,21 @@ function InputBox({
             to {pending.to}
           </p>
           <ul>
-            {pending.warnings.map((w) => (
-              <li key={w}>{w}</li>
-            ))}
+            {pending.warnings
+              .filter((w) => !w.startsWith("Saved locally"))
+              .map((w) => (
+                <li key={w}>{w}</li>
+              ))}
           </ul>
           <OperationTable rows={pending.rows} kind={kind} />
           <div className="editor-actions">
-            <button className="button primary" disabled={!actor} onClick={save}>
+            <button
+              className="button primary"
+              disabled={!actor || busy}
+              onClick={save}
+            >
               <Save size={16} />
-              Save activity data
+              Publish activity data
             </button>
             <button className="button outline" onClick={() => setPending(null)}>
               <X size={16} />
@@ -197,17 +208,69 @@ export default function OperationalInput({
         highlighted fields; no guest names, confirmation numbers or staff names
         are stored. No BOB or market balance updates.
       </p>
+      <LegacyPublications />
       <div className="operation-input-grid">
         <InputBox kind="cancellations" onBusyChange={onBusyChange} />
         <InputBox kind="reservations" onBusyChange={onBusyChange} />
       </div>
       <p>
-        Browser-local datasets: users on other devices cannot see these imports.
-        Use Reports Library from this named admin session for cancellation and
-        reservations-entered reports. Overlapping date ranges are blocked to
+        Publishing makes approved activity fields publicly reportable across
+        devices. PIN is required only to upload/publish, not to generate
+        reports. Shared storage setup must be active; failed publishing is never
+        reported as a shared save. Overlapping date ranges are blocked to
         prevent double-counting. Reservations entered is not the same as all
         bookings confirmed.
       </p>
+    </section>
+  );
+}
+
+function LegacyPublications() {
+  const [batches, setBatches] = useState<
+      import("./operational").OperationBatch[]
+    >([]),
+    [message, setMessage] = useState(""),
+    [busy, setBusy] = useState(false);
+  useEffect(() => {
+    try {
+      setBatches(readOperations(localStorage));
+    } catch (e) {
+      setMessage((e as Error).message);
+    }
+  }, []);
+  if (!batches.length) return message ? <p role="alert">{message}</p> : null;
+  return (
+    <section className="panel operation-input">
+      <h3>Publish previous browser uploads</h3>
+      <p>
+        Older imports are not automatically shared. Publish each reviewed batch
+        to make it available to everyone. No guest or staff names are included.
+      </p>
+      {batches.map((b) => (
+        <div key={b.id}>
+          <span>
+            {b.kind} · {b.from} to {b.to} · {b.rows.length} rows
+          </span>
+          <button
+            className="button outline"
+            disabled={busy}
+            onClick={async () => {
+              setBusy(true);
+              try {
+                await publishOperationBatch(b);
+                setMessage("Published for public reports.");
+              } catch (e) {
+                setMessage((e as Error).message);
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            Publish this import
+          </button>
+        </div>
+      ))}
+      {message && <p role="status">{message}</p>}
     </section>
   );
 }

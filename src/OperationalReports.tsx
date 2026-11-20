@@ -1,3 +1,4 @@
+import { loadSharedOperations } from "./sharedOperations";
 import DatePicker from "./DatePicker";
 import { useEffect, useState } from "react";
 import { Download, Printer, X } from "lucide-react";
@@ -70,7 +71,9 @@ export default function OperationalReports({
       at: string;
       from: string;
       to: string;
+      source: string;
     } | null>(null);
+  const [generating, setGenerating] = useState(false);
   useEffect(() => {
     function refresh() {
       try {
@@ -129,8 +132,9 @@ export default function OperationalReports({
           : "Reservations Confirmed Reports"}
       </h2>
       <p>
-        Separate daily activity dataset · Saved in this browser only. No effect
-        on BOB, market budgets or other devices.
+        Public activity reports · No PIN required to view or generate. Admin
+        uploads publish to shared report storage once configured. BOB and market
+        budgets remain separate.
       </p>
       {kind === "reservations" && (
         <p>
@@ -154,31 +158,55 @@ export default function OperationalReports({
         </label>
         <button
           className="report-gold-button"
-          onClick={() => {
+          disabled={generating}
+          onClick={async () => {
             setError("");
             if (!from || !to || from > to) {
               setError("Choose a valid activity date range.");
               return;
             }
-            const selected = saved.filter(
-              (r) => r.eventDate >= from && r.eventDate <= to,
-            );
-            if (!selected.length) {
-              setError(
-                "No saved uploaded rows for this range on this browser. Import and save a report in Data Input first.",
-              );
+            setGenerating(true);
+            try {
+              let selected: OperationRow[],
+                source = "Published shared uploads";
+              try {
+                selected = await loadSharedOperations(kind, from, to);
+              } catch (e) {
+                selected = saved.filter(
+                  (r) => r.eventDate >= from && r.eventDate <= to,
+                );
+                if (!selected.length) throw e;
+                source =
+                  "This browser's unpublished legacy uploads only — not shared across devices";
+                setError(
+                  `Shared report storage unavailable. Showing this browser's local data only. ${(e as Error).message}`,
+                );
+              }
+              if (!selected.length) {
+                setReport(null);
+                setError(
+                  "No published uploads for this date range. An admin must publish the report first.",
+                );
+                return;
+              }
+              setReport({
+                rows: structuredClone(selected),
+                at: new Date().toISOString(),
+                from,
+                to,
+                source,
+              });
+            } catch (e) {
               setReport(null);
-              return;
+              setError((e as Error).message);
+            } finally {
+              setGenerating(false);
             }
-            setReport({
-              rows: structuredClone(selected),
-              at: new Date().toISOString(),
-              from,
-              to,
-            });
           }}
         >
-          Generate activity report
+          {generating
+            ? "Loading published report…"
+            : "Generate activity report"}
         </button>
       </div>
       {error && (
@@ -189,7 +217,8 @@ export default function OperationalReports({
       {report && (
         <>
           <p>
-            Snapshot generated {report.at} · {report.from} to {report.to}
+            Snapshot generated {report.at} · {report.from} to {report.to} ·{" "}
+            {report.source}
           </p>
           <CancellationSummary kind={kind} rows={rows} />
           <section className="visual-panel">

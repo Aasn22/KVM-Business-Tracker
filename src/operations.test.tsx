@@ -233,7 +233,7 @@ describe("separate operational activity imports", () => {
       <OperationalReports kind="reservations" onClose={() => {}} />,
     );
     expect(report).toContain("Not every row");
-    expect(report).toContain("browser only");
+    expect(report).toContain("No PIN required");
     const table = renderToStaticMarkup(
       <OperationTable rows={[cancel]} kind="cancellations" />,
     );

@@ -31,11 +31,11 @@ describe("print layout and cancellation presentation", () => {
     ])
       expect(html).toContain(label);
   });
-  it("provides a visible accessible calendar trigger as well as native date input", () => {
+  it("provides a visible accessible calendar trigger with no editable date input", () => {
     const html = renderToStaticMarkup(
       <DatePicker label="From date" value="2026-11-19" onChange={() => {}} />,
     );
-    expect(html).toContain('type="date"');
+    expect(html).not.toContain("<input");
     expect(html).toContain('aria-label="Open calendar for From date"');
     expect(html).toContain('type="button"');
   });

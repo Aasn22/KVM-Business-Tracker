@@ -1741,7 +1741,6 @@ export default function App({
           {view === "reports" && !countryOnly && (
             <ReportLibrary
               onYearChange={setYear}
-              localDataEnabled={localPin}
               entries={entries}
               year={year}
               loading={loading}

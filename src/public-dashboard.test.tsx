@@ -6,7 +6,10 @@ describe("public read-only dashboard", () => {
   it("opens the dashboard with clear real-data labels and no login form", () => {
     vi.stubGlobal("window", { location: { pathname: "/" } });
     const html = renderToStaticMarkup(<App publicDemo />);
-    expect(html).toContain("Public real-budget review");
+    expect(html).toContain("Data maintained by Director of Revenue");
+    expect(html).toContain("Opera PMS: not connected");
+    expect(html).toContain("LAST UPDATE BY TEAM: DATE/TIME NOT AVAILABLE");
+    expect(html).not.toContain("Live database from Opera");
     expect(html).not.toContain("Fictional figures");
     expect(html).toContain(
       "Commercial performance, from historical benchmarks to future targets.",
@@ -26,7 +29,7 @@ describe("public read-only dashboard", () => {
     );
     const order = [
       "PORTAL",
-      "Flash Report",
+      "Commercial Pulse",
       "Management Review",
       "Reports",
       "YOUR MARKETS",

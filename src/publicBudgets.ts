@@ -1,14 +1,25 @@
+import { lastSavedUpdate } from "./updateStatus";
 import { validData, type Entry } from "./model";
-export type PublicBudgets = { entries: Entry[]; notice: string };
+export type PublicBudgets = {
+  entries: Entry[];
+  notice: string;
+  lastUpdatedAt: string | null;
+  databaseAvailable: boolean;
+};
 function readEntries(value: unknown, year: number): Entry[] {
   if (!Array.isArray(value)) throw Error("Invalid budget response");
   return value
     .filter(
       (e) =>
         e?.year === year &&
-        ["asia", "america", "middle-east", "russia", "europe"].includes(
-          e.market_id,
-        ) &&
+        [
+          "asia",
+          "america",
+          "middle-east",
+          "russia",
+          "europe",
+          "other-markets",
+        ].includes(e.market_id) &&
         Number.isInteger(e.month) &&
         e.month >= 1 &&
         e.month <= 12 &&
@@ -38,6 +49,8 @@ export async function loadPublicBudgets(year: number): Promise<PublicBudgets> {
     saved.forEach((e) => records.set(`${e.market_id}:${e.month}`, e));
     return {
       entries: [...records.values()],
+      lastUpdatedAt: lastSavedUpdate(saved),
+      databaseAvailable: true,
       notice: saved.length
         ? `${saved.length} saved database months loaded${baseline.length > saved.length ? "; remaining months use published workbook figures" : ""}.`
         : baseline.length
@@ -47,6 +60,8 @@ export async function loadPublicBudgets(year: number): Promise<PublicBudgets> {
   } catch {
     return {
       entries: baseline,
+      lastUpdatedAt: null,
+      databaseAvailable: false,
       notice: baseline.length
         ? "Published 2027 workbook figures. Live database updates could not be verified; these figures are not a live feed."
         : "Live database unavailable and no workbook figures supplied for this year.",

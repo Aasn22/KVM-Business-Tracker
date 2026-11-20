@@ -59,7 +59,7 @@ export function totalReview(entries: Entry[], year: number, period: string) {
   );
   const coverage = `${sources.length}/${expected} market-month records available`;
   const complete = expected > 0 && missing.length === 0;
-  const notice = `${complete ? "Complete five-market coverage" : "Partial total — missing or inaccessible market data"}. ${coverage}. Only saved records accessible to your account are included; no missing values are estimated.`;
+  const notice = `${complete ? "Complete market coverage" : "Partial total — missing or inaccessible market data"}. ${coverage}. Only saved records accessible to your account are included; no missing values are estimated.`;
   const monthly: Entry[] = expectedMonths.flatMap((month) => {
     const records = sources.filter((e) => e.month === month);
     return records.length

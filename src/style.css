@@ -2261,3 +2261,76 @@ fieldset {
     flex-wrap: wrap;
   }
 }
+
+.mode-banner > .last-update {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  color: #b42318;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  text-align: right;
+  flex: 0 1 330px;
+  line-height: 1.6;
+}
+.last-update small {
+  display: block;
+  flex-basis: 100%;
+  font-size: 9px;
+  color: #b42318;
+  font-weight: 600;
+}
+.update-indicator {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #b42318;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 3px #b423181a;
+}
+.update-indicator.available {
+  animation: update-pulse 2s ease-in-out infinite;
+}
+.source-details {
+  margin-top: 4px;
+  color: #5f756c;
+  line-height: 1.6;
+}
+.source-details summary {
+  cursor: pointer;
+  text-decoration: underline;
+}
+@keyframes update-pulse {
+  50% {
+    box-shadow: 0 0 0 5px #b423180d;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .update-indicator.available {
+    animation: none;
+  }
+}
+@media (max-width: 800px) {
+  .mode-banner > .last-update {
+    flex-basis: 100%;
+    justify-content: flex-start;
+    text-align: left;
+  }
+  .mode-banner > .last-update > .update-indicator {
+    display: inline-block;
+  }
+}
+.mode-copy {
+  display: block;
+  line-height: 1.7;
+  flex: 1 1 350px;
+  min-width: 0;
+}
+.mode-copy > svg {
+  vertical-align: middle;
+  margin-right: 6px;
+}

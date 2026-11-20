@@ -88,8 +88,7 @@ export function managementReport(
   return {
     year,
     market,
-    scope:
-      market === "all" ? "All five markets" : (known[0]?.name ?? "No market"),
+    scope: market === "all" ? "All markets" : (known[0]?.name ?? "No market"),
     sources,
     periods,
     annual: periods[periods.length - 1],

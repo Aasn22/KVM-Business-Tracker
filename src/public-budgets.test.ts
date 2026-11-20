@@ -38,11 +38,15 @@ describe("published actual budgets", () => {
     const result = await loadPublicBudgets(2027);
     expect(result.entries).toHaveLength(60);
     expect(result.notice).toContain("not a live feed");
+    expect(result.lastUpdatedAt).toBeNull();
+    expect(result.databaseAvailable).toBe(false);
   });
   it("overlays saved months on actual workbook months and strips notes", async () => {
     const entry = structuredClone(baseline.entries[0]);
     entry.data.commercial[1].bob += 1;
     entry.data.notes = "Private staff note";
+    entry.version = 1;
+    entry.updated_at = "2026-11-20T07:00:00Z";
     vi.stubGlobal(
       "fetch",
       vi
@@ -57,6 +61,8 @@ describe("published actual budgets", () => {
     expect(result.entries).toHaveLength(60);
     expect(result.entries[0].data.notes).toBe("");
     expect(result.notice).toContain("1 saved database months");
+    expect(result.lastUpdatedAt).toBe("2026-11-20T07:00:00.000Z");
+    expect(result.databaseAvailable).toBe(true);
   });
   it("does not invent historical data", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false }));

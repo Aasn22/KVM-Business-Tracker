@@ -186,7 +186,7 @@ export default function TotalReview({
               setMessage("");
             }}
           >
-            <option value="all">All five markets</option>
+            <option value="all">All markets</option>
             {markets.map((m) => (
               <option value={m.id} key={m.id}>
                 {m.name}

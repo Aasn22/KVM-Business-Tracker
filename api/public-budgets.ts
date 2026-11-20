@@ -35,7 +35,14 @@ export default async function handler(
       .from("market_months")
       .select("market_id,year,month,data,version,updated_at")
       .eq("year", year)
-      .in("market_id", ["asia", "america", "middle-east", "russia", "europe"]);
+      .in("market_id", [
+        "asia",
+        "america",
+        "middle-east",
+        "russia",
+        "europe",
+        "other-markets",
+      ]);
     if (result.error) throw result.error;
     // Explicit numeric section allowlist. Never publish notes, team, Auth data, audits or property settings.
     const entries = (result.data ?? []).map((e) => ({

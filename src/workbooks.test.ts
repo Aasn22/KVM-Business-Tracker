@@ -48,6 +48,16 @@ async function fixture(
   return new File([buffer], "test.xlsx");
 }
 describe("Excel imports", () => {
+  it("imports Other Markets through the same twelve-month pipeline", async () => {
+    const entries = await importWorkbook(
+      await fixture("OTHER MARKETS"),
+      "other-markets",
+      2027,
+      [],
+    );
+    expect(entries).toHaveLength(12);
+    expect(entries.every((e) => e.market_id === "other-markets")).toBe(true);
+  });
   it("imports Europe and rejects it for another market", async () => {
     const file = await fixture("EUROPE");
     const entries = await importWorkbook(file, "europe", 2027, []);

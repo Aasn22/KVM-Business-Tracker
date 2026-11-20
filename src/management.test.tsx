@@ -10,10 +10,10 @@ import {
 import { exportManagementReport } from "./managementExport";
 import TotalReview from "./TotalReview";
 describe("spreadsheet management report", () => {
-  it("derives each month, quarter and year from the same five-market records", () => {
+  it("derives each month, quarter and year from the same six-market records", () => {
     const entries = makeDemo(2027);
     const r = managementReport(entries, 2027);
-    expect(r.annual.count).toBe(60);
+    expect(r.annual.count).toBe(72);
     expect(r.annual.complete).toBe(true);
     expect(r.commercial("year", "Room Revenue").budget).toBe(
       entries.reduce((s, e) => s + e.data.commercial[1].budget, 0),
@@ -50,7 +50,7 @@ describe("spreadsheet management report", () => {
     const e = makeDemo(2027).filter((v) => v.month === 1);
     e.forEach((v) => (v.data.villas = [row("Shared Villa", 10, 5)]));
     const r = managementReport([...e, ...e], 2027);
-    expect(r.values("1", "villas", "Shared Villa").budget).toBe(50);
+    expect(r.values("1", "villas", "Shared Villa").budget).toBe(60);
     expect(r.values("2", "villas", "Shared Villa").budget).toBeNull();
   });
   it("uses weighted ADR and no available rate when room nights are zero", () => {

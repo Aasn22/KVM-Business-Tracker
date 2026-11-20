@@ -4,11 +4,11 @@ begin;
 create table public.app_admins (user_id uuid primary key references auth.users(id) on delete cascade);
 create table public.market_members (
  user_id uuid references auth.users(id) on delete cascade,
- market_id text check (market_id in ('asia','america','middle-east','russia','europe')),
+ market_id text check (market_id in ('asia','america','middle-east','russia','europe','other-markets')),
  primary key (user_id, market_id)
 );
 create table public.market_months (
- market_id text not null check (market_id in ('asia','america','middle-east','russia','europe')),
+ market_id text not null check (market_id in ('asia','america','middle-east','russia','europe','other-markets')),
  year integer not null check (year between 2020 and 2100),
  month integer not null check (month between 1 and 12),
  data jsonb not null,
@@ -180,7 +180,7 @@ create table if not exists public.team_directory (
  role text not null check(role in ('Read-Only','Admin','Super Admin')),
  scope text not null check(scope in ('all','markets','india','kazakhstan')),
  markets text[] not null default '{}', version integer not null default 1,
- check(role='Read-Only' or scope='all'), check(markets <@ array['asia','america','middle-east','russia','europe']::text[])
+ check(role='Read-Only' or scope='all'), check(markets <@ array['asia','america','middle-east','russia','europe','other-markets']::text[])
 );
 alter table public.team_directory enable row level security;
 revoke all on public.team_directory from anon,authenticated;

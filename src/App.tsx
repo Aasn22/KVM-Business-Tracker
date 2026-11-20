@@ -49,6 +49,7 @@ import PropertySetup from "./PropertySetup";
 import CountryPerformance from "./CountryPerformance";
 import SignInPage from "./SignInPage";
 import { loadPublicBudgets } from "./publicBudgets";
+import { formatUpdate, lastSavedUpdate } from "./updateStatus";
 const money = (n: number) =>
   new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -79,6 +80,8 @@ export default function App({
   const [publicNotice, setPublicNotice] = useState(
     "Loading published real budget figures…",
   );
+  const [publicUpdatedAt, setPublicUpdatedAt] = useState<string | null>(null);
+  const [publicFeed, setPublicFeed] = useState(false);
   const [year, setYear] = useState(2027);
   const [entries, setEntries] = useState<Entry[]>([]);
   const [session, setSession] = useState<Session | null>(null);
@@ -224,12 +227,16 @@ export default function App({
       setEntries([]);
       setLoading(true);
       setPublicNotice("Loading published real budget figures…");
+      setPublicUpdatedAt(null);
+      setPublicFeed(false);
       async function refreshPublic() {
         try {
           const result = await loadPublicBudgets(year);
           if (active) {
             setEntries(result.entries);
             setPublicNotice(result.notice);
+            setPublicUpdatedAt(result.lastUpdatedAt);
+            setPublicFeed(result.databaseAvailable);
           }
         } catch (e) {
           if (active) {
@@ -529,7 +536,7 @@ export default function App({
   }
   const visibleMarkets = markets;
   const noAccess =
-    !!session && !loading && !entries.some((e) => e.market_id === market);
+    !loading && !!market && !entries.some((e) => e.market_id === market);
   return (
     <div className="app">
       <aside
@@ -562,7 +569,7 @@ export default function App({
         <nav className="total-nav" aria-label="Portal">
           <button
             className={view === "overview" && !market ? "active" : ""}
-            aria-label="Flash Report"
+            aria-label="Commercial Pulse"
             aria-current={view === "overview" && !market ? "page" : undefined}
             onClick={() =>
               navigate(() => {
@@ -571,7 +578,7 @@ export default function App({
               })
             }
           >
-            Flash Report
+            Commercial Pulse
           </button>
           <button
             className={view === "total" ? "active" : ""}
@@ -766,7 +773,7 @@ export default function App({
             <strong>
               {selected?.name ??
                 {
-                  overview: "Flash Report",
+                  overview: "Commercial Pulse",
                   total: "Management Review",
                   admin: "Data Input",
                   property: "Property Setup",
@@ -804,11 +811,18 @@ export default function App({
         </header>
         <main>
           <div className={`mode-banner ${demo ? "" : "live"}`}>
-            <span>
+            <div className="mode-copy">
               <ShieldCheck size={15} />
               {publicDemo ? (
                 <>
-                  <strong>Public real-budget review</strong> · {publicNotice}
+                  <strong>
+                    Data maintained by Director of Revenue &amp; Team.
+                  </strong>{" "}
+                  Opera PMS: not connected.
+                  <details className="source-details">
+                    <summary>Data source details</summary>
+                    {publicNotice}
+                  </details>
                 </>
               ) : localPin ? (
                 <>
@@ -831,13 +845,26 @@ export default function App({
                     : "Sign in to see or update budget figures."}
                 </>
               )}
-            </span>
+            </div>
             {publicDemo ? (
-              <a href="/admin-data-input">
-                Data Input <ArrowUpRight size={13} />
-              </a>
+              <span className="last-update" role="status">
+                <span
+                  className={`update-indicator ${publicFeed ? "available" : ""}`}
+                  aria-hidden="true"
+                />
+                {formatUpdate(publicUpdatedAt)}
+                <small>
+                  {publicFeed
+                    ? "SAVED DATA CHECKED EVERY 60 SECONDS · NOT OPERA LIVE"
+                    : "WORKBOOK SNAPSHOT · NOT A LIVE FEED"}
+                </small>
+              </span>
             ) : localPin ? (
-              <a href="/">Published dashboard</a>
+              <span className="last-update" role="status">
+                <span className="update-indicator" aria-hidden="true" />
+                {formatUpdate(lastSavedUpdate(entries), true)}
+                <small>LOCAL EDITS ONLY · NOT SHARED</small>
+              </span>
             ) : demo ? (
               <button
                 onClick={() =>
@@ -891,7 +918,7 @@ export default function App({
                     : selected
                       ? "View saved performance. All data input is managed by an administrator."
                       : view === "total"
-                        ? "One automatic review of saved performance across the five markets."
+                        ? "One automatic review of saved performance across all markets."
                         : view === "overview"
                           ? "A unified executive view of property budgets, market pace, and revenue forecasts."
                           : view === "reports"
@@ -1292,35 +1319,56 @@ export default function App({
                   <section className="stats-grid market-stats">
                     <Stat
                       title="Annual revenue budget"
-                      value={compact(
-                        summarize(entries.filter((e) => e.market_id === market))
-                          .budget,
-                      )}
+                      value={
+                        noAccess
+                          ? "—"
+                          : compact(
+                              summarize(
+                                entries.filter((e) => e.market_id === market),
+                              ).budget,
+                            )
+                      }
                       detail={`${selected?.name} · ${year}`}
                     />
                     <Stat
                       title="Monthly revenue budget"
-                      value={money(activeData.commercial[1].budget)}
+                      value={
+                        !current && !canEdit
+                          ? "—"
+                          : money(activeData.commercial[1].budget)
+                      }
                       detail={`${months[month - 1]} target`}
                     />
                     <Stat
                       title="Monthly BOB revenue"
-                      value={money(activeData.commercial[1].bob)}
-                      detail={`${percentage(activeData.commercial[1].bob, activeData.commercial[1].budget).toFixed(1)}% of budget`}
+                      value={
+                        !current && !canEdit
+                          ? "—"
+                          : money(activeData.commercial[1].bob)
+                      }
+                      detail={
+                        !current && !canEdit
+                          ? "Not available"
+                          : `${percentage(activeData.commercial[1].bob, activeData.commercial[1].budget).toFixed(1)}% of budget`
+                      }
                     />
                     <Stat
                       title="Revenue variance"
-                      value={money(
-                        activeData.commercial[1].bob -
-                          activeData.commercial[1].budget,
-                      )}
+                      value={
+                        !current && !canEdit
+                          ? "—"
+                          : money(
+                              activeData.commercial[1].bob -
+                                activeData.commercial[1].budget,
+                            )
+                      }
                       detail="BOB minus budget"
                     />
                   </section>
                   {noAccess && (
                     <div className="notice">
                       No saved data is available for this market and year. An
-                      administrator must enter or import data through Admin Data
+                      administrator must enter or import data through Data
                       Input. Missing data is not a confirmed zero budget.
                     </div>
                   )}
@@ -1412,7 +1460,13 @@ export default function App({
                                 : "Not yet saved"}
                         </span>
                       </div>
-                      {tab === "notes" ? (
+                      {!current && !canEdit ? (
+                        <div className="empty">
+                          No figures supplied for {selected?.name} ·{" "}
+                          {months[month - 1]} {year}. Enter data through Data
+                          Input; missing figures are not zero.
+                        </div>
+                      ) : tab === "notes" ? (
                         <div className="notes">
                           <label htmlFor="notes">
                             Performance review & corrective actions
@@ -1591,9 +1645,11 @@ export default function App({
                           <LockKeyhole size={13} />
                           {!canEdit
                             ? "Read-only · Changes are made only in Data Input"
-                            : demo
-                              ? "Demo admin edits stay in your browser"
-                              : "Admin changes are versioned and audit logged"}{" "}
+                            : localPin
+                              ? "Local edits stay in your browser"
+                              : demo
+                                ? "Demo admin edits stay in your browser"
+                                : "Admin changes are versioned and audit logged"}{" "}
                           · Currency: USD
                         </span>
                         {canEdit && (

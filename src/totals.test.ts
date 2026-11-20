@@ -10,13 +10,13 @@ describe("automatic total review", () => {
     expect(periodMonths("12")).toEqual([12]);
     expect(periodMonths("q5")).toEqual([]);
   });
-  it("totals exactly the five markets once for the selected year", () => {
+  it("totals exactly the six markets once for the selected year", () => {
     const records = makeDemo(2027);
     const review = totalReview([...records, ...makeDemo(2021)], 2027, "year");
     expect(review.complete).toBe(true);
     expect(review.monthly).toHaveLength(12);
-    expect(review.sources).toHaveLength(60);
-    expect(review.coverage).toBe("60/60 market-month records available");
+    expect(review.sources).toHaveLength(72);
+    expect(review.coverage).toBe("72/72 market-month records available");
     expect(summarize(review.monthly)).toEqual(summarize(records));
     const doubled = totalReview(
       [...records, ...records, ...review.monthly],
@@ -27,8 +27,8 @@ describe("automatic total review", () => {
   });
   it("filters historical monthly and quarterly totals", () => {
     const entries = makeDemo(2021);
-    expect(totalReview(entries, 2021, "q1").sources).toHaveLength(15);
-    expect(totalReview(entries, 2021, "5").sources).toHaveLength(5);
+    expect(totalReview(entries, 2021, "q1").sources).toHaveLength(18);
+    expect(totalReview(entries, 2021, "5").sources).toHaveLength(6);
     expect(totalReview(entries, 2027, "year").sources).toHaveLength(0);
   });
   it("marks missing or unauthorized records as partial without inventing rows", () => {
@@ -37,10 +37,10 @@ describe("automatic total review", () => {
     );
     const r = totalReview(onlyAsia, 2027, "q1");
     expect(r.complete).toBe(false);
-    expect(r.missing).toHaveLength(14);
+    expect(r.missing).toHaveLength(17);
     expect(r.monthly).toHaveLength(1);
     expect(r.notice).toContain("Partial total");
-    expect(r.coverage).toContain("1/15");
+    expect(r.coverage).toContain("1/18");
     expect(totalReview([], 2027, "year").monthly).toHaveLength(0);
   });
   it("sums category labels and all weekly target/BOB pairs without modifying sources", () => {

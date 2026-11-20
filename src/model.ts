@@ -69,6 +69,14 @@ export const markets = [
       "Europe Other",
     ],
   },
+  {
+    id: "other-markets",
+    name: "Other Markets",
+    tag: "OM",
+    region: "Additional markets",
+    color: "#687e8b",
+    countries: ["Other Markets"],
+  },
 ];
 export const villas = [
   "Sunrise Beach Villa",
@@ -143,6 +151,8 @@ export function makeDemo(year: number): Entry[] {
   return markets.flatMap((m, i) =>
     months.map((_, j) => {
       const d = blank(m.id);
+      if (m.id === "other-markets")
+        return { market_id: m.id, year, month: j + 1, data: d, version: 0 };
       const nights = 300 + i * 113 + j * 23;
       const revenue = nights * (900 + i * 180);
       const achievement = 0.43 + ((j + i) % 5) * 0.08;

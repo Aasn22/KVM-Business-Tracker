@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import App, { Numeric } from "./App";
 afterEach(() => vi.unstubAllGlobals());
 describe("read-only views and admin entry", () => {
-  it("retains the main brand logo but gives Flash Report no icon", () => {
+  it("retains the main brand logo but gives Commercial Pulse no icon", () => {
     vi.stubGlobal("window", { location: { pathname: "/" } });
     const html = renderToStaticMarkup(<App />);
     expect(html.match(/src="\/kuda-villingili-logo.png"/g)).toHaveLength(1);
@@ -15,7 +15,7 @@ describe("read-only views and admin entry", () => {
       "A unified executive view of property budgets, market pace, and revenue forecasts.",
     );
     const button = html.match(
-      /<button[^>]*aria-label="Flash Report"[^>]*>[\s\S]*?<\/button>/,
+      /<button[^>]*aria-label="Commercial Pulse"[^>]*>[\s\S]*?<\/button>/,
     )?.[0];
     expect(button).toBeDefined();
     expect(button).not.toContain("<img");
@@ -36,7 +36,7 @@ describe("read-only views and admin entry", () => {
     );
     const order = [
       "PORTAL",
-      "Flash Report",
+      "Commercial Pulse",
       "Management Review",
       "Reports",
       "YOUR MARKETS",

@@ -29,10 +29,10 @@ describe("financial calculations", () => {
     );
   });
   it("creates separate years and market months", () => {
-    expect(makeDemo(2027)).toHaveLength(60);
+    expect(makeDemo(2027)).toHaveLength(72);
     expect(
       new Set(makeDemo(2027).map((e) => `${e.market_id}-${e.month}`)).size,
-    ).toBe(60);
+    ).toBe(72);
   });
   it("rejects invalid numbers, weekly shapes, and oversized notes", () => {
     const d = blank("asia");
@@ -57,7 +57,7 @@ describe("historical years", () => {
     "keeps %i entries and report rows tied to their year",
     (year) => {
       const historical = makeDemo(year);
-      expect(historical).toHaveLength(60);
+      expect(historical).toHaveLength(72);
       expect(historical.every((e) => e.year === year)).toBe(true);
       expect(reportRows(historical).every((r) => r.Year === year)).toBe(true);
       historical[0].data.commercial[1].bob = 123;
@@ -84,10 +84,10 @@ describe("Europe market", () => {
     old[0].data.commercial[1].bob = 12345;
     old[0].data.notes = "Existing imported budget";
     const restored = restoreDemo(2027, old);
-    expect(restored).toHaveLength(60);
+    expect(restored).toHaveLength(72);
     expect(restored[0].data).toEqual(old[0].data);
     expect(restored.filter((e) => e.market_id === "europe")).toHaveLength(12);
     expect(restoreDemo(2025, old)[0].data.notes).toBe("");
-    expect(restoreDemo(2027, null)).toHaveLength(60);
+    expect(restoreDemo(2027, null)).toHaveLength(72);
   });
 });

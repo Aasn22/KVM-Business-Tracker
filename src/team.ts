@@ -53,7 +53,14 @@ export function safeTeamImport(value: unknown): TeamMember[] {
       !Array.isArray(m.markets) ||
       m.markets.some(
         (k) =>
-          !["asia", "america", "middle-east", "russia", "europe"].includes(k),
+          ![
+            "asia",
+            "america",
+            "middle-east",
+            "russia",
+            "europe",
+            "other-markets",
+          ].includes(k),
       ) ||
       (m.role !== "Read-Only" && m.scope !== "all")
     )

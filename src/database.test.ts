@@ -300,4 +300,37 @@ describe("existing database migrations", () => {
       ).rows,
     ).toEqual(before.rows);
   });
+  it("adds Other Markets without changing data and retains admin-only saves", async () => {
+    await db.exec("reset role");
+    const before = await db.query(
+      "select * from public.market_months order by market_id,year,month",
+    );
+    const migration = readFileSync(
+      "supabase/migrations/20261120_add_other_markets.sql",
+      "utf8",
+    );
+    await db.exec(migration);
+    await db.exec(migration);
+    expect(
+      (
+        await db.query(
+          "select * from public.market_months order by market_id,year,month",
+        )
+      ).rows,
+    ).toEqual(before.rows);
+    await login(manager);
+    await expect(save("other-markets")).rejects.toThrow(
+      "Administrator access required",
+    );
+    await login(admin);
+    await save("other-markets");
+    await db.exec("reset role");
+    expect(
+      (
+        await db.query(
+          "select * from public.market_months where market_id='other-markets'",
+        )
+      ).rows,
+    ).toHaveLength(1);
+  });
 });

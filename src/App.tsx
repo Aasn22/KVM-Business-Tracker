@@ -47,6 +47,7 @@ import { db, loadYear, loadAdminRole, saveImport, saveMonth } from "./api";
 import { exportWorkbook, importWorkbook } from "./workbooks";
 import TotalReview from "./TotalReview";
 import ReportLibrary from "./ReportLibrary";
+import { useMenuIntro } from "./useMenuIntro";
 import BusinessInsight from "./BusinessInsight";
 import { insightReviewed } from "./insightData";
 import PropertySetup from "./PropertySetup";
@@ -125,6 +126,7 @@ export default function App({
   const [login, setLogin] = useState(false);
   const [help, setHelp] = useState(false);
   const [sidebar, setSidebar] = useState(false);
+  const { appRef, cancelIntro } = useMenuIntro(setSidebar);
   const [pending, setPending] = useState<Entry[] | null>(null);
   const [audit, setAudit] = useState<Audit[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -402,6 +404,7 @@ export default function App({
   function navigate(fn: () => void) {
     if (busy) return;
     if (dirty && !window.confirm("Discard your unsaved changes?")) return;
+    cancelIntro();
     setDirty(false);
     setError("");
     fn();
@@ -545,9 +548,11 @@ export default function App({
   const noAccess =
     !loading && !!market && !entries.some((e) => e.market_id === market);
   return (
-    <div className="app">
+    <div className="app" ref={appRef}>
       <aside
         id="platform-navigation"
+        onPointerDown={cancelIntro}
+        onFocusCapture={cancelIntro}
         className={`sidebar ${sidebar ? "open" : ""}`}
       >
         <a
@@ -611,7 +616,7 @@ export default function App({
             }
           >
             <BarChart3 size={18} />
-            Reports
+            Reports Library
           </button>
           <button
             className={view === "insight" && !market ? "active" : ""}
@@ -785,7 +790,10 @@ export default function App({
             aria-label="Toggle navigation"
             aria-expanded={sidebar}
             aria-controls="platform-navigation"
-            onClick={() => setSidebar(!sidebar)}
+            onClick={() => {
+              cancelIntro();
+              setSidebar(!sidebar);
+            }}
           >
             <Menu size={20} />
           </button>
@@ -798,7 +806,7 @@ export default function App({
                   total: "Management Lense",
                   admin: "Data Input",
                   property: "Property Setup",
-                  reports: "Reports",
+                  reports: "Reports Library",
                   insight: "Business Insight",
                   activity: "Activity Log",
                   setup: "Setup & access",
@@ -937,7 +945,7 @@ export default function App({
                           : view === "overview"
                             ? "Commercial performance, from historical benchmarks to future targets."
                             : view === "reports"
-                              ? "Executive report library"
+                              ? "Reports Library"
                               : view === "activity"
                                 ? "A record of every change."
                                 : "Make it your workspace."}

@@ -198,7 +198,7 @@ describe("executive saved-data reports", () => {
     expect(reportTypes).toHaveLength(7);
     vi.stubGlobal("window", { location: { pathname: "/reports" } });
     const app = renderToStaticMarkup(<App publicDemo />);
-    expect(app).toContain("Executive report library");
+    expect(app).toContain("Reports Library");
     expect(app).not.toContain("Market performance report ·");
   });
   it("exports captured metadata, full numeric precision and monthly/market/category detail", async () => {

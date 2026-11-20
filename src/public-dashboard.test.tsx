@@ -34,7 +34,7 @@ describe("public read-only dashboard", () => {
       "KVM PORTAL",
       "Commercial Pulse",
       "Management Lense",
-      "Reports",
+      "Reports Library",
       "Business Insight",
       "MARKET INSIGHTS",
       "ADMINISTRATOR",

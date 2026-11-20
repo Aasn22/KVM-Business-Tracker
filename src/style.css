@@ -3330,3 +3330,45 @@ fieldset {
     display: none !important;
   }
 }
+
+/* Dark navy navigation, consistent with Reports Library branding. */
+.sidebar {
+  background: #0b1930;
+  color: #c5cddb;
+}
+.sidebar .brand small,
+.sidebar .profile small {
+  color: #9baabd;
+}
+.sidebar .nav-label {
+  color: #b8a17a;
+}
+.sidebar nav button,
+.sidebar nav a.settings-nav {
+  color: #c5cddb;
+}
+.sidebar nav button:hover,
+.sidebar nav a.settings-nav:hover {
+  background: #172d49;
+  color: #f3e4c7;
+}
+.sidebar nav button.active {
+  background: #213953;
+  color: #f3e4c7;
+}
+.sidebar .secure {
+  border-color: #d4bd9130;
+  color: #c8c9c7;
+}
+.sidebar .secure > svg,
+.sidebar .secure small {
+  color: #a6b3c4;
+}
+.sidebar .profile {
+  border-top-color: #d4bd9125;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sidebar {
+    transition: none !important;
+  }
+}

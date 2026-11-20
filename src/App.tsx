@@ -47,6 +47,7 @@ import { db, loadYear, loadAdminRole, saveImport, saveMonth } from "./api";
 import { exportWorkbook, importWorkbook } from "./workbooks";
 import TotalReview from "./TotalReview";
 import ReportLibrary from "./ReportLibrary";
+import { formatMoney, formatNumber, isMoneyMetric } from "./format";
 import { useMenuIntro } from "./useMenuIntro";
 import BusinessInsight from "./BusinessInsight";
 import { insightReviewed } from "./insightData";
@@ -55,16 +56,9 @@ import CountryPerformance from "./CountryPerformance";
 import SignInPage from "./SignInPage";
 import { loadPublicBudgets } from "./publicBudgets";
 import { formatUpdate, lastSavedUpdate } from "./updateStatus";
-const money = (n: number) =>
-  new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(n);
-const num = (n: number) =>
-  new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 }).format(n);
-const compact = (n: number) =>
-  n >= 1e6 ? `$${(n / 1e6).toFixed(2)}m` : money(n);
+const money = formatMoney;
+const num = (n: number) => formatNumber(n, 1);
+const compact = formatMoney;
 type View =
   | "overview"
   | "reports"
@@ -1249,7 +1243,7 @@ export default function App({
                     : demo
                       ? "Exploring with fictional sample data. Connect your database before importing private budgets."
                       : "Figures shown only for markets assigned to your account."}
-                <span>All revenue values in USD</span>
+                <span>Revenue figures shown with $</span>
               </div>
             </>
           )}
@@ -1604,7 +1598,9 @@ export default function App({
                                           : "positive"
                                       }
                                     >
-                                      {num(r.bob - r.budget)}
+                                      {isMoneyMetric(r.label)
+                                        ? money(r.bob - r.budget)
+                                        : num(r.bob - r.budget)}
                                     </td>
                                     {r.targets.map((v, w) => (
                                       <CellPair
@@ -1693,7 +1689,7 @@ export default function App({
                               : demo
                                 ? "Demo admin edits stay in your browser"
                                 : "Admin changes are versioned and audit logged"}{" "}
-                          · Currency: USD
+                          · Currency: $
                         </span>
                         {canEdit && (
                           <button className="text-button" onClick={refresh}>
@@ -1950,7 +1946,7 @@ export default function App({
             </p>
             <p>
               Weekly targets and BOB are independently editable snapshots; they
-              do not overwrite the monthly BOB. Budget revenue is shown in USD
+              do not overwrite the monthly BOB. Budget revenue is shown with $
               with no conversion.
             </p>
             <button className="button primary" onClick={() => setHelp(false)}>
@@ -2015,10 +2011,12 @@ function AdrPair({ data, w }: { data: MonthData; w: number }) {
   return (
     <>
       <td>
-        {num(adr(data.commercial[1].targets[w], data.commercial[0].targets[w]))}
+        {money(
+          adr(data.commercial[1].targets[w], data.commercial[0].targets[w]),
+        )}
       </td>
       <td>
-        {num(adr(data.commercial[1].weekly[w], data.commercial[0].weekly[w]))}
+        {money(adr(data.commercial[1].weekly[w], data.commercial[0].weekly[w]))}
       </td>
     </>
   );
@@ -2034,10 +2032,11 @@ export function Numeric({
   value: number;
   onChange: (n: number) => void;
 }) {
+  const display = isMoneyMetric(label) ? money(value) : num(value);
   if (!editable)
     return (
-      <span className="read-only-value" aria-label={`${label}: ${num(value)}`}>
-        {num(value)}
+      <span className="read-only-value" aria-label={`${label}: ${display}`}>
+        {display}
       </span>
     );
   return (

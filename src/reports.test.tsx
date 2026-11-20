@@ -221,6 +221,10 @@ describe("executive saved-data reports", () => {
     await w.xlsx.load(await blob!.arrayBuffer());
     expect(w.worksheets).toHaveLength(6);
     expect(w.getWorksheet("Markets")!.getCell("C2").value).toBe(123.45678);
+    expect(w.getWorksheet("Markets")!.getCell("C2").numFmt).toContain('"$"');
+    expect(w.getWorksheet("Markets")!.getCell("F2").numFmt ?? "").not.toContain(
+      "$",
+    );
     expect(w.getWorksheet("Snapshot")!.getCell("B3").value).toBe(
       "Test saved input",
     );

@@ -1,3 +1,4 @@
+import { formatMoney, formatNumber, isMoneyMetric } from "./format";
 import { useEffect, useState } from "react";
 import { db } from "./api";
 import {
@@ -238,8 +239,10 @@ export default function CountryPerformance({
                           })
                         }
                       />
+                    ) : isMoneyMetric(r.label) ? (
+                      formatMoney(r.budget)
                     ) : (
-                      r.budget
+                      formatNumber(r.budget)
                     )}
                   </td>
                   <td>
@@ -260,24 +263,29 @@ export default function CountryPerformance({
                           })
                         }
                       />
+                    ) : isMoneyMetric(r.label) ? (
+                      formatMoney(r.bob)
                     ) : (
-                      r.bob
+                      formatNumber(r.bob)
                     )}
                   </td>
-                  <td>{r.bob - r.budget}</td>
+                  <td>
+                    {isMoneyMetric(r.label)
+                      ? formatMoney(r.bob - r.budget)
+                      : formatNumber(r.bob - r.budget)}
+                  </td>
                 </tr>
               ))}
               <tr>
                 <th>ADR (calculated)</th>
                 <td>
-                  {adr(
-                    data.commercial[1].budget,
-                    data.commercial[0].budget,
-                  ).toFixed(2)}
+                  {formatMoney(
+                    adr(data.commercial[1].budget, data.commercial[0].budget),
+                  )}
                 </td>
                 <td>
-                  {adr(data.commercial[1].bob, data.commercial[0].bob).toFixed(
-                    2,
+                  {formatMoney(
+                    adr(data.commercial[1].bob, data.commercial[0].bob),
                   )}
                 </td>
                 <td>—</td>

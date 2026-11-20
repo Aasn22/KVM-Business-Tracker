@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatCompact, formatMoney } from "./format";
 import { Globe2, ExternalLink, AlertTriangle, TrendingUp } from "lucide-react";
 import {
   insightReviewed,
@@ -41,6 +42,8 @@ export function InsightChart({
   note?: string;
 }) {
   const max = Math.max(...rows.map((r) => Math.abs(r.value)), 1);
+  const display = (value: number) =>
+    unit === "$ amounts" ? formatMoney(value) : number(value);
   return (
     <section className="panel insight-card">
       <h2>{title}</h2>
@@ -48,7 +51,7 @@ export function InsightChart({
       <div
         className="insight-bars"
         role="img"
-        aria-label={`${title}: ${rows.map((r) => `${r.label} ${number(r.value)} ${unit}`).join("; ")}`}
+        aria-label={`${title}: ${rows.map((r) => `${r.label} ${display(r.value)} ${unit}`).join("; ")}`}
       >
         {rows.map((r) => (
           <div className="insight-bar-row" key={r.label}>
@@ -62,7 +65,7 @@ export function InsightChart({
               />
             </div>
             <strong>
-              {number(r.value)}
+              {display(r.value)}
               {unit === "% year on year" || unit === "% of experts" ? "%" : ""}
             </strong>
           </div>
@@ -86,7 +89,7 @@ export function InsightChart({
               {rows.map((r) => (
                 <tr key={r.label}>
                   <th>{r.label}</th>
-                  <td>{number(r.value)}</td>
+                  <td>{display(r.value)}</td>
                 </tr>
               ))}
             </tbody>
@@ -154,7 +157,7 @@ export default function BusinessInsight() {
       <div className="insight-kpis">
         <article>
           <span>Maldives arrivals</span>
-          <strong>1.90m</strong>
+          <strong>{formatCompact(1900838)}</strong>
           <small>
             To 17 Nov 2026 · {yoy(1900838, 1961566)!.toFixed(1)}% YoY
             (calculated)
@@ -163,13 +166,13 @@ export default function BusinessInsight() {
         </article>
         <article>
           <span>Maldives travel receipts</span>
-          <strong>US$400.10m</strong>
+          <strong>{formatMoney(400100000)}</strong>
           <small>Aug 2026 · +10.2% YoY (reported)</small>
           <Source id="receipts" />
         </article>
         <article>
           <span>Global international arrivals</span>
-          <strong>690m</strong>
+          <strong>{formatCompact(690000000)}</strong>
           <small>H1 2026 · +0.4% YoY (estimated)</small>
           <Source id="global" />
         </article>
@@ -200,8 +203,8 @@ export default function BusinessInsight() {
             />
             <InsightChart
               title="Maldives travel receipts: Jan–Aug 2026"
-              rows={travelReceipts}
-              unit="US$ million"
+              rows={travelReceipts.map((r) => ({ ...r, value: r.value * 1e6 }))}
+              unit="$ amounts"
               source="receipts"
               note="MMA series 246 estimates receipts from tourism-related taxes and fees; not this property's revenue and not a direct measure of cash available to operators. Later months unavailable in the verified series."
             />
@@ -222,8 +225,8 @@ export default function BusinessInsight() {
               </h2>
               <ul>
                 <li>
-                  UN Tourism's September Barometer reports 690m international
-                  tourists in H1 2026, around 3m above H1 2025.
+                  UN Tourism's September Barometer reports 690M international
+                  tourists in H1 2026, around 3M above H1 2025.
                 </li>
                 <li>
                   Western Europe arrivals fell 6% in June; South-East Asia fell

@@ -144,6 +144,12 @@ describe("spreadsheet management report", () => {
       expect(book.getWorksheet("Management Lense")!.getCell("A1").value).toBe(
         "Management Lense",
       );
+      expect(
+        book.getWorksheet("Management Lense")!.getCell("C8").numFmt,
+      ).toContain('"$"');
+      expect(
+        book.getWorksheet("Management Lense")!.getCell("C9").numFmt ?? "",
+      ).not.toContain("$");
       expect(book.getWorksheet("Market Performance")!.rowCount).toBeGreaterThan(
         20,
       );

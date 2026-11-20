@@ -2618,7 +2618,7 @@ fieldset {
   justify-content: center;
   text-align: center;
   gap: 22px;
-  background: radial-gradient(ellipse at 50% 30%, #203554, #0d1b31 70%);
+  background: transparent;
 }
 .report-welcome-logo {
   width: min(48vw, 200px);
@@ -3370,5 +3370,21 @@ fieldset {
 @media (prefers-reduced-motion: reduce) {
   .sidebar {
     transition: none !important;
+  }
+}
+
+/* Full comma-grouped dollar figures stay within narrow cards. */
+.stat strong,
+.card-budget strong,
+.visual-kpis strong,
+.insight-kpis > article > strong {
+  overflow-wrap: anywhere;
+}
+.insight-bar-row {
+  grid-template-columns: 118px minmax(0, 1fr) minmax(76px, max-content);
+}
+@media (max-width: 800px) {
+  .insight-bar-row {
+    grid-template-columns: 80px minmax(0, 1fr) minmax(70px, max-content);
   }
 }

@@ -1,3 +1,4 @@
+import { dollarExcelFormat } from "./format";
 import { markets, months, type Entry, type MonthData } from "./model";
 import { periodMonths, totalReview } from "./totals";
 import { lastSavedUpdate } from "./updateStatus";
@@ -315,6 +316,21 @@ export async function exportVisualReport(report: ReportSnapshot) {
   for (const t of reportTables(report)) {
     const sheet = workbook.addWorksheet(t.name);
     t.rows.forEach((r) => sheet.addRow(r));
+    sheet.eachRow((r, i) => {
+      if (i < 2) return;
+      const moneyColumns = ["Markets", "Monthly"].includes(t.name)
+        ? [2, 3, 4, 8, 9]
+        : t.name === "Weekly snapshots"
+          ? [2, 3, 4]
+          : t.name === "Summary" &&
+              ["Revenue", "Weighted ADR"].includes(String(r.getCell(1).value))
+            ? [2, 3, 4]
+            : [];
+      moneyColumns.forEach((c) => {
+        if (typeof r.getCell(c).value === "number")
+          r.getCell(c).numFmt = dollarExcelFormat;
+      });
+    });
     sheet.columns.forEach((c, i) => (c.width = i === 0 ? 32 : 24));
     sheet.getRow(1).font = { bold: true };
     sheet.views = [{ state: "frozen", ySplit: 1 }];

@@ -1,3 +1,4 @@
+import { dollarExcelFormat, isMoneyMetric } from "./format";
 import {
   blank,
   months,
@@ -132,6 +133,8 @@ export async function exportWorkbook(entries: Entry[], name: string) {
     sheet.addRow(Object.keys(rows[0]));
     rows.forEach((r) => sheet.addRow(Object.values(r)));
   }
+  for (const column of [4, 5, 6, 10, 11])
+    sheet.getColumn(column).numFmt = dollarExcelFormat;
   const detail = workbook.addWorksheet("Breakdowns");
   detail.addRow([
     "Market",
@@ -166,6 +169,15 @@ export async function exportWorkbook(entries: Entry[], name: string) {
       ),
     ),
   );
+  detail.eachRow((r, index) => {
+    if (
+      index > 1 &&
+      r.getCell(4).value === "commercial" &&
+      isMoneyMetric(String(r.getCell(5).value))
+    )
+      for (let col = 6; col <= 15; col++)
+        r.getCell(col).numFmt = dollarExcelFormat;
+  });
   for (const s of [sheet, detail]) {
     s.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
     s.getRow(1).fill = {

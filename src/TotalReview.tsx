@@ -1,3 +1,4 @@
+import { formatMoney, formatNumber, isMoneyMetric } from "./format";
 import { Fragment, useState } from "react";
 import { ArrowDownToLine, LockKeyhole, Printer } from "lucide-react";
 import { markets, months, type Entry } from "./model";
@@ -8,10 +9,8 @@ import {
   type Metric,
 } from "./management";
 import { exportManagementReport } from "./managementExport";
-const n = (v: number | null) =>
-  v === null
-    ? "—"
-    : new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(v);
+const n = formatNumber;
+const money = formatMoney;
 export default function TotalReview({
   entries,
   year,
@@ -104,18 +103,20 @@ export default function TotalReview({
               <th>{label}</th>
               <td>
                 {section === "commercial"
-                  ? `${n(report.commercial("year", "ADR").budget)} / ${n(report.commercial("year", "ADR").bob)}`
+                  ? `${money(report.commercial("year", "ADR").budget)} / ${money(report.commercial("year", "ADR").bob)}`
                   : unavailable}
               </td>
               {periods.map((p) => {
+                const amount =
+                  section === "commercial" && isMoneyMetric(label) ? money : n;
                 const v =
                   section === "commercial"
                     ? report.commercial(p.key, label)
                     : report.values(p.key, section, label);
                 return (
                   <Fragment key={p.key}>
-                    <td>{n(v.budget)}</td>
-                    <td>{n(v.bob)}</td>
+                    <td>{amount(v.budget)}</td>
+                    <td>{amount(v.bob)}</td>
                     {(p.key.startsWith("q") || p.key === "year") && (
                       <td
                         className={
@@ -126,7 +127,7 @@ export default function TotalReview({
                             : "negative"
                         }
                       >
-                        {n(
+                        {amount(
                           v.budget !== null && v.bob !== null
                             ? v.bob - v.budget
                             : null,
@@ -272,8 +273,8 @@ export default function TotalReview({
           </div>
         </header>
         <p className="management-subtitle">
-          Commercial team budget & performance review · Read-only · USD · Market
-          contributions shown below
+          Commercial team budget & performance review · Read-only · $ figures ·
+          Market contributions shown below
         </p>
         <div className="table-scroll">
           <table className="management-summary">
@@ -293,12 +294,12 @@ export default function TotalReview({
                 <th>Occupancy %</th>
                 <td>{unavailable}</td>
                 <td rowSpan={2}>
-                  {n(report.commercial("year", "ADR").budget)} /{" "}
-                  {n(report.commercial("year", "ADR").bob)}
+                  {money(report.commercial("year", "ADR").budget)} /{" "}
+                  {money(report.commercial("year", "ADR").bob)}
                 </td>
                 <td rowSpan={2}>
-                  {n(report.commercial("year", "Room Revenue").budget)} /{" "}
-                  {n(report.commercial("year", "Room Revenue").bob)}
+                  {money(report.commercial("year", "Room Revenue").budget)} /{" "}
+                  {money(report.commercial("year", "Room Revenue").bob)}
                 </td>
                 <td rowSpan={2}>{unavailable}</td>
                 <td rowSpan={2}>{unavailable}</td>
@@ -358,8 +359,8 @@ export default function TotalReview({
                         </small>
                       </th>
                       <td>
-                        {n(report.commercial(p.key, "ADR").budget)} /{" "}
-                        {n(report.commercial(p.key, "ADR").bob)}
+                        {money(report.commercial(p.key, "ADR").budget)} /{" "}
+                        {money(report.commercial(p.key, "ADR").bob)}
                       </td>
                       <MetricCells
                         metric={report.commercial(p.key, "Room Nights")}
@@ -468,8 +469,10 @@ function SheetSection({
 function MetricCells({ metric }: { metric: Metric }) {
   return (
     <>
-      <td>{n(metric.budget)}</td>
-      <td>{n(metric.bob)}</td>
+      <td>
+        {isMoneyMetric(metric.label) ? money(metric.budget) : n(metric.budget)}
+      </td>
+      <td>{isMoneyMetric(metric.label) ? money(metric.bob) : n(metric.bob)}</td>
       <td>{unavailable}</td>
     </>
   );
@@ -518,10 +521,10 @@ function MarketPerformance({ report }: { report: ManagementReport }) {
                     const v = r.commercial(`q${q}`, "Room Revenue");
                     return (
                       <Fragment key={q}>
-                        <td>{n(v.budget)}</td>
-                        <td>{n(v.bob)}</td>
+                        <td>{money(v.budget)}</td>
+                        <td>{money(v.bob)}</td>
                         <td>
-                          {n(
+                          {money(
                             v.budget !== null && v.bob !== null
                               ? v.bob - v.budget
                               : null,
@@ -530,10 +533,10 @@ function MarketPerformance({ report }: { report: ManagementReport }) {
                       </Fragment>
                     );
                   })}
-                  <td>{n(r.commercial("year", "Room Revenue").budget)}</td>
-                  <td>{n(r.commercial("year", "Room Revenue").bob)}</td>
+                  <td>{money(r.commercial("year", "Room Revenue").budget)}</td>
+                  <td>{money(r.commercial("year", "Room Revenue").bob)}</td>
                   <td>
-                    {n(
+                    {money(
                       r.annual.count
                         ? r.commercial("year", "Room Revenue").bob! -
                             r.commercial("year", "Room Revenue").budget!
@@ -541,7 +544,7 @@ function MarketPerformance({ report }: { report: ManagementReport }) {
                     )}
                   </td>
                   <td>{n(r.commercial("year", "Room Nights").bob)}</td>
-                  <td>{n(r.commercial("year", "ADR").bob)}</td>
+                  <td>{money(r.commercial("year", "ADR").bob)}</td>
                 </tr>
               );
             })}
@@ -551,10 +554,10 @@ function MarketPerformance({ report }: { report: ManagementReport }) {
               const v = report.commercial(`q${q}`, "Room Revenue");
               return (
                 <Fragment key={q}>
-                  <td>{n(v.budget)}</td>
-                  <td>{n(v.bob)}</td>
+                  <td>{money(v.budget)}</td>
+                  <td>{money(v.bob)}</td>
                   <td>
-                    {n(
+                    {money(
                       v.budget !== null && v.bob !== null
                         ? v.bob - v.budget
                         : null,
@@ -563,10 +566,10 @@ function MarketPerformance({ report }: { report: ManagementReport }) {
                 </Fragment>
               );
             })}
-            <td>{n(report.commercial("year", "Room Revenue").budget)}</td>
-            <td>{n(report.commercial("year", "Room Revenue").bob)}</td>
+            <td>{money(report.commercial("year", "Room Revenue").budget)}</td>
+            <td>{money(report.commercial("year", "Room Revenue").bob)}</td>
             <td>
-              {n(
+              {money(
                 report.annual.count
                   ? report.commercial("year", "Room Revenue").bob! -
                       report.commercial("year", "Room Revenue").budget!
@@ -574,7 +577,7 @@ function MarketPerformance({ report }: { report: ManagementReport }) {
               )}
             </td>
             <td>{n(report.commercial("year", "Room Nights").bob)}</td>
-            <td>{n(report.commercial("year", "ADR").bob)}</td>
+            <td>{money(report.commercial("year", "ADR").bob)}</td>
           </tr>
         </tbody>
       </table>

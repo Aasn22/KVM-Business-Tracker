@@ -18,6 +18,7 @@ import {
   Printer,
   X,
 } from "lucide-react";
+import { formatMoney, formatNumber } from "./format";
 import { markets, months, type Entry } from "./model";
 import { quickReports, quickReportPeriod } from "./quickReports";
 import {
@@ -100,23 +101,9 @@ const colors = [
   "#a5b77d",
 ];
 const fmt = (v: number | null, currency = false) =>
-  v === null
-    ? "—"
-    : new Intl.NumberFormat(
-        "en-GB",
-        currency
-          ? { style: "currency", currency: "USD", maximumFractionDigits: 0 }
-          : { maximumFractionDigits: 1 },
-      ).format(v);
+  currency ? formatMoney(v) : formatNumber(v, 1);
 const detailFmt = (v: number | null, currency = false) =>
-  v === null
-    ? "—"
-    : new Intl.NumberFormat(
-        "en-GB",
-        currency
-          ? { style: "currency", currency: "USD", maximumFractionDigits: 2 }
-          : { maximumFractionDigits: 2 },
-      ).format(v);
+  currency ? formatMoney(v) : formatNumber(v, 2);
 const pct = (r: ReportMetric) =>
   r.budget && r.bob !== null
     ? `${((r.bob / r.budget) * 100).toFixed(1)}%`
@@ -336,8 +323,8 @@ function DetailTable({
       <div className="table-scroll">
         <table className="visual-table">
           <caption>
-            {currency ? "USD" : "Source units"} · exact saved values summarized;
-            — means unavailable
+            {currency ? "$ amounts" : "Source units"} · rounded for display;
+            source precision retained in Excel; — means unavailable
           </caption>
           <thead>
             <tr>

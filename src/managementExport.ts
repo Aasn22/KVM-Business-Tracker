@@ -1,3 +1,4 @@
+import { dollarExcelFormat, isMoneyMetric } from "./format";
 import { managementExportTables, type ManagementReport } from "./management";
 export async function exportManagementReport(
   report: ManagementReport,
@@ -8,6 +9,18 @@ export async function exportManagementReport(
   for (const table of managementExportTables(report, demo)) {
     const sheet = workbook.addWorksheet(table.name);
     table.rows.forEach((row) => sheet.addRow(row));
+    sheet.eachRow((r) => {
+      // Only commercial revenue/ADR rows, never independent categories or counts.
+      if (
+        isMoneyMetric(String(r.getCell(2).value)) &&
+        (table.name === "Market Performance" ||
+          r.getCell(1).value === "Commercial")
+      ) {
+        for (let c = 3; c <= r.cellCount; c++)
+          if ((c - 3) % 4 !== 3 && typeof r.getCell(c).value === "number")
+            r.getCell(c).numFmt = dollarExcelFormat;
+      }
+    });
     sheet.columns.forEach((col, i) => {
       col.width = i === 0 || i === 1 ? 25 : 20;
     });

@@ -532,7 +532,10 @@ export default function App({
     !!session && !loading && !entries.some((e) => e.market_id === market);
   return (
     <div className="app">
-      <aside className={`sidebar ${sidebar ? "open" : ""}`}>
+      <aside
+        id="platform-navigation"
+        className={`sidebar ${sidebar ? "open" : ""}`}
+      >
         <a
           className="brand"
           href="#"
@@ -576,7 +579,8 @@ export default function App({
           <div>KVM-OVERVIEW</div>
           <ChevronRight size={14} />
         </button>
-        <nav className="total-nav">
+        <div className="nav-label">PORTAL</div>
+        <nav className="total-nav" aria-label="Portal">
           <button
             className={view === "total" ? "active" : ""}
             aria-current={view === "total" ? "page" : undefined}
@@ -590,29 +594,18 @@ export default function App({
             <BarChart3 size={18} />
             Management Review
           </button>
-        </nav>
-        <div className="nav-label">WORKSPACE</div>
-        <nav>
-          {(
-            [
-              ["reports", BarChart3, "Reports"],
-              ["activity", Clock3, "Activity log"],
-            ] as const
-          ).map(([id, Icon, label]) => (
-            <button
-              key={id}
-              className={view === id && !market ? "active" : ""}
-              onClick={() =>
-                navigate(() => {
-                  setView(id);
-                  setMarket(null);
-                })
-              }
-            >
-              <Icon size={18} />
-              {label}
-            </button>
-          ))}
+          <button
+            className={view === "reports" && !market ? "active" : ""}
+            onClick={() =>
+              navigate(() => {
+                setView("reports");
+                setMarket(null);
+              })
+            }
+          >
+            <BarChart3 size={18} />
+            Reports
+          </button>
         </nav>
         <div className="nav-label market-label">
           YOUR MARKETS <span>{markets.length.toString().padStart(2, "0")}</span>
@@ -631,6 +624,7 @@ export default function App({
           ))}
         </nav>
 
+        <div className="nav-label administrator-label">ADMINISTRATOR</div>
         {publicDemo ? (
           <>
             <nav className="property-nav">
@@ -642,7 +636,7 @@ export default function App({
             <nav className="admin-nav">
               <a className="settings-nav" href="/admin-data-input">
                 <LockKeyhole size={18} />
-                Admin Data Input
+                Data Input
               </a>
             </nav>
           </>
@@ -673,11 +667,25 @@ export default function App({
                 }
               >
                 <LockKeyhole size={18} />
-                Admin Data Input
+                Data Input
               </button>
             </nav>
           </>
         )}
+        <nav aria-label="Administrator activity">
+          <button
+            className={view === "activity" && !market ? "active" : ""}
+            onClick={() =>
+              navigate(() => {
+                setView("activity");
+                setMarket(null);
+              })
+            }
+          >
+            <Clock3 size={18} />
+            Activity Log
+          </button>
+        </nav>
         <div className="sidebar-bottom">
           <div className="secure">
             <ShieldCheck size={20} />
@@ -755,21 +763,23 @@ export default function App({
           <button
             className="mobile-menu icon-button"
             aria-label="Toggle navigation"
+            aria-expanded={sidebar}
+            aria-controls="platform-navigation"
             onClick={() => setSidebar(!sidebar)}
           >
             <Menu size={20} />
           </button>
           <div className="breadcrumb">
-            Workspace <ChevronRight size={13} />{" "}
+            Portal <ChevronRight size={13} />{" "}
             <strong>
               {selected?.name ??
                 {
                   overview: "KVM-OVERVIEW",
                   total: "Management Review",
-                  admin: "Admin Data Input",
+                  admin: "Data Input",
                   property: "Property Setup",
                   reports: "Reports",
-                  activity: "Activity log",
+                  activity: "Activity Log",
                   setup: "Setup & access",
                 }[view]}
             </strong>
@@ -832,7 +842,7 @@ export default function App({
             </span>
             {publicDemo ? (
               <a href="/admin-data-input">
-                Admin Data Input <ArrowUpRight size={13} />
+                Data Input <ArrowUpRight size={13} />
               </a>
             ) : localPin ? (
               <a href="/">Published dashboard</a>
@@ -868,7 +878,7 @@ export default function App({
                 {view === "property"
                   ? "Property Setup"
                   : view === "admin"
-                    ? "Admin Data Input"
+                    ? "Data Input"
                     : selected
                       ? selected.name
                       : view === "total"
@@ -1187,7 +1197,7 @@ export default function App({
                 {localPin
                   ? "Data Input — local browser"
                   : demo
-                    ? "Demo Admin Data Input"
+                    ? "Demo Data Input"
                     : "Administrator workspace"}
               </h2>
               {localPin ? (
@@ -1364,7 +1374,7 @@ export default function App({
                         ) : (
                           <span className="read-only-badge">
                             <LockKeyhole size={14} />
-                            Read-only · Admin Data Input manages all changes
+                            Read-only · Data Input manages all changes
                           </span>
                         )}
                       </div>
@@ -1588,7 +1598,7 @@ export default function App({
                         <span>
                           <LockKeyhole size={13} />
                           {!canEdit
-                            ? "Read-only · Changes are made only in Admin Data Input"
+                            ? "Read-only · Changes are made only in Data Input"
                             : demo
                               ? "Demo admin edits stay in your browser"
                               : "Admin changes are versioned and audit logged"}{" "}
@@ -1845,10 +1855,10 @@ export default function App({
                 <li>
                   <strong>Import your market workbooks</strong>
                   <p>
-                    An administrator uses Admin Data Input to choose the
-                    matching market and year, then Import Excel. All other pages
-                    are read-only. FULL BUDGET is a reference workbook, not a
-                    market import.
+                    An administrator uses Data Input to choose the matching
+                    market and year, then Import Excel. All other pages are
+                    read-only. FULL BUDGET is a reference workbook, not a market
+                    import.
                   </p>
                 </li>
               </ol>

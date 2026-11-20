@@ -11,12 +11,30 @@ describe("public read-only dashboard", () => {
     expect(html).toContain("EYE on every market");
     expect(html).not.toContain("Email me a sign-in link");
     expect(html).not.toContain("Try Super Admin");
-    expect(html).not.toContain(">Admin Data Input</button>");
+    expect(html).not.toContain(">Data Input</button>");
     expect(html).not.toContain(">Property Setup</button>");
     expect(html).toContain('href="/property-setup"');
     expect(html).toContain('href="/admin-data-input"');
     expect(html).toContain("Property Setup");
-    expect(html).toContain("Admin Data Input");
+    expect(html).toContain("Data Input");
     expect(html).not.toContain("PIN workspace");
+    const sidebar = html.slice(
+      html.indexOf("<aside"),
+      html.indexOf("</aside>"),
+    );
+    const order = [
+      "PORTAL",
+      "Management Review",
+      "Reports",
+      "YOUR MARKETS",
+      "ADMINISTRATOR",
+      "Property Setup",
+      "Data Input",
+      "Activity Log",
+    ];
+    for (let i = 1; i < order.length; i++)
+      expect(sidebar.indexOf(order[i])).toBeGreaterThan(
+        sidebar.indexOf(order[i - 1]),
+      );
   });
 });

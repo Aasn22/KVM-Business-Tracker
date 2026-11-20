@@ -2163,3 +2163,101 @@ fieldset {
 .account-nav {
   margin-top: 10px;
 }
+
+/* Compact navigation groups; preserve comfortable 44px touch targets. */
+.sidebar {
+  padding-top: 20px;
+}
+.sidebar .brand {
+  padding-bottom: 16px;
+}
+.sidebar .workspace {
+  padding: 10px;
+  margin-bottom: 14px;
+}
+.sidebar .nav-label {
+  margin: 12px 12px 6px;
+}
+.sidebar nav {
+  gap: 0;
+}
+.sidebar nav button,
+.sidebar nav a.settings-nav {
+  min-height: 44px;
+  padding: 10px 12px;
+  margin: 0;
+  width: 100%;
+  border-radius: 6px;
+  font-size: 12px;
+}
+.sidebar nav a.settings-nav:hover {
+  background: #1b3d42;
+  color: #fff;
+}
+.sidebar .total-nav,
+.sidebar .property-nav,
+.sidebar .admin-nav {
+  margin: 0;
+}
+.sidebar .sidebar-bottom {
+  padding-top: 20px;
+}
+/* Tablet landscape as well as portrait use the entire viewport for every page. */
+@media screen and (max-width: 1366px) {
+  .sidebar {
+    transform: translateX(-100%);
+    width: min(280px, 88vw);
+    padding-top: 78px;
+    transition: transform 0.2s;
+    height: 100dvh;
+  }
+  .sidebar.open {
+    transform: translateX(0);
+    box-shadow: 0 0 0 100vmax #12333855;
+  }
+  .main {
+    margin-left: 0;
+    width: 100%;
+    min-width: 0;
+  }
+  .main > main {
+    width: 100%;
+    max-width: none;
+    padding: 20px;
+  }
+  .topbar {
+    position: relative;
+    z-index: 31;
+    height: 62px;
+    padding: 0 20px;
+  }
+  .mobile-menu {
+    display: grid;
+  }
+  .breadcrumb {
+    margin-right: auto;
+    margin-left: 12px;
+  }
+}
+@media screen and (max-width: 600px) {
+  .main > main {
+    padding: 12px;
+  }
+  .topbar {
+    padding: 0 12px;
+  }
+  .property-setup {
+    padding: 16px;
+  }
+  .property-setup-heading {
+    flex-wrap: wrap;
+  }
+  .heading-actions {
+    max-width: 100%;
+    flex-wrap: wrap;
+  }
+  .mode-banner {
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+}

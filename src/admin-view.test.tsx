@@ -29,28 +29,37 @@ describe("read-only views and admin entry", () => {
     vi.stubGlobal("window", { location: { pathname: "/admin-data-input" } });
     expect(renderToStaticMarkup(<App />)).not.toContain('aria-current="page"');
   });
-  it("places Management Review directly after KVM-OVERVIEW and before workspace links", () => {
+  it("groups Portal and Administrator pages in compact navigation", () => {
     vi.stubGlobal("window", { location: { pathname: "/" } });
     const html = renderToStaticMarkup(<App />);
     const sidebar = html.slice(
       html.indexOf("<aside"),
       html.indexOf("</aside>"),
     );
-    expect(sidebar).toMatch(
-      /KVM-OVERVIEW<\/div>[\s\S]*?<\/button><nav class="total-nav">/,
-    );
-    expect(sidebar.indexOf("Management Review")).toBeLessThan(
-      sidebar.indexOf("WORKSPACE"),
-    );
+    const order = [
+      "KVM-OVERVIEW</div>",
+      "PORTAL",
+      "Management Review",
+      "Reports",
+      "YOUR MARKETS",
+      "ADMINISTRATOR",
+      "Property Setup",
+      "Data Input",
+      "Activity Log",
+    ];
+    for (let i = 1; i < order.length; i++)
+      expect(sidebar.indexOf(order[i])).toBeGreaterThan(
+        sidebar.indexOf(order[i - 1]),
+      );
+    expect(sidebar).not.toContain("WORKSPACE");
+    expect(sidebar).not.toContain("Admin Data Input");
     expect(sidebar.match(/Management Review/g)).toHaveLength(1);
-    expect(sidebar).not.toContain("Total Budget Review");
-    expect(sidebar).not.toContain("Kuda Villingili Overview");
   });
   it("provides a dedicated Property Setup route and visible navigation", () => {
     vi.stubGlobal("window", { location: { pathname: "/property-setup" } });
     const html = renderToStaticMarkup(<App />);
     expect(html).toContain("Property Setup");
-    expect(html).not.toContain("Demo Admin Data Input");
+    expect(html).not.toContain("Demo Data Input");
     expect(html).not.toContain("Export report");
   });
   it("renders numbers as non-interactive text outside admin entry", () => {
@@ -84,7 +93,7 @@ describe("read-only views and admin entry", () => {
   it("opens a distinct demo admin page through its URL", () => {
     vi.stubGlobal("window", { location: { pathname: "/admin-data-input" } });
     const html = renderToStaticMarkup(<App />);
-    expect(html).toContain("Demo Admin Data Input");
+    expect(html).toContain("Demo Data Input");
     expect(html).toContain("Admin market");
     expect(html).toContain("Select a market");
     expect(html).not.toContain("Monthly performance");

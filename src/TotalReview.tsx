@@ -44,7 +44,7 @@ export default function TotalReview({
     try {
       await exportManagementReport(report, demo);
       setMessage(
-        `Management Review Excel report generated for ${year} · ${report.scope}.`,
+        `Management Lense Excel report generated for ${year} · ${report.scope}.`,
       );
     } catch (e) {
       setError((e as Error).message);

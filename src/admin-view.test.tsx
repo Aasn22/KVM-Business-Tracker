@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import App, { Numeric } from "./App";
 afterEach(() => vi.unstubAllGlobals());
 describe("read-only views and admin entry", () => {
-  it("retains the main brand logo but gives Commercial Pulse no icon", () => {
+  it("retains the main brand logo but gives Commercial Pulse a navigation icon", () => {
     vi.stubGlobal("window", { location: { pathname: "/" } });
     const html = renderToStaticMarkup(<App />);
     expect(html.match(/src="\/kuda-villingili-logo.png"/g)).toHaveLength(1);
@@ -19,7 +19,7 @@ describe("read-only views and admin entry", () => {
     )?.[0];
     expect(button).toBeDefined();
     expect(button).not.toContain("<img");
-    expect(button).not.toContain("<svg");
+    expect(button).toContain("<svg");
     expect(button).toContain('aria-current="page"');
     expect(html).not.toContain("KVM-OVERVIEW");
   });
@@ -35,11 +35,12 @@ describe("read-only views and admin entry", () => {
       html.indexOf("</aside>"),
     );
     const order = [
-      "PORTAL",
+      "KVM PORTAL",
       "Commercial Pulse",
-      "Management Review",
+      "Management Lense",
       "Reports",
-      "YOUR MARKETS",
+      "Business Insight",
+      "MARKET INSIGHTS",
       "ADMINISTRATOR",
       "Property Setup",
       "Data Input",
@@ -51,7 +52,7 @@ describe("read-only views and admin entry", () => {
       );
     expect(sidebar).not.toContain("WORKSPACE");
     expect(sidebar).not.toContain("Admin Data Input");
-    expect(sidebar.match(/Management Review/g)).toHaveLength(1);
+    expect(sidebar.match(/Management Lense/g)).toHaveLength(1);
   });
   it("provides a dedicated Property Setup route and visible navigation", () => {
     vi.stubGlobal("window", { location: { pathname: "/property-setup" } });

@@ -106,7 +106,7 @@ export function managementExportTables(
 ): ExportTable[] {
   const annual = report.annual;
   const context = [
-    ["Management Review", report.year, report.scope],
+    ["Management Lense", report.year, report.scope],
     [demo ? "Fictional demo figures" : "Saved authorized market records only"],
     [
       "Coverage",
@@ -181,7 +181,7 @@ export function managementExportTables(
   ]);
   return [
     {
-      name: "Management Review",
+      name: "Management Lense",
       rows: [...context, [], columns, ...performance, ...breakdowns],
     },
     {

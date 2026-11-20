@@ -1,5 +1,5 @@
 import { markets, row, type Entry, type MonthData, type Row } from "./model";
-export const totalLabel = "Management Review";
+export const totalLabel = "Management Lense";
 export type ReviewSection = "commercial" | "villas" | "countries" | "meals";
 export function periodMonths(period: string): number[] {
   if (period === "year") return Array.from({ length: 12 }, (_, i) => i + 1);

@@ -7,7 +7,7 @@ describe("public read-only dashboard", () => {
     vi.stubGlobal("window", { location: { pathname: "/" } });
     const html = renderToStaticMarkup(<App publicDemo />);
     expect(html).toContain("Maintained by Revenue Director");
-    expect(html).toContain("Opera PMS not connected");
+    expect(html).toContain("Database manually sourced from Opera (PMS)");
     expect(html).toContain("Last update: Not available");
     expect(html).not.toContain("Live database from Opera");
     expect(html).not.toContain("Data source details");
@@ -31,11 +31,12 @@ describe("public read-only dashboard", () => {
       html.indexOf("</aside>"),
     );
     const order = [
-      "PORTAL",
+      "KVM PORTAL",
       "Commercial Pulse",
-      "Management Review",
+      "Management Lense",
       "Reports",
-      "YOUR MARKETS",
+      "Business Insight",
+      "MARKET INSIGHTS",
       "ADMINISTRATOR",
       "Property Setup",
       "Data Input",

@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import {
+  Activity,
+  BookOpen,
   ArrowDownToLine,
   ArrowLeft,
   ArrowUpRight,
@@ -45,6 +47,8 @@ import {
 import { db, loadYear, loadAdminRole, saveImport, saveMonth } from "./api";
 import { exportWorkbook, importWorkbook } from "./workbooks";
 import TotalReview from "./TotalReview";
+import BusinessInsight from "./BusinessInsight";
+import { insightReviewed } from "./insightData";
 import PropertySetup from "./PropertySetup";
 import CountryPerformance from "./CountryPerformance";
 import SignInPage from "./SignInPage";
@@ -67,7 +71,8 @@ type View =
   | "setup"
   | "total"
   | "admin"
-  | "property";
+  | "property"
+  | "insight";
 type Tab = "commercial" | "villas" | "countries" | "meals" | "notes";
 export default function App({
   publicDemo = false,
@@ -94,11 +99,13 @@ export default function App({
   const isAdmin =
     !!session && adminRole?.userId === session.user.id && adminRole.allowed;
   const [view, setView] = useState<View>(
-    window.location.pathname === "/property-setup"
-      ? "property"
-      : window.location.pathname === "/admin-data-input"
-        ? "admin"
-        : "overview",
+    window.location.pathname === "/business-insight"
+      ? "insight"
+      : window.location.pathname === "/property-setup"
+        ? "property"
+        : window.location.pathname === "/admin-data-input"
+          ? "admin"
+          : "overview",
   );
   const canEdit = !publicDemo && view === "admin" && (demo || isAdmin);
   const [market, setMarket] = useState<string | null>(null);
@@ -182,11 +189,13 @@ export default function App({
   }, [demo, session]);
   useEffect(() => {
     const path =
-      view === "property"
-        ? "/property-setup"
-        : view === "admin"
-          ? "/admin-data-input"
-          : "/";
+      view === "insight"
+        ? "/business-insight"
+        : view === "property"
+          ? "/property-setup"
+          : view === "admin"
+            ? "/admin-data-input"
+            : "/";
     if (window.location.pathname !== path)
       window.history.pushState(null, "", path);
   }, [view]);
@@ -196,22 +205,26 @@ export default function App({
         window.history.pushState(
           null,
           "",
-          view === "property"
-            ? "/property-setup"
-            : view === "admin"
-              ? "/admin-data-input"
-              : "/",
+          view === "insight"
+            ? "/business-insight"
+            : view === "property"
+              ? "/property-setup"
+              : view === "admin"
+                ? "/admin-data-input"
+                : "/",
         );
         return;
       }
       setDirty(false);
       setMarket(null);
       setView(
-        window.location.pathname === "/property-setup"
-          ? "property"
-          : window.location.pathname === "/admin-data-input"
-            ? "admin"
-            : "overview",
+        window.location.pathname === "/business-insight"
+          ? "insight"
+          : window.location.pathname === "/property-setup"
+            ? "property"
+            : window.location.pathname === "/admin-data-input"
+              ? "admin"
+              : "overview",
       );
     }
     window.addEventListener("popstate", onPop);
@@ -557,8 +570,8 @@ export default function App({
             KVM BUSINESS LENSE<small>Commercial intelligence</small>
           </span>
         </a>
-        <div className="nav-label">PORTAL</div>
-        <nav className="total-nav" aria-label="Portal">
+        <div className="nav-label">KVM PORTAL</div>
+        <nav className="total-nav" aria-label="KVM Portal">
           <button
             className={view === "overview" && !market ? "active" : ""}
             aria-label="Commercial Pulse"
@@ -570,6 +583,7 @@ export default function App({
               })
             }
           >
+            <Activity size={18} />
             Commercial Pulse
           </button>
           <button
@@ -583,7 +597,7 @@ export default function App({
             }
           >
             <BarChart3 size={18} />
-            Management Review
+            Management Lense
           </button>
           <button
             className={view === "reports" && !market ? "active" : ""}
@@ -597,9 +611,22 @@ export default function App({
             <BarChart3 size={18} />
             Reports
           </button>
+          <button
+            className={view === "insight" && !market ? "active" : ""}
+            onClick={() =>
+              navigate(() => {
+                setView("insight");
+                setMarket(null);
+              })
+            }
+          >
+            <BookOpen size={18} />
+            Business Insight
+          </button>
         </nav>
         <div className="nav-label market-label">
-          YOUR MARKETS <span>{markets.length.toString().padStart(2, "0")}</span>
+          MARKET INSIGHTS{" "}
+          <span>{markets.length.toString().padStart(2, "0")}</span>
         </div>
         <nav>
           {visibleMarkets.map((m) => (
@@ -761,15 +788,16 @@ export default function App({
             <Menu size={20} />
           </button>
           <div className="breadcrumb">
-            Portal <ChevronRight size={13} />{" "}
+            KVM Portal <ChevronRight size={13} />{" "}
             <strong>
               {selected?.name ??
                 {
                   overview: "Commercial Pulse",
-                  total: "Management Review",
+                  total: "Management Lense",
                   admin: "Data Input",
                   property: "Property Setup",
                   reports: "Reports",
+                  insight: "Business Insight",
                   activity: "Activity Log",
                   setup: "Setup & access",
                 }[view]}
@@ -807,10 +835,14 @@ export default function App({
           >
             <div className="mode-copy">
               <ShieldCheck size={15} />
-              {publicDemo ? (
+              {view === "insight" ? (
                 <>
-                  Maintained by Revenue Director &amp; Team · Opera PMS not
-                  connected.
+                  Public hospitality research · Sources and periods cited below.
+                </>
+              ) : publicDemo ? (
+                <>
+                  Database manually sourced from Opera (PMS) · Maintained by
+                  Revenue Director &amp; Team.
                 </>
               ) : localPin ? (
                 <>
@@ -834,7 +866,11 @@ export default function App({
                 </>
               )}
             </div>
-            {publicDemo ? (
+            {view === "insight" ? (
+              <span className="last-update">
+                Reviewed: {insightReviewed} · Snapshot
+              </span>
+            ) : publicDemo ? (
               <span className="last-update" role="status">
                 <span
                   className="update-indicator animated"
@@ -874,7 +910,9 @@ export default function App({
               )
             )}
           </div>
-          <div className="page-heading">
+          <div
+            className={`page-heading ${view === "overview" && !market ? "pulse-heading" : ""}`}
+          >
             <div>
               <div className="eyebrow">
                 {selected
@@ -884,42 +922,46 @@ export default function App({
                     : "COMMERCIAL WORKSPACE"}
               </div>
               <h1>
-                {view === "property"
-                  ? "Property Setup"
-                  : view === "admin"
-                    ? "Data Input"
-                    : selected
-                      ? selected.name
-                      : view === "total"
-                        ? "Management Review"
-                        : view === "overview"
-                          ? "Commercial performance, from historical benchmarks to future targets."
-                          : view === "reports"
-                            ? "Reports & insights"
-                            : view === "activity"
-                              ? "A record of every change."
-                              : "Make it your workspace."}
+                {view === "insight"
+                  ? "Business Insight"
+                  : view === "property"
+                    ? "Property Setup"
+                    : view === "admin"
+                      ? "Data Input"
+                      : selected
+                        ? selected.name
+                        : view === "total"
+                          ? "Management Lense"
+                          : view === "overview"
+                            ? "Commercial performance, from historical benchmarks to future targets."
+                            : view === "reports"
+                              ? "Reports & insights"
+                              : view === "activity"
+                                ? "A record of every change."
+                                : "Make it your workspace."}
               </h1>
               <p>
-                {view === "property"
-                  ? "Property profile and configuration. Viewable by all signed-in users; editable only by Super Admin."
-                  : view === "admin"
-                    ? "The only workspace for entering numbers, importing workbooks, and updating action plans."
-                    : selected
-                      ? "View saved performance. All data input is managed by an administrator."
-                      : view === "total"
-                        ? "One automatic review of saved performance across all markets."
-                        : view === "overview"
-                          ? "A unified executive view of property budgets, market pace, and revenue forecasts."
-                          : view === "reports"
-                            ? "Turn market performance into clear, shareable reports."
-                            : view === "activity"
-                              ? "Traceable updates across your connected markets."
-                              : "Connect secure accounts and bring your spreadsheets to life."}
+                {view === "insight"
+                  ? "Maldives tourism, global hospitality and commercial risk intelligence — with sources and reporting dates."
+                  : view === "property"
+                    ? "Property profile and configuration. Viewable by all signed-in users; editable only by Super Admin."
+                    : view === "admin"
+                      ? "The only workspace for entering numbers, importing workbooks, and updating action plans."
+                      : selected
+                        ? "View saved performance. All data input is managed by an administrator."
+                        : view === "total"
+                          ? "One automatic review of saved performance across all markets."
+                          : view === "overview"
+                            ? "A unified executive view of property budgets, market pace, and revenue forecasts."
+                            : view === "reports"
+                              ? "Turn market performance into clear, shareable reports."
+                              : view === "activity"
+                                ? "Traceable updates across your connected markets."
+                                : "Connect secure accounts and bring your spreadsheets to life."}
               </p>
             </div>
             <div className="heading-actions">
-              {view !== "property" && (
+              {view !== "property" && view !== "insight" && (
                 <label className="year-control">
                   <span>Budget year</span>
                   <select
@@ -939,6 +981,7 @@ export default function App({
               {view !== "setup" &&
                 view !== "activity" &&
                 view !== "total" &&
+                view !== "insight" &&
                 view !== "admin" &&
                 view !== "property" && (
                   <button
@@ -1002,6 +1045,7 @@ export default function App({
               onBusyChange={setBusy}
             />
           )}
+          {view === "insight" && <BusinessInsight />}
           {view === "total" && !countryOnly && (
             <TotalReview
               entries={entries}
@@ -1042,7 +1086,7 @@ export default function App({
               <div className="section-heading">
                 <div>
                   <h2>
-                    Your markets{" "}
+                    Market Insights{" "}
                     <span>{markets.length.toString().padStart(2, "0")}</span>
                   </h2>
                   <p>Select a market to explore its budget and performance.</p>
@@ -1190,7 +1234,7 @@ export default function App({
               <div className="footer-note">
                 <ShieldCheck size={14} />{" "}
                 {publicDemo
-                  ? "Published workbook figures; no Opera PMS connection."
+                  ? "Published workbook figures · Manually maintained; no automated PMS feed."
                   : localPin
                     ? "Real workbook figures plus browser-local edits. Not a shared live feed."
                     : demo

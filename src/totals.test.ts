@@ -115,7 +115,7 @@ describe("automatic total review", () => {
       await workbook.xlsx.load(await captured!.arrayBuffer());
       const sheet = workbook.getWorksheet("Performance")!;
       expect(sheet.rowCount).toBe(4);
-      expect(sheet.getCell("A2").value).toBe("Management Review");
+      expect(sheet.getCell("A2").value).toBe("Management Lense");
       expect(sheet.getCell("B2").value).toBe(2025);
       expect(sheet.getCell("L2").value).toContain("Partial total");
       expect(

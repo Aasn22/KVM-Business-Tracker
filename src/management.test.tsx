@@ -123,7 +123,7 @@ describe("spreadsheet management report", () => {
     const r = managementReport(makeDemo(2027), 2027);
     const tables = managementExportTables(r, true);
     expect(tables.map((t) => t.name)).toEqual([
-      "Management Review",
+      "Management Lense",
       "Market Performance",
       "Actions",
     ]);
@@ -141,8 +141,8 @@ describe("spreadsheet management report", () => {
       await exportManagementReport(r, true);
       const book = new ExcelJS.Workbook();
       await book.xlsx.load(await blob!.arrayBuffer());
-      expect(book.getWorksheet("Management Review")!.getCell("A1").value).toBe(
-        "Management Review",
+      expect(book.getWorksheet("Management Lense")!.getCell("A1").value).toBe(
+        "Management Lense",
       );
       expect(book.getWorksheet("Market Performance")!.rowCount).toBeGreaterThan(
         20,

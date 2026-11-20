@@ -558,29 +558,21 @@ export default function App({
             KVM BUSINESS LENSE<small>Commercial intelligence</small>
           </span>
         </a>
-        <button
-          className={`workspace ${view === "overview" && !market ? "active" : ""}`}
-          aria-label="KVM-OVERVIEW"
-          aria-current={view === "overview" && !market ? "page" : undefined}
-          onClick={() =>
-            navigate(() => {
-              setMarket(null);
-              setView("overview");
-            })
-          }
-        >
-          <img
-            className="workspace-icon"
-            src="/kuda-villingili-logo.png"
-            alt=""
-            width={38}
-            height={38}
-          />
-          <div>KVM-OVERVIEW</div>
-          <ChevronRight size={14} />
-        </button>
         <div className="nav-label">PORTAL</div>
         <nav className="total-nav" aria-label="Portal">
+          <button
+            className={view === "overview" && !market ? "active" : ""}
+            aria-label="Flash Report"
+            aria-current={view === "overview" && !market ? "page" : undefined}
+            onClick={() =>
+              navigate(() => {
+                setMarket(null);
+                setView("overview");
+              })
+            }
+          >
+            Flash Report
+          </button>
           <button
             className={view === "total" ? "active" : ""}
             aria-current={view === "total" ? "page" : undefined}
@@ -774,7 +766,7 @@ export default function App({
             <strong>
               {selected?.name ??
                 {
-                  overview: "KVM-OVERVIEW",
+                  overview: "Flash Report",
                   total: "Management Review",
                   admin: "Data Input",
                   property: "Property Setup",
@@ -884,7 +876,7 @@ export default function App({
                       : view === "total"
                         ? "Management Review"
                         : view === "overview"
-                          ? "EYE on every market. One clear view."
+                          ? "Commercial performance, from historical benchmarks to future targets."
                           : view === "reports"
                             ? "Reports & insights"
                             : view === "activity"
@@ -901,7 +893,7 @@ export default function App({
                       : view === "total"
                         ? "One automatic review of saved performance across the five markets."
                         : view === "overview"
-                          ? "Keep your team aligned and your performance in focus."
+                          ? "A unified executive view of property budgets, market pace, and revenue forecasts."
                           : view === "reports"
                             ? "Turn market performance into clear, shareable reports."
                             : view === "activity"

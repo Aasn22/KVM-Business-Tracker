@@ -8,7 +8,9 @@ describe("public read-only dashboard", () => {
     const html = renderToStaticMarkup(<App publicDemo />);
     expect(html).toContain("Public real-budget review");
     expect(html).not.toContain("Fictional figures");
-    expect(html).toContain("EYE on every market");
+    expect(html).toContain(
+      "Commercial performance, from historical benchmarks to future targets.",
+    );
     expect(html).not.toContain("Email me a sign-in link");
     expect(html).not.toContain("Try Super Admin");
     expect(html).not.toContain(">Data Input</button>");
@@ -24,6 +26,7 @@ describe("public read-only dashboard", () => {
     );
     const order = [
       "PORTAL",
+      "Flash Report",
       "Management Review",
       "Reports",
       "YOUR MARKETS",

@@ -3,27 +3,25 @@ import { renderToStaticMarkup } from "react-dom/server";
 import App, { Numeric } from "./App";
 afterEach(() => vi.unstubAllGlobals());
 describe("read-only views and admin entry", () => {
-  it("uses the transparent Kuda Villingili logo in both sidebar positions", () => {
+  it("retains the main brand logo but gives Flash Report no icon", () => {
     vi.stubGlobal("window", { location: { pathname: "/" } });
     const html = renderToStaticMarkup(<App />);
-    expect(html).toMatch(
-      /class="brand-icon"[^>]*src="\/kuda-villingili-logo.png"[^>]*alt="Kuda Villingili"/,
-    );
-    expect(html).toMatch(
-      /class="workspace-icon"[^>]*src="\/kuda-villingili-logo.png"[^>]*alt=""/,
-    );
-    expect(html.match(/src="\/kuda-villingili-logo.png"/g)).toHaveLength(2);
+    expect(html.match(/src="\/kuda-villingili-logo.png"/g)).toHaveLength(1);
     expect(html).toContain("KVM BUSINESS LENSE");
-    expect(html).toContain("EYE on every market. One clear view.");
-    expect(html).not.toContain("BUSINESS TRACKER");
-  });
-  it("merges the resort card and duplicate overview into one current-page button", () => {
-    vi.stubGlobal("window", { location: { pathname: "/" } });
-    const html = renderToStaticMarkup(<App />);
-    expect(html.match(/aria-label="KVM-OVERVIEW"/g)).toHaveLength(1);
-    expect(html).toContain('aria-current="page"');
-    expect(html).not.toContain(">Overview</button>");
-    expect(html).not.toContain("Resort Maldives</small>");
+    expect(html).toContain(
+      "Commercial performance, from historical benchmarks to future targets.",
+    );
+    expect(html).toContain(
+      "A unified executive view of property budgets, market pace, and revenue forecasts.",
+    );
+    const button = html.match(
+      /<button[^>]*aria-label="Flash Report"[^>]*>[\s\S]*?<\/button>/,
+    )?.[0];
+    expect(button).toBeDefined();
+    expect(button).not.toContain("<img");
+    expect(button).not.toContain("<svg");
+    expect(button).toContain('aria-current="page"');
+    expect(html).not.toContain("KVM-OVERVIEW");
   });
   it("does not mark the overview card current on the admin page", () => {
     vi.stubGlobal("window", { location: { pathname: "/admin-data-input" } });
@@ -37,8 +35,8 @@ describe("read-only views and admin entry", () => {
       html.indexOf("</aside>"),
     );
     const order = [
-      "KVM-OVERVIEW</div>",
       "PORTAL",
+      "Flash Report",
       "Management Review",
       "Reports",
       "YOUR MARKETS",

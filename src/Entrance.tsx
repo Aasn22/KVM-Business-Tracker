@@ -111,7 +111,12 @@ export function RouteEntrance({
   pathname: string;
   children: ReactNode;
 }) {
-  return pathname === "/reports" ? (
+  return [
+    "/reports",
+    "/admin-data-input",
+    "/property-setup",
+    "/activity-log",
+  ].includes(pathname) ? (
     <>{children}</>
   ) : (
     <Entrance>{children}</Entrance>

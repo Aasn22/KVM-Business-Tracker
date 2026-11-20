@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Building2, LockKeyhole, Plus, Save, Upload, X } from "lucide-react";
+import { useAdminName } from "./AdminIdentity";
+import { recordActivity } from "./activity";
 import { db } from "./api";
 import TeamDirectory from "./TeamDirectory";
 import {
@@ -23,6 +25,7 @@ export default function PropertySetup({
   onDirtyChange: (value: boolean) => void;
   onBusyChange: (value: boolean) => void;
 }) {
+  const adminName = useAdminName();
   const [record, setRecord] = useState<PropertyRecord | null>(null);
   const [draft, setDraft] = useState<PropertyData>(
     structuredClone(defaultProperty),
@@ -140,6 +143,17 @@ export default function PropertySetup({
         localStorage.setItem(
           localOnly ? "business-eye-local-property" : propertyStorageKey,
           JSON.stringify(next),
+        );
+      if (
+        localOnly &&
+        !recordActivity(
+          "change",
+          adminName ?? "Unnamed admin",
+          "Property Setup settings updated",
+        )
+      )
+        setError(
+          "Property saved, but activity could not be recorded in browser storage.",
         );
       setRecord(next);
       setEditing(false);

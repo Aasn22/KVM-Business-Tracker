@@ -49,4 +49,15 @@ describe("branded entrance", () => {
     expect(root).toContain("entrance-screen");
     expect(root).toContain('inert=""');
   });
+  it.each(["/admin-data-input", "/property-setup", "/activity-log"])(
+    "opens %s directly without entrance",
+    (pathname) => {
+      const html = renderToStaticMarkup(
+        <RouteEntrance pathname={pathname}>
+          <p>PIN entry</p>
+        </RouteEntrance>,
+      );
+      expect(html).toBe("<p>PIN entry</p>");
+    },
+  );
 });

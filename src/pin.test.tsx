@@ -96,6 +96,9 @@ describe("PIN entry", () => {
       </PinShell>,
     );
     expect(html).toContain("Enter access PIN");
+    expect(html).toContain('aria-label="Admin name"');
+    expect(html).toContain("GO BACK");
+    expect(html).toContain('href="/"');
     expect(html).toContain("Restricted access only for admins.");
     expect(html).toContain("CHECKING ACCESS…");
     expect(html).not.toContain("SECRET_EDITOR");

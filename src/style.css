@@ -3474,3 +3474,79 @@ fieldset {
     padding: 24px;
   }
 }
+
+.admin-pin-box .admin-pin-second-label {
+  margin-top: 20px;
+}
+.admin-pin-back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  width: max-content;
+  margin: 24px auto 0;
+  padding: 14px 28px;
+  color: #d4c0b7;
+  border: 1px solid #bea09580;
+  border-radius: 30px;
+  font-size: 12px;
+}
+.admin-pin-back:hover {
+  background: #bea09515;
+  border-color: #bea095;
+}
+.admin-pin-back:focus-visible {
+  outline: 2px solid #d4c0b7;
+  outline-offset: 5px;
+}
+.activity-disclaimer {
+  margin-bottom: 18px;
+  line-height: 1.8;
+}
+.activity-panels {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+.activity-panel {
+  min-width: 0;
+  padding: 20px;
+}
+.activity-panel h2 {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 17px;
+}
+.activity-panel > p {
+  font-size: 11px;
+  line-height: 1.8;
+  color: #718383;
+  margin: 12px 0 18px;
+}
+.activity-panel ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 550px;
+  overflow-y: auto;
+}
+.activity-panel li {
+  display: grid;
+  gap: 6px;
+  padding: 14px 0;
+  border-bottom: 1px solid #e2e9e4;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.activity-panel time,
+.activity-panel small {
+  font-size: 10px;
+  color: #718383;
+  line-height: 1.7;
+}
+@media (max-width: 1000px) {
+  .activity-panels {
+    grid-template-columns: 1fr;
+  }
+}

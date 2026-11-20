@@ -1,8 +1,12 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { AdminIdentity } from "./AdminIdentity";
+import { cleanActor, recordActivity } from "./activity";
 export default function PinShell({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [unlocked, setUnlocked] = useState(false);
   const [pin, setPin] = useState("");
+  const [name, setName] = useState("");
+  const [actor, setActor] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   useEffect(() => {
@@ -12,7 +16,8 @@ export default function PinShell({ children }: { children: ReactNode }) {
         const data = await res.json();
         if (!active) return;
         if (!res.ok) setError(data.message);
-        setUnlocked(res.ok && data.authenticated === true);
+        // Existing PIN cookie does not supply a name: each admin entry must be named.
+        setUnlocked(false);
       })
       .catch(() => {
         if (active) setError("Unable to check PIN access. Please retry.");
@@ -35,6 +40,7 @@ export default function PinShell({ children }: { children: ReactNode }) {
     setBusy(true);
     setError("");
     try {
+      const reportedName = cleanActor(name);
       const res = await fetch("/api/pin-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -44,6 +50,16 @@ export default function PinShell({ children }: { children: ReactNode }) {
       if (!res.ok || !data.authenticated)
         throw Error(data.message || "Unable to unlock.");
       setPin("");
+      setActor(reportedName);
+      const logged = recordActivity(
+        "admin-access",
+        reportedName,
+        "Admin pages accessed",
+      );
+      if (!logged)
+        setError(
+          "Access granted, but browser storage is unavailable; activity was not recorded.",
+        );
       setUnlocked(true);
     } catch (e) {
       setError((e as Error).message);
@@ -53,10 +69,11 @@ export default function PinShell({ children }: { children: ReactNode }) {
   }
   if (unlocked)
     return (
-      <>
+      <AdminIdentity.Provider value={actor}>
         <div className="mode-banner">
           <span>
-            Local workspace · Changes stay in this browser, not shared online.
+            {actor} · Self-reported name · Changes stay in this browser, not
+            shared online.
           </span>
           <button
             onClick={async () => {
@@ -70,7 +87,7 @@ export default function PinShell({ children }: { children: ReactNode }) {
           {error && <span role="alert">{error}</span>}
         </div>
         {children}
-      </>
+      </AdminIdentity.Provider>
     );
   return (
     <main className="admin-pin-page">
@@ -86,7 +103,23 @@ export default function PinShell({ children }: { children: ReactNode }) {
           height={100}
         />
         <form className="admin-pin-box" onSubmit={submit}>
-          <label htmlFor="admin-access-pin">PIN</label>
+          <label htmlFor="admin-access-name">
+            YOUR NAME <small>(self-reported)</small>
+          </label>
+          <input
+            id="admin-access-name"
+            aria-label="Admin name"
+            type="text"
+            autoComplete="name"
+            placeholder="Enter your name"
+            maxLength={80}
+            required
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+          <label className="admin-pin-second-label" htmlFor="admin-access-pin">
+            PIN
+          </label>
           <input
             id="admin-access-pin"
             aria-label="Access PIN"
@@ -110,6 +143,9 @@ export default function PinShell({ children }: { children: ReactNode }) {
             Restricted access only for admins.
           </p>
         </form>
+        <a className="admin-pin-back" href="/">
+          GO BACK <span aria-hidden="true">→</span>
+        </a>
       </section>
     </main>
   );

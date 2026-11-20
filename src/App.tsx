@@ -38,7 +38,6 @@ import {
   row,
   summarize,
   validData,
-  type Audit,
   type Entry,
   type MonthData,
   type Row,
@@ -48,6 +47,9 @@ import { exportWorkbook, importWorkbook } from "./workbooks";
 import TotalReview from "./TotalReview";
 import ReportLibrary from "./ReportLibrary";
 import { formatMoney, formatNumber, isMoneyMetric } from "./format";
+import ActivityLog from "./ActivityLog";
+import { useAdminName } from "./AdminIdentity";
+import { recordActivity, recordPlatformVisit } from "./activity";
 import { useMenuIntro } from "./useMenuIntro";
 import BusinessInsight from "./BusinessInsight";
 import { insightReviewed } from "./insightData";
@@ -77,6 +79,10 @@ export default function App({
   localPin?: boolean;
 }) {
   const demo = localPin || (!publicDemo && !db);
+  const adminName = useAdminName();
+  useEffect(() => {
+    if (publicDemo) recordPlatformVisit();
+  }, [publicDemo]);
   const [publicUpdatedAt, setPublicUpdatedAt] = useState<string | null>(null);
   const [publicFeed, setPublicFeed] = useState(false);
   const [reportSource, setReportSource] = useState(
@@ -97,15 +103,17 @@ export default function App({
   const isAdmin =
     !!session && adminRole?.userId === session.user.id && adminRole.allowed;
   const [view, setView] = useState<View>(
-    window.location.pathname === "/reports"
-      ? "reports"
-      : window.location.pathname === "/business-insight"
-        ? "insight"
-        : window.location.pathname === "/property-setup"
-          ? "property"
-          : window.location.pathname === "/admin-data-input"
-            ? "admin"
-            : "overview",
+    window.location.pathname === "/activity-log"
+      ? "activity"
+      : window.location.pathname === "/reports"
+        ? "reports"
+        : window.location.pathname === "/business-insight"
+          ? "insight"
+          : window.location.pathname === "/property-setup"
+            ? "property"
+            : window.location.pathname === "/admin-data-input"
+              ? "admin"
+              : "overview",
   );
   const canEdit = !publicDemo && view === "admin" && (demo || isAdmin);
   const [market, setMarket] = useState<string | null>(null);
@@ -122,7 +130,6 @@ export default function App({
   const [sidebar, setSidebar] = useState(false);
   const { appRef, cancelIntro } = useMenuIntro(setSidebar);
   const [pending, setPending] = useState<Entry[] | null>(null);
-  const [audit, setAudit] = useState<Audit[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (publicDemo || localPin || !db) return;
@@ -138,7 +145,6 @@ export default function App({
       setEntries([]);
       setDraft(null);
       setPending(null);
-      setAudit([]);
       setDirty(false);
     });
     return () => data.subscription.unsubscribe();
@@ -188,15 +194,17 @@ export default function App({
   }, [demo, session]);
   useEffect(() => {
     const path =
-      view === "reports"
-        ? "/reports"
-        : view === "insight"
-          ? "/business-insight"
-          : view === "property"
-            ? "/property-setup"
-            : view === "admin"
-              ? "/admin-data-input"
-              : "/";
+      view === "activity"
+        ? "/activity-log"
+        : view === "reports"
+          ? "/reports"
+          : view === "insight"
+            ? "/business-insight"
+            : view === "property"
+              ? "/property-setup"
+              : view === "admin"
+                ? "/admin-data-input"
+                : "/";
     if (window.location.pathname !== path)
       window.history.pushState(null, "", path);
   }, [view]);
@@ -206,30 +214,34 @@ export default function App({
         window.history.pushState(
           null,
           "",
-          view === "reports"
-            ? "/reports"
-            : view === "insight"
-              ? "/business-insight"
-              : view === "property"
-                ? "/property-setup"
-                : view === "admin"
-                  ? "/admin-data-input"
-                  : "/",
+          view === "activity"
+            ? "/activity-log"
+            : view === "reports"
+              ? "/reports"
+              : view === "insight"
+                ? "/business-insight"
+                : view === "property"
+                  ? "/property-setup"
+                  : view === "admin"
+                    ? "/admin-data-input"
+                    : "/",
         );
         return;
       }
       setDirty(false);
       setMarket(null);
       setView(
-        window.location.pathname === "/reports"
-          ? "reports"
-          : window.location.pathname === "/business-insight"
-            ? "insight"
-            : window.location.pathname === "/property-setup"
-              ? "property"
-              : window.location.pathname === "/admin-data-input"
-                ? "admin"
-                : "overview",
+        window.location.pathname === "/activity-log"
+          ? "activity"
+          : window.location.pathname === "/reports"
+            ? "reports"
+            : window.location.pathname === "/business-insight"
+              ? "insight"
+              : window.location.pathname === "/property-setup"
+                ? "property"
+                : window.location.pathname === "/admin-data-input"
+                  ? "admin"
+                  : "overview",
       );
     }
     window.addEventListener("popstate", onPop);
@@ -342,23 +354,6 @@ export default function App({
     return () => clearTimeout(timer);
   }, [toast]);
   useEffect(() => {
-    let active = true;
-    if (view === "activity" && db && session) {
-      db.from("audit_log")
-        .select("id,market_id,year,month,changed_at,actor")
-        .order("changed_at", { ascending: false })
-        .limit(50)
-        .then(({ data, error }) => {
-          if (!active) return;
-          if (error) setError(error.message);
-          else setAudit(data as Audit[]);
-        });
-    }
-    return () => {
-      active = false;
-    };
-  }, [view, session]);
-  useEffect(() => {
     if (!login && !help && !pending) return;
     const previous = document.activeElement as HTMLElement | null;
     const dialog = document.querySelector<HTMLElement>('[role="dialog"]');
@@ -447,6 +442,17 @@ export default function App({
           localPin ? `business-eye-local-${year}` : `kvm-demo-${year}`,
           JSON.stringify(next),
         );
+      if (
+        localPin &&
+        !recordActivity(
+          "change",
+          adminName ?? "Unnamed admin",
+          `${markets.find((m) => m.id === market)?.name ?? market} · ${months[month - 1]} ${year} budget inputs saved`,
+        )
+      )
+        setError(
+          "Changes saved, but activity could not be recorded in browser storage.",
+        );
       setEntries(next);
       setDirty(false);
       setToast(
@@ -511,6 +517,17 @@ export default function App({
         );
       setEntries(next);
       setPending(null);
+      if (
+        localPin &&
+        !recordActivity(
+          "change",
+          adminName ?? "Unnamed admin",
+          `${markets.find((m) => m.id === market)?.name ?? market} · ${year} workbook imported (12 months)`,
+        )
+      )
+        setError(
+          "Workbook saved, but activity could not be recorded in browser storage.",
+        );
       setToast("12 monthly sheets imported.");
     } catch (e) {
       setError((e as Error).message);
@@ -692,18 +709,25 @@ export default function App({
           </>
         )}
         <nav aria-label="Administrator activity">
-          <button
-            className={view === "activity" && !market ? "active" : ""}
-            onClick={() =>
-              navigate(() => {
-                setView("activity");
-                setMarket(null);
-              })
-            }
-          >
-            <Clock3 size={18} />
-            Activity Log
-          </button>
+          {publicDemo ? (
+            <a className="settings-nav" href="/activity-log">
+              <Clock3 size={18} />
+              Activity Log
+            </a>
+          ) : (
+            <button
+              className={view === "activity" ? "active" : ""}
+              onClick={() =>
+                navigate(() => {
+                  setView("activity");
+                  setMarket(null);
+                })
+              }
+            >
+              <Clock3 size={18} />
+              Activity Log
+            </button>
+          )}
         </nav>
         <div className="sidebar-bottom">
           <div className="secure">
@@ -824,6 +848,10 @@ export default function App({
               aria-label="View recent activity"
               onClick={() =>
                 navigate(() => {
+                  if (publicDemo) {
+                    window.location.assign("/activity-log");
+                    return;
+                  }
                   setMarket(null);
                   setView("activity");
                 })
@@ -941,7 +969,7 @@ export default function App({
                             : view === "reports"
                               ? "Reports Library"
                               : view === "activity"
-                                ? "A record of every change."
+                                ? "Activity Log"
                                 : "Make it your workspace."}
               </h1>
               <p>
@@ -960,28 +988,30 @@ export default function App({
                             : view === "reports"
                               ? "Visual intelligence for leadership and revenue teams."
                               : view === "activity"
-                                ? "Traceable updates across your connected markets."
+                                ? "Access, updates and recent changes recorded on this browser."
                                 : "Connect secure accounts and bring your spreadsheets to life."}
               </p>
             </div>
             <div className="heading-actions">
-              {view !== "property" && view !== "insight" && (
-                <label className="year-control">
-                  <span>Budget year</span>
-                  <select
-                    aria-label="Budget year"
-                    disabled={busy}
-                    value={year}
-                    onChange={(e) =>
-                      navigate(() => setYear(Number(e.target.value)))
-                    }
-                  >
-                    {budgetYears.map((y) => (
-                      <option key={y}>{y}</option>
-                    ))}
-                  </select>
-                </label>
-              )}
+              {view !== "property" &&
+                view !== "insight" &&
+                view !== "activity" && (
+                  <label className="year-control">
+                    <span>Budget year</span>
+                    <select
+                      aria-label="Budget year"
+                      disabled={busy}
+                      value={year}
+                      onChange={(e) =>
+                        navigate(() => setYear(Number(e.target.value)))
+                      }
+                    >
+                      {budgetYears.map((y) => (
+                        <option key={y}>{y}</option>
+                      ))}
+                    </select>
+                  </label>
+                )}
               {view !== "setup" &&
                 view !== "activity" &&
                 view !== "total" &&
@@ -1719,64 +1749,7 @@ export default function App({
               }
             />
           )}
-          {view === "activity" && (
-            <section className="panel">
-              <div className="section-heading">
-                <div>
-                  <h2>Recent updates</h2>
-                  <p>Latest 50 changes visible to your account</p>
-                </div>
-                <Clock3 size={22} />
-              </div>
-              {localPin ? (
-                <div className="empty">
-                  Browser-local changes only. No shared audit log.
-                </div>
-              ) : demo ? (
-                <div className="empty">
-                  <Clock3 size={30} />
-                  <h3>A clear trail, from day one.</h3>
-                  <p>
-                    Live saves and workbook imports create immutable audit
-                    records.
-                    <br />
-                    Demo changes are local and are not audit logged.
-                  </p>
-                </div>
-              ) : !session ? (
-                <div className="empty">Sign in to see your activity log.</div>
-              ) : audit.length ? (
-                <div className="table-scroll">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Market</th>
-                        <th>Period</th>
-                        <th>Changed at</th>
-                        <th>Actor ID</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {audit.map((a) => (
-                        <tr key={a.id}>
-                          <th>
-                            {markets.find((m) => m.id === a.market_id)?.name}
-                          </th>
-                          <td>
-                            {months[a.month - 1]} {a.year}
-                          </td>
-                          <td>{new Date(a.changed_at).toLocaleString()}</td>
-                          <td>{a.actor}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div className="empty">No changes recorded yet.</div>
-              )}
-            </section>
-          )}
+          {view === "activity" && !publicDemo && <ActivityLog />}
           {!publicDemo && view === "setup" && (
             <section className="panel setup">
               <div className="setup-icon">

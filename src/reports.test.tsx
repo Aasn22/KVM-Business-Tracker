@@ -199,6 +199,8 @@ describe("executive saved-data reports", () => {
     vi.stubGlobal("window", { location: { pathname: "/reports" } });
     const app = renderToStaticMarkup(<App publicDemo />);
     expect(app).toContain("Reports Library");
+    expect(app).not.toContain("Budget year");
+    expect(app).not.toContain('aria-label="Report year"');
     expect(app).not.toContain("Market performance report ·");
   });
   it("exports captured metadata, full numeric precision and monthly/market/category detail", async () => {
@@ -229,7 +231,7 @@ describe("executive saved-data reports", () => {
       "Test saved input",
     );
   });
-  it("renders the twelve supplied reports as compact icon shortcuts without oversized cards", () => {
+  it("renders the operational shortcuts alongside the supplied reports as compact icon shortcuts without oversized cards", () => {
     const expected = [
       "Hotel Performance Reports",
       "Business Pace Reports",
@@ -240,6 +242,7 @@ describe("executive saved-data reports", () => {
       "Market Performance Reports",
       "Country Performance Reports",
       "Cancellation Reports",
+      "Reservations Confirmed Reports",
       "Monthly Reports",
       "Quarterly Reports",
       "Yearly Reports",
@@ -249,17 +252,23 @@ describe("executive saved-data reports", () => {
       <QuickReports group="All" loading={false} onSelect={() => {}} />,
     );
     expect(html).toContain("QUICK REPORTS");
-    expect(html.match(/class="quick-report-button"/g)).toHaveLength(12);
-    expect(html.match(/<svg/g)).toHaveLength(12);
+    expect(html.match(/class="quick-report-button"/g)).toHaveLength(13);
+    expect(html.match(/<svg/g)).toHaveLength(13);
     expect(html).not.toContain("report-category-card");
     for (const name of expected) expect(html).toContain(name);
   });
   it("discloses unavailable inputs and does not map segment, sales or cancellation to fabricated data", () => {
-    for (const id of ["segment", "sales", "cancellation"]) {
+    for (const id of ["segment", "sales"]) {
       const r = quickReports.find((q) => q.id === id)!;
       expect(r.type).toBeUndefined();
       expect(r.unavailable).toContain("not collected");
     }
+    expect(quickReports.find((q) => q.id === "cancellation")!.operational).toBe(
+      "cancellations",
+    );
+    expect(quickReports.find((q) => q.id === "reservations")!.operational).toBe(
+      "reservations",
+    );
     const pace = quickReports.find((q) => q.id === "pace")!;
     expect(pace.limitation).toContain("true pickup");
     const report = calculateReport([entry()], {

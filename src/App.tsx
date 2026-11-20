@@ -48,6 +48,7 @@ import TotalReview from "./TotalReview";
 import ReportLibrary from "./ReportLibrary";
 import { formatMoney, formatNumber, isMoneyMetric } from "./format";
 import ActivityLog from "./ActivityLog";
+import OperationalInput from "./OperationalInput";
 import { useAdminName } from "./AdminIdentity";
 import { recordActivity, recordPlatformVisit } from "./activity";
 import { useMenuIntro } from "./useMenuIntro";
@@ -995,7 +996,8 @@ export default function App({
             <div className="heading-actions">
               {view !== "property" &&
                 view !== "insight" &&
-                view !== "activity" && (
+                view !== "activity" &&
+                view !== "reports" && (
                   <label className="year-control">
                     <span>Budget year</span>
                     <select
@@ -1276,6 +1278,9 @@ export default function App({
                 <span>Revenue figures shown with $</span>
               </div>
             </>
+          )}
+          {localPin && view === "admin" && (
+            <OperationalInput onBusyChange={setBusy} />
           )}
           {!publicDemo && view === "admin" && (
             <section className="panel admin-access">
@@ -1735,6 +1740,8 @@ export default function App({
           )}
           {view === "reports" && !countryOnly && (
             <ReportLibrary
+              onYearChange={setYear}
+              localDataEnabled={localPin}
               entries={entries}
               year={year}
               loading={loading}

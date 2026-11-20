@@ -3550,3 +3550,125 @@ fieldset {
     grid-template-columns: 1fr;
   }
 }
+
+/* Match only the report welcome copy and Explore icon to the supplied rose-gold logo. */
+.report-welcome h2,
+.report-welcome p,
+.report-welcome small,
+.report-welcome .eyebrow,
+.report-welcome .report-gold-button svg {
+  color: #bea095;
+}
+.operations-input {
+  margin-bottom: 24px;
+}
+.operations-input > h2 {
+  font-size: 20px;
+  margin-bottom: 10px;
+}
+.operations-input > p {
+  font-size: 12px;
+  line-height: 1.8;
+  color: #718383;
+  margin-bottom: 16px;
+}
+.operation-input-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+.operation-input {
+  padding: 20px;
+  min-width: 0;
+}
+.operation-input h3 {
+  background: #17375c;
+  color: #fff;
+  padding: 12px;
+  font-size: 15px;
+  margin: -20px -20px 20px;
+}
+.operation-input fieldset {
+  display: grid;
+  gap: 14px;
+}
+.operation-input label {
+  display: grid;
+  gap: 8px;
+  font-size: 12px;
+}
+.operation-input input {
+  width: 100%;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid #d5e1d9;
+  border-radius: 5px;
+}
+.operation-file {
+  border: 1px dashed #b7c9be;
+  padding: 12px;
+  border-radius: 6px;
+}
+.operation-preview {
+  margin-top: 18px;
+}
+.operation-preview p,
+.operation-preview li {
+  font-size: 11px;
+  line-height: 1.8;
+}
+.operation-preview .table-scroll {
+  max-height: 350px;
+  margin: 16px 0;
+}
+.operational-report {
+  display: grid;
+  gap: 18px;
+}
+.operational-report h2,
+.operational-report h3 {
+  color: #d4bd91;
+}
+.operational-report .table-scroll th,
+.operational-report .table-scroll td {
+  color: #d4bd91;
+  border-color: #d4bd9130;
+}
+.operational-report .table-scroll thead {
+  background: #13253c;
+}
+.operation-bar {
+  display: grid;
+  grid-template-columns: 45px minmax(0, 1fr) 110px;
+  gap: 10px;
+  margin: 16px 0;
+  align-items: center;
+  font-size: 12px;
+}
+.operation-bar i {
+  display: block;
+  height: 12px;
+  background: #c5a46d;
+}
+@media (max-width: 900px) {
+  .operation-input-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.report-library-head > .report-gold-button {
+  flex-shrink: 0;
+}
+.report-selected-source,
+.report-selection {
+  margin: 0 0 18px;
+  font-size: 11px !important;
+}
+#custom-report-builder {
+  margin-bottom: 20px;
+}
+@media print {
+  #custom-report-builder,
+  .report-selection {
+    display: none !important;
+  }
+}

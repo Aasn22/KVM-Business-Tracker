@@ -19,7 +19,9 @@ import {
   X,
 } from "lucide-react";
 import { formatMoney, formatNumber } from "./format";
-import { markets, months, type Entry } from "./model";
+import { budgetYears, markets, months, type Entry } from "./model";
+import OperationalReports from "./OperationalReports";
+import type { OperationKind } from "./operational";
 import { quickReports, quickReportPeriod } from "./quickReports";
 import {
   reportTypes,
@@ -41,6 +43,7 @@ const quickIcons = [
   BarChart3,
   Globe2,
   CircleX,
+  Hotel,
   CalendarDays,
   PieChart,
   FileChartColumn,
@@ -66,6 +69,7 @@ export function QuickReports({
           .filter((r) => {
             if (group === "All") return true;
             const type = reportTypes.find((t) => t.id === r.type);
+            if (r.operational) return group === "All" || group === "Revenue";
             return group === "Unavailable inputs"
               ? !!r.unavailable
               : type?.group === group;
@@ -551,7 +555,11 @@ export default function ReportLibrary({
   year,
   source,
   loading,
+  localDataEnabled = false,
+  onYearChange,
 }: {
+  localDataEnabled?: boolean;
+  onYearChange?: (year: number) => void;
   entries: Entry[];
   year: number;
   source: string;
@@ -568,6 +576,8 @@ export default function ReportLibrary({
     [snapshot, setSnapshot] = useState<ReportSnapshot | null>(null),
     [recent, setRecent] = useState<ReportSnapshot[]>([]),
     [exporting, setExporting] = useState(false);
+  const [customOpen, setCustomOpen] = useState(false);
+  const [operational, setOperational] = useState<OperationKind | null>(null);
   const [inputNotice, setInputNotice] = useState<string | null>(null);
   const controller = useRef<AbortController | null>(null);
   useEffect(() => () => controller.current?.abort(), []);
@@ -617,6 +627,15 @@ export default function ReportLibrary({
       }
     }
   }
+  if (operational)
+    return (
+      <div className="report-library">
+        <OperationalReports
+          kind={operational}
+          onClose={() => setOperational(null)}
+        />
+      </div>
+    );
   if (!entered)
     return (
       <section className="report-welcome">
@@ -728,114 +747,160 @@ export default function ReportLibrary({
                 saved records only—not unsaved input fields.
               </p>
             </div>
-            <span>{source}</span>
-          </header>
-          <div className="report-controls">
-            <label>
-              Market
-              <select
-                aria-label="Report market"
-                value={market}
-                onChange={(e) => setMarket(e.target.value)}
-              >
-                <option value="all">All available markets</option>
-                {markets.map((m) => (
-                  <option value={m.id} key={m.id}>
-                    {m.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Reporting period
-              <select
-                aria-label="Report period"
-                value={period}
-                onChange={(e) => setPeriod(e.target.value)}
-              >
-                <option value="year">Full year</option>
-                {[1, 2, 3, 4].map((q) => (
-                  <option key={q} value={`q${q}`}>
-                    Quarter {q}
-                  </option>
-                ))}
-                {months.map((m, i) => (
-                  <option key={m} value={i + 1}>
-                    {m}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Category
-              <select
-                aria-label="Report category"
-                value={group}
-                onChange={(e) => setGroup(e.target.value)}
-              >
-                {[
-                  "All",
-                  "Executive",
-                  "Revenue",
-                  "Breakdowns",
-                  "Unavailable inputs",
-                ].map((g) => (
-                  <option key={g}>{g}</option>
-                ))}
-              </select>
-            </label>
-          </div>
-          <section className="report-builder">
-            <div>
-              <h3>
-                <FileChartColumn size={18} />
-                Build your report
-              </h3>
-              <p>
-                Set the title and visual report type; market, year and period
-                use your current selection.
-              </p>
-            </div>
-            <label>
-              Report title
-              <input
-                aria-label="Custom report title"
-                maxLength={100}
-                placeholder="e.g. Monthly commercial review"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-              />
-            </label>
-            <label>
-              Report type
-              <select
-                aria-label="Custom report type"
-                value={type}
-                onChange={(e) => setType(e.target.value as ReportType)}
-              >
-                {reportTypes.map((t) => (
-                  <option value={t.id} key={t.id}>
-                    {t.title}
-                  </option>
-                ))}
-              </select>
-            </label>
             <button
               className="report-gold-button"
-              disabled={loading}
-              onClick={() => void generate(type, true)}
+              aria-expanded={customOpen}
+              aria-controls="custom-report-builder"
+              onClick={() => setCustomOpen(!customOpen)}
             >
-              Generate report
+              <FileChartColumn size={17} />
+              {customOpen ? "Hide Custom Report" : "Generate Your Own Report"}
             </button>
-          </section>
+          </header>
+          {customOpen && (
+            <section id="custom-report-builder">
+              <p className="report-selected-source">{source}</p>
+              <div className="report-controls">
+                <label>
+                  Report year
+                  <select
+                    aria-label="Report year"
+                    value={year}
+                    onChange={(e) => onYearChange?.(Number(e.target.value))}
+                    disabled={!onYearChange}
+                  >
+                    {budgetYears.map((y) => (
+                      <option value={y} key={y}>
+                        {y}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Market
+                  <select
+                    aria-label="Report market"
+                    value={market}
+                    onChange={(e) => setMarket(e.target.value)}
+                  >
+                    <option value="all">All available markets</option>
+                    {markets.map((m) => (
+                      <option value={m.id} key={m.id}>
+                        {m.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Reporting period
+                  <select
+                    aria-label="Report period"
+                    value={period}
+                    onChange={(e) => setPeriod(e.target.value)}
+                  >
+                    <option value="year">Full year</option>
+                    {[1, 2, 3, 4].map((q) => (
+                      <option key={q} value={`q${q}`}>
+                        Quarter {q}
+                      </option>
+                    ))}
+                    {months.map((m, i) => (
+                      <option key={m} value={i + 1}>
+                        {m}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Category
+                  <select
+                    aria-label="Report category"
+                    value={group}
+                    onChange={(e) => setGroup(e.target.value)}
+                  >
+                    {[
+                      "All",
+                      "Executive",
+                      "Revenue",
+                      "Breakdowns",
+                      "Unavailable inputs",
+                    ].map((g) => (
+                      <option key={g}>{g}</option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              <section className="report-builder">
+                <div>
+                  <h3>
+                    <FileChartColumn size={18} />
+                    Build your report
+                  </h3>
+                  <p>
+                    Set the title and visual report type; market, year and
+                    period use your current selection.
+                  </p>
+                </div>
+                <label>
+                  Report title
+                  <input
+                    aria-label="Custom report title"
+                    maxLength={100}
+                    placeholder="e.g. Monthly commercial review"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                  />
+                </label>
+                <label>
+                  Report type
+                  <select
+                    aria-label="Custom report type"
+                    value={type}
+                    onChange={(e) => setType(e.target.value as ReportType)}
+                  >
+                    {reportTypes.map((t) => (
+                      <option value={t.id} key={t.id}>
+                        {t.title}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button
+                  className="report-gold-button"
+                  disabled={loading}
+                  onClick={() => void generate(type, true)}
+                >
+                  Generate report
+                </button>
+              </section>
+            </section>
+          )}
+          <p className="report-selection">
+            {year} ·{" "}
+            {market === "all"
+              ? "All available markets"
+              : markets.find((m) => m.id === market)?.name}{" "}
+            · {periodLabel(period)}. Change selection using Generate Your Own
+            Report.
+          </p>
           {loading && (
             <p role="status">Loading saved data before generation…</p>
           )}
           <QuickReports
-            group={group}
+            group={customOpen ? group : "All"}
             loading={loading}
             onSelect={(id) => {
               const quick = quickReports.find((r) => r.id === id)!;
+              if (quick.operational) {
+                if (!localDataEnabled) {
+                  setInputNotice(
+                    "These uploads are browser-local and PIN protected. Open Data Input, enter your name and PIN, then use Reports Library inside that session. No uploaded private rows are read on this public page.",
+                  );
+                  return;
+                }
+                setOperational(quick.operational);
+                return;
+              }
               if (quick.unavailable) {
                 setInputNotice(`${quick.title}: ${quick.unavailable}`);
                 return;

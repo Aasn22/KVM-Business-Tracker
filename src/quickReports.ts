@@ -6,6 +6,7 @@ export const quickReports: {
   periodMode?: "month" | "quarter" | "year";
   limitation?: string;
   unavailable?: string;
+  operational?: "cancellations" | "reservations";
 }[] = [
   { id: "hotel", title: "Hotel Performance Reports", type: "executive" },
   {
@@ -34,8 +35,12 @@ export const quickReports: {
   {
     id: "cancellation",
     title: "Cancellation Reports",
-    unavailable:
-      "Cancellation counts, cancelled room nights, cancellation dates and cancelled revenue are not collected. No cancellation figures or rates can be inferred from BOB.",
+    operational: "cancellations",
+  },
+  {
+    id: "reservations",
+    title: "Reservations Confirmed Reports",
+    operational: "reservations",
   },
   {
     id: "monthly",

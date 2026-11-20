@@ -19,7 +19,6 @@ import {
   LogOut,
   Menu,
   Plus,
-  Printer,
   Save,
   Settings2,
   ShieldCheck,
@@ -47,6 +46,7 @@ import {
 import { db, loadYear, loadAdminRole, saveImport, saveMonth } from "./api";
 import { exportWorkbook, importWorkbook } from "./workbooks";
 import TotalReview from "./TotalReview";
+import ReportLibrary from "./ReportLibrary";
 import BusinessInsight from "./BusinessInsight";
 import { insightReviewed } from "./insightData";
 import PropertySetup from "./PropertySetup";
@@ -84,6 +84,9 @@ export default function App({
   const demo = localPin || (!publicDemo && !db);
   const [publicUpdatedAt, setPublicUpdatedAt] = useState<string | null>(null);
   const [publicFeed, setPublicFeed] = useState(false);
+  const [reportSource, setReportSource] = useState(
+    "Published workbook snapshot; database status unverified",
+  );
   const [year, setYear] = useState(2027);
   const [entries, setEntries] = useState<Entry[]>([]);
   const [session, setSession] = useState<Session | null>(null);
@@ -99,13 +102,15 @@ export default function App({
   const isAdmin =
     !!session && adminRole?.userId === session.user.id && adminRole.allowed;
   const [view, setView] = useState<View>(
-    window.location.pathname === "/business-insight"
-      ? "insight"
-      : window.location.pathname === "/property-setup"
-        ? "property"
-        : window.location.pathname === "/admin-data-input"
-          ? "admin"
-          : "overview",
+    window.location.pathname === "/reports"
+      ? "reports"
+      : window.location.pathname === "/business-insight"
+        ? "insight"
+        : window.location.pathname === "/property-setup"
+          ? "property"
+          : window.location.pathname === "/admin-data-input"
+            ? "admin"
+            : "overview",
   );
   const canEdit = !publicDemo && view === "admin" && (demo || isAdmin);
   const [market, setMarket] = useState<string | null>(null);
@@ -122,8 +127,6 @@ export default function App({
   const [sidebar, setSidebar] = useState(false);
   const [pending, setPending] = useState<Entry[] | null>(null);
   const [audit, setAudit] = useState<Audit[]>([]);
-  const [reportMarket, setReportMarket] = useState("all");
-  const [period, setPeriod] = useState("year");
   const fileRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (publicDemo || localPin || !db) return;
@@ -189,13 +192,15 @@ export default function App({
   }, [demo, session]);
   useEffect(() => {
     const path =
-      view === "insight"
-        ? "/business-insight"
-        : view === "property"
-          ? "/property-setup"
-          : view === "admin"
-            ? "/admin-data-input"
-            : "/";
+      view === "reports"
+        ? "/reports"
+        : view === "insight"
+          ? "/business-insight"
+          : view === "property"
+            ? "/property-setup"
+            : view === "admin"
+              ? "/admin-data-input"
+              : "/";
     if (window.location.pathname !== path)
       window.history.pushState(null, "", path);
   }, [view]);
@@ -205,26 +210,30 @@ export default function App({
         window.history.pushState(
           null,
           "",
-          view === "insight"
-            ? "/business-insight"
-            : view === "property"
-              ? "/property-setup"
-              : view === "admin"
-                ? "/admin-data-input"
-                : "/",
+          view === "reports"
+            ? "/reports"
+            : view === "insight"
+              ? "/business-insight"
+              : view === "property"
+                ? "/property-setup"
+                : view === "admin"
+                  ? "/admin-data-input"
+                  : "/",
         );
         return;
       }
       setDirty(false);
       setMarket(null);
       setView(
-        window.location.pathname === "/business-insight"
-          ? "insight"
-          : window.location.pathname === "/property-setup"
-            ? "property"
-            : window.location.pathname === "/admin-data-input"
-              ? "admin"
-              : "overview",
+        window.location.pathname === "/reports"
+          ? "reports"
+          : window.location.pathname === "/business-insight"
+            ? "insight"
+            : window.location.pathname === "/property-setup"
+              ? "property"
+              : window.location.pathname === "/admin-data-input"
+                ? "admin"
+                : "overview",
       );
     }
     window.addEventListener("popstate", onPop);
@@ -245,6 +254,7 @@ export default function App({
             setEntries(result.entries);
             setPublicUpdatedAt(result.lastUpdatedAt);
             setPublicFeed(result.databaseAvailable);
+            setReportSource(result.notice);
           }
         } catch (e) {
           if (active) {
@@ -409,14 +419,6 @@ export default function App({
   const selected = markets.find((m) => m.id === market);
   const activeData =
     (canEdit ? draft : current?.data) ?? blank(market ?? "asia");
-  const scoped = entries.filter(
-    (e) =>
-      (reportMarket === "all" || e.market_id === reportMarket) &&
-      (period === "year" ||
-        (period.startsWith("q")
-          ? Math.ceil(e.month / 3) === Number(period.slice(1))
-          : e.month === Number(period))),
-  );
   async function save() {
     if (!canEdit || !draft || !market) return;
     if (!validData(draft)) {
@@ -935,7 +937,7 @@ export default function App({
                           : view === "overview"
                             ? "Commercial performance, from historical benchmarks to future targets."
                             : view === "reports"
-                              ? "Reports & insights"
+                              ? "Executive report library"
                               : view === "activity"
                                 ? "A record of every change."
                                 : "Make it your workspace."}
@@ -954,7 +956,7 @@ export default function App({
                           : view === "overview"
                             ? "A unified executive view of property budgets, market pace, and revenue forecasts."
                             : view === "reports"
-                              ? "Turn market performance into clear, shareable reports."
+                              ? "Visual intelligence for owners, leadership and revenue teams."
                               : view === "activity"
                                 ? "Traceable updates across your connected markets."
                                 : "Connect secure accounts and bring your spreadsheets to life."}
@@ -982,6 +984,7 @@ export default function App({
                 view !== "activity" &&
                 view !== "total" &&
                 view !== "insight" &&
+                view !== "reports" &&
                 view !== "admin" &&
                 view !== "property" && (
                   <button
@@ -991,9 +994,7 @@ export default function App({
                       download(
                         selected
                           ? entries.filter((e) => e.market_id === market)
-                          : view === "reports"
-                            ? scoped
-                            : entries,
+                          : entries,
                         `KVM-${selected?.id ?? "all-markets"}-${year}`,
                       )
                     }
@@ -1699,141 +1700,20 @@ export default function App({
             </>
           )}
           {view === "reports" && !countryOnly && (
-            <>
-              <section className="panel report-filters">
-                <label>
-                  Market
-                  <select
-                    value={reportMarket}
-                    onChange={(e) => setReportMarket(e.target.value)}
-                  >
-                    <option value="all">All accessible markets</option>
-                    {markets.map((m) => (
-                      <option value={m.id} key={m.id}>
-                        {m.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Reporting period
-                  <select
-                    value={period}
-                    onChange={(e) => setPeriod(e.target.value)}
-                  >
-                    <option value="year">Full year</option>
-                    {[1, 2, 3, 4].map((q) => (
-                      <option key={q} value={`q${q}`}>
-                        Quarter {q}
-                      </option>
-                    ))}
-                    {months.map((m, i) => (
-                      <option key={m} value={i + 1}>
-                        {m}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <button
-                  className="button outline"
-                  onClick={() => window.print()}
-                >
-                  <Printer size={16} />
-                  Print / Save PDF
-                </button>
-              </section>
-              <section className="stats-grid">
-                <Stat
-                  title="Revenue budget"
-                  value={money(summarize(scoped).budget)}
-                  detail="Selected reporting period"
-                />
-                <Stat
-                  title="Revenue on books"
-                  value={money(summarize(scoped).bob)}
-                  detail="Selected reporting period"
-                />
-                <Stat
-                  title="Variance to budget"
-                  value={money(
-                    summarize(scoped).bob - summarize(scoped).budget,
-                  )}
-                  detail="BOB minus budget"
-                />
-                <Stat
-                  title="Weighted BOB ADR"
-                  value={money(
-                    adr(summarize(scoped).bob, summarize(scoped).booked),
-                  )}
-                  detail="Revenue ÷ room nights"
-                />
-              </section>
-              <section className="panel">
-                <div className="section-heading">
-                  <div>
-                    <h2>Market performance report · {year}</h2>
-                    <p>
-                      {localPin
-                        ? "Browser-local workbook data"
-                        : demo
-                          ? "Fictional sample data"
-                          : "Authorized markets only"}{" "}
-                      · USD ·{" "}
-                      {period === "year"
-                        ? "Full year"
-                        : period.startsWith("q")
-                          ? `Quarter ${period.slice(1)}`
-                          : months[Number(period) - 1]}
-                    </p>
-                  </div>
-                </div>
-                <div className="table-scroll">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Market</th>
-                        <th>Budget</th>
-                        <th>On books</th>
-                        <th>Variance</th>
-                        <th>Achievement</th>
-                        <th>BOB nights</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {markets
-                        .filter((m) => scoped.some((e) => e.market_id === m.id))
-                        .map((m) => {
-                          const t = summarize(
-                            scoped.filter((e) => e.market_id === m.id),
-                          );
-                          return (
-                            <tr key={m.id}>
-                              <th>{m.name}</th>
-                              <td>{money(t.budget)}</td>
-                              <td>{money(t.bob)}</td>
-                              <td
-                                className={
-                                  t.bob < t.budget ? "negative" : "positive"
-                                }
-                              >
-                                {money(t.bob - t.budget)}
-                              </td>
-                              <td>{percentage(t.bob, t.budget).toFixed(1)}%</td>
-                              <td>{num(t.booked)}</td>
-                            </tr>
-                          );
-                        })}
-                    </tbody>
-                  </table>
-                  {!scoped.length && (
-                    <div className="empty">
-                      No accessible data for this period. Sign in or import a
-                      workbook first.
-                    </div>
-                  )}
-                </div>
-              </section>
-            </>
+            <ReportLibrary
+              entries={entries}
+              year={year}
+              loading={loading}
+              source={
+                localPin
+                  ? "Browser-local saved inputs; not shared"
+                  : publicDemo
+                    ? reportSource
+                    : demo
+                      ? "Fictional demonstration data"
+                      : "Saved authorized market data"
+              }
+            />
           )}
           {view === "activity" && (
             <section className="panel">

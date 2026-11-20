@@ -7,7 +7,9 @@ import "./style.css";
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <Entrance>
-      {["/", "/business-insight"].includes(window.location.pathname) ? (
+      {["/", "/business-insight", "/reports"].includes(
+        window.location.pathname,
+      ) ? (
         <App publicDemo />
       ) : (
         <PinShell>

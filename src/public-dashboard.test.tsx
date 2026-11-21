@@ -27,17 +27,14 @@ describe("public read-only dashboard", () => {
     expect(html).toContain("Data Input");
     expect(html).not.toContain("PIN workspace");
     const sidebar = html.slice(
-      html.indexOf("<aside"),
-      html.indexOf("</aside>"),
+      html.indexOf('<nav class="icon-rail'),
+      html.indexOf("</nav>"),
     );
     const order = [
-      "KVM PORTAL",
       "Commercial Pulse",
       "Management Lense",
       "Reports Library",
       "Business Insight",
-      "MARKET INSIGHTS",
-      "ADMINISTRATOR",
       "Property Setup",
       "Data Input",
       "Activity Log",

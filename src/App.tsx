@@ -16,8 +16,6 @@ import {
   FileSpreadsheet,
   Globe2,
   LockKeyhole,
-  LogOut,
-  Menu,
   Plus,
   Save,
   Settings2,
@@ -54,7 +52,6 @@ import PageInsights from "./PageInsights";
 import PerformanceAnalysis from "./PerformanceAnalysis";
 import { useAdminName } from "./AdminIdentity";
 import { recordActivity, recordPlatformVisit } from "./activity";
-import { useMenuIntro } from "./useMenuIntro";
 import BusinessInsight from "./BusinessInsight";
 import { insightReviewed } from "./insightData";
 import PropertySetup from "./PropertySetup";
@@ -131,25 +128,7 @@ export default function App({
   const [toast, setToast] = useState("");
   const [login, setLogin] = useState(false);
   const [help, setHelp] = useState(false);
-  const [sidebar, setSidebar] = useState(false);
-  const [navGroup, setNavGroup] = useState<"portal" | "markets" | "admin">(
-    "portal",
-  );
-  const navRailRef = useRef<HTMLElement>(null);
-  useEffect(() => {
-    if (!sidebar) return;
-    function dismiss(e: KeyboardEvent) {
-      if (e.key === "Escape") {
-        setSidebar(false);
-        navRailRef.current
-          ?.querySelector<HTMLButtonElement>('[aria-expanded="true"]')
-          ?.focus();
-      }
-    }
-    document.addEventListener("keydown", dismiss);
-    return () => document.removeEventListener("keydown", dismiss);
-  }, [sidebar]);
-  const { appRef, cancelIntro } = useMenuIntro(setSidebar);
+  const appRef = useRef<HTMLDivElement>(null);
   const [pending, setPending] = useState<Entry[] | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
@@ -414,11 +393,9 @@ export default function App({
   function navigate(fn: () => void) {
     if (busy) return;
     if (dirty && !window.confirm("Discard your unsaved changes?")) return;
-    cancelIntro();
     setDirty(false);
     setError("");
     fn();
-    setSidebar(false);
   }
   function openMarket(id: string) {
     navigate(() => {
@@ -581,11 +558,7 @@ export default function App({
     !loading && !!market && !entries.some((e) => e.market_id === market);
   return (
     <div className="app rail-layout" ref={appRef}>
-      <nav
-        className="icon-rail"
-        aria-label="Navigation categories"
-        ref={navRailRef}
-      >
+      <nav className="icon-rail direct-rail" aria-label="Page navigation">
         <a href="/" className="rail-brand" aria-label="KVM BUSINESS LENSE home">
           <img
             src="/kuda-villingili-logo.png"
@@ -596,311 +569,119 @@ export default function App({
         </a>
         {(
           [
-            { id: "portal", label: "Portal", Icon: Activity },
-            { id: "markets", label: "Markets", Icon: Globe2 },
-            { id: "admin", label: "Admin", Icon: ShieldCheck },
+            {
+              id: "overview",
+              label: "Commercial Pulse",
+              short: "Pulse",
+              Icon: Activity,
+            },
+            {
+              id: "total",
+              label: "Management Lense",
+              short: "Lense",
+              Icon: BarChart3,
+            },
+            {
+              id: "reports",
+              label: "Reports Library",
+              short: "Reports",
+              Icon: FileSpreadsheet,
+            },
+            {
+              id: "insight",
+              label: "Business Insight",
+              short: "Insights",
+              Icon: BookOpen,
+            },
           ] as const
-        ).map(({ id, label, Icon }) => (
+        ).map(({ id, label, short, Icon }) => (
           <button
             key={id}
             type="button"
-            className={sidebar && navGroup === id ? "active" : ""}
-            aria-label={`Open ${label} navigation`}
             title={label}
-            aria-expanded={sidebar && navGroup === id}
-            aria-controls="platform-navigation"
-            onClick={() => {
-              cancelIntro();
-              setNavGroup(id);
-              setSidebar(!(sidebar && navGroup === id));
-            }}
+            aria-label={label}
+            aria-current={view === id && !market ? "page" : undefined}
+            className={view === id && !market ? "active" : ""}
+            onClick={() =>
+              navigate(() => {
+                setMarket(null);
+                setView(id);
+              })
+            }
           >
-            <Icon size={22} />
-            <span>{label}</span>
+            <Icon size={21} />
+            <span>{short}</span>
           </button>
         ))}
-      </nav>
-      {sidebar && (
-        <button
-          className="nav-dismiss"
-          aria-label="Close navigation panel"
-          onClick={() => {
-            cancelIntro();
-            setSidebar(false);
-          }}
-        />
-      )}
-      <aside
-        id="platform-navigation"
-        aria-label="Expanded navigation"
-        inert={!sidebar}
-        aria-hidden={!sidebar}
-        onPointerDown={cancelIntro}
-        onFocusCapture={cancelIntro}
-        className={`sidebar ${sidebar ? "open" : ""}`}
-      >
-        <div className="navigation-heading">
-          <strong>Navigation</strong>
+        {markets.map((m) => (
           <button
+            key={m.id}
             type="button"
-            aria-label="Close navigation"
-            onClick={() => {
-              cancelIntro();
-              setSidebar(false);
-            }}
+            title={m.name}
+            aria-label={m.name}
+            aria-current={
+              view === "overview" && market === m.id ? "page" : undefined
+            }
+            className={view === "overview" && market === m.id ? "active" : ""}
+            onClick={() => openMarket(m.id)}
           >
-            <X size={20} />
+            <Globe2 size={21} />
+            <span>{m.name}</span>
           </button>
-        </div>
-        <a
-          className="brand"
-          href="#"
-          onClick={(e) => {
-            e.preventDefault();
-            navigate(() => {
-              setMarket(null);
-              setView("overview");
-            });
-          }}
-        >
-          <span>
-            KVM BUSINESS LENSE<small>Commercial intelligence</small>
-          </span>
-        </a>
-        <div className="nav-section" hidden={navGroup !== "portal"}>
-          <div className="nav-label">KVM PORTAL</div>
-          <nav className="total-nav" aria-label="KVM Portal">
-            <button
-              className={view === "overview" && !market ? "active" : ""}
-              aria-label="Commercial Pulse"
-              aria-current={view === "overview" && !market ? "page" : undefined}
-              onClick={() =>
-                navigate(() => {
-                  setMarket(null);
-                  setView("overview");
-                })
-              }
-            >
-              <Activity size={18} />
-              Commercial Pulse
-            </button>
-            <button
-              className={view === "total" ? "active" : ""}
-              aria-current={view === "total" ? "page" : undefined}
-              onClick={() =>
-                navigate(() => {
-                  setMarket(null);
-                  setView("total");
-                })
-              }
-            >
-              <BarChart3 size={18} />
-              Management Lense
-            </button>
-            <button
-              className={view === "reports" && !market ? "active" : ""}
-              onClick={() =>
-                navigate(() => {
-                  setView("reports");
-                  setMarket(null);
-                })
-              }
-            >
-              <BarChart3 size={18} />
-              Reports Library
-            </button>
-            <button
-              className={view === "insight" && !market ? "active" : ""}
-              onClick={() =>
-                navigate(() => {
-                  setView("insight");
-                  setMarket(null);
-                })
-              }
-            >
-              <BookOpen size={18} />
-              Business Insight
-            </button>
-          </nav>
-        </div>
-        <div className="nav-section" hidden={navGroup !== "markets"}>
-          <div className="nav-label market-label">
-            MARKET INSIGHTS{" "}
-            <span>{markets.length.toString().padStart(2, "0")}</span>
-          </div>
-          <nav>
-            {visibleMarkets.map((m) => (
-              <button
-                key={m.id}
-                className={
-                  view === "overview" && market === m.id ? "active" : ""
-                }
-                onClick={() => openMarket(m.id)}
-              >
-                <span className="market-dot" style={{ background: m.color }} />
-                {m.name}
-                <ChevronRight size={14} />
-              </button>
-            ))}
-          </nav>
-        </div>
-        <div className="nav-section" hidden={navGroup !== "admin"}>
-          <div className="nav-label administrator-label">ADMINISTRATOR</div>
-          {publicDemo ? (
-            <>
-              <nav className="property-nav">
-                <a className="settings-nav" href="/property-setup">
-                  <Building2 size={18} />
-                  Property Setup
-                </a>
-              </nav>
-              <nav className="admin-nav">
-                <a className="settings-nav" href="/admin-data-input">
-                  <LockKeyhole size={18} />
-                  Data Input
-                </a>
-              </nav>
-            </>
+        ))}
+        {(
+          [
+            {
+              id: "property",
+              label: "Property Setup",
+              short: "Property",
+              path: "/property-setup",
+              Icon: Building2,
+            },
+            {
+              id: "admin",
+              label: "Data Input",
+              short: "Input",
+              path: "/admin-data-input",
+              Icon: LockKeyhole,
+            },
+            {
+              id: "activity",
+              label: "Activity Log",
+              short: "Activity",
+              path: "/activity-log",
+              Icon: Clock3,
+            },
+          ] as const
+        ).map(({ id, label, short, path, Icon }) =>
+          publicDemo ? (
+            <a key={id} href={path} title={label} aria-label={label}>
+              <Icon size={21} />
+              <span>{short}</span>
+            </a>
           ) : (
-            <>
-              <nav className="property-nav">
-                <button
-                  className={view === "property" ? "active" : ""}
-                  onClick={() =>
-                    navigate(() => {
-                      setMarket(null);
-                      setView("property");
-                    })
-                  }
-                >
-                  <Building2 size={18} />
-                  Property Setup
-                </button>
-              </nav>
-              <nav className="admin-nav">
-                <button
-                  className={view === "admin" ? "active" : ""}
-                  onClick={() =>
-                    navigate(() => {
-                      setMarket(null);
-                      setView("admin");
-                    })
-                  }
-                >
-                  <LockKeyhole size={18} />
-                  Data Input
-                </button>
-              </nav>
-            </>
-          )}
-          <nav aria-label="Administrator activity">
-            {publicDemo ? (
-              <a className="settings-nav" href="/activity-log">
-                <Clock3 size={18} />
-                Activity Log
-              </a>
-            ) : (
-              <button
-                className={view === "activity" ? "active" : ""}
-                onClick={() =>
-                  navigate(() => {
-                    setView("activity");
-                    setMarket(null);
-                  })
-                }
-              >
-                <Clock3 size={18} />
-                Activity Log
-              </button>
-            )}
-          </nav>
-        </div>
-        <div className="sidebar-bottom">
-          <div className="secure">
-            <ShieldCheck size={20} />
-            <div>
-              One source of truth<small>Built for your commercial team</small>
-            </div>
-          </div>
-          {!publicDemo && !localPin && (
-            <>
-              <button
-                className="settings-nav"
-                onClick={() =>
-                  navigate(() => {
-                    setMarket(null);
-                    setView("setup");
-                  })
-                }
-              >
-                <Settings2 size={17} />
-                Setup & access
-              </button>
-            </>
-          )}
-          <div className="profile">
-            <span>
-              {publicDemo
-                ? "P"
-                : demo
-                  ? "D"
-                  : (session?.user.email?.[0] ?? "G").toUpperCase()}
-            </span>
-            <div>
-              {publicDemo
-                ? "Public budget review"
-                : demo
-                  ? localPin
-                    ? "Local workspace"
-                    : "Demo workspace"
-                  : (session?.user.email ?? "Guest")}
-              <small>
-                {publicDemo
-                  ? "Read-only real figures"
-                  : demo
-                    ? localPin
-                      ? "Local edits only"
-                      : "Sample data only"
-                    : session
-                      ? "Signed in securely"
-                      : "Sign in to your market"}
-              </small>
-            </div>
-            {session && (
-              <button
-                aria-label="Sign out"
-                onClick={() =>
-                  navigate(() => {
-                    void db!.auth.signOut().then(({ error }) => {
-                      if (error) setError(error.message);
-                      else {
-                        setMarket(null);
-                        setView("overview");
-                      }
-                    });
-                  })
-                }
-              >
-                <LogOut size={16} />
-              </button>
-            )}
-          </div>
-        </div>
-      </aside>
+            <button
+              key={id}
+              type="button"
+              title={label}
+              aria-label={label}
+              aria-current={view === id ? "page" : undefined}
+              className={view === id ? "active" : ""}
+              onClick={() =>
+                navigate(() => {
+                  setMarket(null);
+                  setView(id);
+                })
+              }
+            >
+              <Icon size={21} />
+              <span>{short}</span>
+            </button>
+          ),
+        )}
+      </nav>
       <div className="main">
         <header className="topbar">
-          <button
-            className="mobile-menu icon-button"
-            aria-label="Toggle navigation"
-            aria-expanded={sidebar}
-            aria-controls="platform-navigation"
-            onClick={() => {
-              cancelIntro();
-              setSidebar(!sidebar);
-            }}
-          >
-            <Menu size={20} />
-          </button>
           <div className="breadcrumb">
             KVM Portal <ChevronRight size={13} />{" "}
             <strong>

@@ -25,23 +25,25 @@ describe("read-only views and admin entry", () => {
   });
   it("does not mark the overview card current on the admin page", () => {
     vi.stubGlobal("window", { location: { pathname: "/admin-data-input" } });
-    expect(renderToStaticMarkup(<App />)).not.toContain('aria-current="page"');
+    const html = renderToStaticMarkup(<App />);
+    const pulse = html.match(
+      /<button[^>]*aria-label="Commercial Pulse"[^>]*>/,
+    )?.[0];
+    expect(pulse).not.toContain('aria-current="page"');
+    expect(html).toMatch(/aria-label="Data Input"[^>]*aria-current="page"/);
   });
-  it("groups Portal and Administrator pages in compact navigation", () => {
+  it("shows direct page icons in consistent navigation order", () => {
     vi.stubGlobal("window", { location: { pathname: "/" } });
     const html = renderToStaticMarkup(<App />);
     const sidebar = html.slice(
-      html.indexOf("<aside"),
-      html.indexOf("</aside>"),
+      html.indexOf('<nav class="icon-rail'),
+      html.indexOf("</nav>"),
     );
     const order = [
-      "KVM PORTAL",
       "Commercial Pulse",
       "Management Lense",
       "Reports Library",
       "Business Insight",
-      "MARKET INSIGHTS",
-      "ADMINISTRATOR",
       "Property Setup",
       "Data Input",
       "Activity Log",
@@ -52,7 +54,7 @@ describe("read-only views and admin entry", () => {
       );
     expect(sidebar).not.toContain("WORKSPACE");
     expect(sidebar).not.toContain("Admin Data Input");
-    expect(sidebar.match(/Management Lense/g)).toHaveLength(1);
+    expect(sidebar.match(/aria-label="Management Lense"/g)).toHaveLength(1);
   });
   it("provides a dedicated Property Setup route and visible navigation", () => {
     vi.stubGlobal("window", { location: { pathname: "/property-setup" } });

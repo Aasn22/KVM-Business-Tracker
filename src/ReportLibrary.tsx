@@ -653,7 +653,7 @@ export default function ReportLibrary({
   }
   if (productionOpen)
     return (
-      <section>
+      <section className="report-library production-report-wrapper">
         <button
           className="button outline"
           onClick={() => setProductionOpen(null)}

@@ -4924,3 +4924,43 @@ fieldset {
     grid-template-columns: minmax(60px, 1fr) minmax(20px, 1fr) 90px;
   }
 }
+/* Production-backed Quick/custom outputs retain the existing report palette. */
+.production-report-wrapper .production-analysis {
+  background: transparent;
+  color: #d4bd91;
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+  margin-top: 20px;
+}
+.production-report-wrapper .production-analysis h2,
+.production-report-wrapper .production-analysis h3,
+.production-report-wrapper .production-analysis p,
+.production-report-wrapper .production-analysis .report-filters label {
+  color: #d4bd91;
+}
+.production-report-wrapper .production-analysis .stat {
+  background: #16293e;
+  color: #e7d4b1;
+  border-color: #d4bd9133;
+}
+.production-report-wrapper .production-analysis .stat strong {
+  color: #e7d4b1;
+}
+.production-report-wrapper .production-analysis table thead {
+  background: #16293e;
+}
+.production-report-wrapper .production-analysis table th,
+.production-report-wrapper .production-analysis table td {
+  color: #d4bd91;
+  border-color: #d4bd9133;
+}
+.production-report-wrapper .production-analysis select {
+  color: #e7d4b1;
+  background: #172a44;
+  border-color: #d4bd9150;
+}
+.production-report-wrapper .button.outline {
+  color: #d4bd91;
+  border-color: #d4bd9170;
+}

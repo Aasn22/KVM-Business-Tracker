@@ -26,7 +26,6 @@ import {
   productionReportMode,
   type ProductionReportMode,
 } from "./productionReports";
-import type { SourceKind, SourceDimension } from "./performanceSources";
 import type { OperationKind } from "./operational";
 import { quickReports, quickReportPeriod } from "./quickReports";
 import {
@@ -987,6 +986,12 @@ export default function ReportLibrary({
               }
               if (quick.unavailable) {
                 setInputNotice(`${quick.title}: ${quick.unavailable}`);
+                return;
+              }
+              if (!quick.type) {
+                setInputNotice(
+                  `${quick.title}: budget/legacy inputs do not include this breakdown. Choose uploaded reservation production for this report.`,
+                );
                 return;
               }
               setInputNotice(null);

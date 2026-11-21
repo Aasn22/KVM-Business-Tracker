@@ -16,6 +16,7 @@ import {
   FileSpreadsheet,
   Globe2,
   LockKeyhole,
+  Menu,
   Plus,
   Save,
   Settings2,
@@ -129,6 +130,20 @@ export default function App({
   const [login, setLogin] = useState(false);
   const [help, setHelp] = useState(false);
   const appRef = useRef<HTMLDivElement>(null);
+  const [navigationOpen, setNavigationOpen] = useState(false);
+  const [marketsOpen, setMarketsOpen] = useState(false);
+  const navigationTrigger = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!navigationOpen) return;
+    function escape(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setNavigationOpen(false);
+        navigationTrigger.current?.focus();
+      }
+    }
+    document.addEventListener("keydown", escape);
+    return () => document.removeEventListener("keydown", escape);
+  }, [navigationOpen]);
   const [pending, setPending] = useState<Entry[] | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
@@ -395,6 +410,7 @@ export default function App({
     if (dirty && !window.confirm("Discard your unsaved changes?")) return;
     setDirty(false);
     setError("");
+    setNavigationOpen(false);
     fn();
   }
   function openMarket(id: string) {
@@ -556,9 +572,38 @@ export default function App({
   const visibleMarkets = markets;
   const noAccess =
     !loading && !!market && !entries.some((e) => e.market_id === market);
-  return (
-    <div className="app rail-layout" ref={appRef}>
-      <nav className="icon-rail direct-rail" aria-label="Page navigation">
+  function renderNavigation(expanded: boolean) {
+    return (
+      <nav
+        className={expanded ? "full-name-navigation" : "icon-rail direct-rail"}
+        aria-label={expanded ? "Full page navigation" : "Page navigation"}
+      >
+        {expanded ? (
+          <header>
+            <strong>Navigation</strong>
+            <button
+              aria-label="Close navigation"
+              onClick={() => {
+                setNavigationOpen(false);
+                navigationTrigger.current?.focus();
+              }}
+            >
+              <X size={20} />
+            </button>
+          </header>
+        ) : (
+          <button
+            ref={navigationTrigger}
+            type="button"
+            aria-label="Show full navigation"
+            aria-expanded={navigationOpen}
+            aria-controls="full-navigation"
+            onClick={() => setNavigationOpen(!navigationOpen)}
+          >
+            <Menu size={21} />
+            <span>Menu</span>
+          </button>
+        )}
         <a href="/" className="rail-brand" aria-label="KVM BUSINESS LENSE home">
           <img
             src="/kuda-villingili-logo.png"
@@ -610,25 +655,42 @@ export default function App({
             }
           >
             <Icon size={21} />
-            <span>{short}</span>
+            <span>{expanded ? label : short}</span>
           </button>
         ))}
-        {markets.map((m) => (
-          <button
-            key={m.id}
-            type="button"
-            title={m.name}
-            aria-label={m.name}
-            aria-current={
-              view === "overview" && market === m.id ? "page" : undefined
+        <button
+          type="button"
+          aria-label="Markets"
+          aria-expanded={expanded && marketsOpen}
+          aria-controls="market-destinations"
+          className={market ? "active" : ""}
+          onClick={() => {
+            if (expanded) setMarketsOpen(!marketsOpen);
+            else {
+              setNavigationOpen(true);
+              setMarketsOpen(true);
             }
-            className={view === "overview" && market === m.id ? "active" : ""}
-            onClick={() => openMarket(m.id)}
-          >
-            <Globe2 size={21} />
-            <span>{m.name}</span>
-          </button>
-        ))}
+          }}
+        >
+          <Globe2 size={21} />
+          <span>Markets</span>
+          <ChevronRight size={14} />
+        </button>
+        {expanded && marketsOpen && (
+          <div id="market-destinations" className="nested-markets">
+            {markets.map((m) => (
+              <button
+                key={m.id}
+                aria-label={m.name}
+                aria-current={market === m.id ? "page" : undefined}
+                onClick={() => openMarket(m.id)}
+              >
+                <Globe2 size={18} />
+                <span>{m.name}</span>
+              </button>
+            ))}
+          </div>
+        )}
         {(
           [
             {
@@ -657,7 +719,7 @@ export default function App({
           publicDemo ? (
             <a key={id} href={path} title={label} aria-label={label}>
               <Icon size={21} />
-              <span>{short}</span>
+              <span>{expanded ? label : short}</span>
             </a>
           ) : (
             <button
@@ -675,11 +737,28 @@ export default function App({
               }
             >
               <Icon size={21} />
-              <span>{short}</span>
+              <span>{expanded ? label : short}</span>
             </button>
           ),
         )}
       </nav>
+    );
+  }
+  return (
+    <div className="app rail-layout" ref={appRef}>
+      {renderNavigation(false)}
+      {navigationOpen && (
+        <>
+          <button
+            className="nav-dismiss"
+            aria-label="Close navigation panel"
+            onClick={() => setNavigationOpen(false)}
+          />
+          <aside id="full-navigation" className="full-navigation-panel">
+            {renderNavigation(true)}
+          </aside>
+        </>
+      )}
       <div className="main">
         <header className="topbar">
           <div className="breadcrumb">

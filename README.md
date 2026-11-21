@@ -313,3 +313,7 @@ Floating right-centre INSIGHTS button uses the supplied bulb image with a CSS gl
 ## Individual direct-navigation rail
 
 The rail now lists each public page, each geographic market and each Administrator destination individually. Click an icon to navigate directly; there are no category expanders or drawer. Short visible labels have full accessible names/tooltips, and the current page is marked. The rail scrolls vertically on short/mobile screens, leaving content at full remaining width. Admin destinations retain PIN protection. The previous once-daily drawer introduction is no longer attached because there is no hidden menu to reveal. Existing data and Insights widget are unchanged.
+
+## Full-name menu with grouped Markets
+
+Individual page shortcuts remain direct. Markets is one rail control opening the full-name Navigation panel with its six children expanded. The Menu icon opens the same panel with complete destination names; Markets can be collapsed there. Page selection closes the panel, as do outside tap, Close and Escape. Original navy/gold and PIN rules retained; no data changes. Rail labels stay short to preserve phone width, full names appear in the panel.

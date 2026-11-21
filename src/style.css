@@ -4568,3 +4568,76 @@ fieldset {
     font-size: 8px;
   }
 }
+.full-navigation-panel {
+  position: fixed;
+  left: var(--rail-width);
+  top: 0;
+  bottom: 0;
+  width: min(300px, calc(100vw - var(--rail-width)));
+  z-index: 59;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: #0b1930;
+  color: #d4bd91;
+  padding: 14px;
+  box-shadow: 10px 0 25px #0002;
+}
+.full-name-navigation {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.full-name-navigation header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #d4bd9133;
+}
+.full-name-navigation header button {
+  min-width: 44px;
+  min-height: 44px;
+  display: grid;
+  place-items: center;
+}
+.full-name-navigation .rail-brand {
+  display: none;
+}
+.full-name-navigation > button,
+.full-name-navigation > a:not(.rail-brand),
+.nested-markets button {
+  display: flex;
+  align-items: center;
+  text-align: left;
+  gap: 12px;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px;
+  border-radius: 8px;
+  color: inherit;
+}
+.full-name-navigation > button span {
+  flex: 1;
+}
+.full-name-navigation .active,
+.full-name-navigation [aria-current="page"],
+.full-name-navigation button:hover,
+.full-name-navigation > a:hover {
+  background: #d4bd9129;
+}
+.nested-markets {
+  padding-left: 14px;
+  border-left: 1px solid #d4bd9144;
+  margin: 0 0 8px 18px;
+}
+.nested-markets button {
+  font-size: 12px;
+}
+.direct-rail > button > svg:last-child:not(:first-child) {
+  display: none;
+}
+@media print {
+  .full-navigation-panel {
+    display: none !important;
+  }
+}

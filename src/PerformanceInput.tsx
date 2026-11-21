@@ -1,125 +1,152 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { Upload } from "lucide-react";
-import DatePicker from "./DatePicker";
-
+import { parseProductionFile, type ProductionData } from "./production";
+import { saveProduction } from "./productionClient";
+import { recordActivity } from "./activity";
+import { useAdminName } from "./AdminIdentity";
+import { formatMoney, formatNumber } from "./format";
 export function spreadsheetSelectionError(file: {
   name: string;
   size: number;
 }) {
-  if (!/\.(xlsx|xls|csv|ods)$/i.test(file.name))
-    return "Select a spreadsheet: XLSX, XLS, CSV or ODS.";
+  if (!/\.xlsx$/i.test(file.name))
+    return "Select an XLSX spreadsheet in the supplied layout.";
   if (!file.size) return "The selected file is empty.";
-  if (file.size > 30 * 1024 * 1024)
-    return "Select a spreadsheet no larger than 30 MB.";
+  if (file.size > 30 * 1024 * 1024) return "Maximum 30 MB.";
   return "";
 }
-
 export default function PerformanceInput() {
-  const [kind, setKind] = useState("history");
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
-  const [file, setFile] = useState<{ name: string; size: number } | null>(null);
-  const [error, setError] = useState("");
-  const input = useRef<HTMLInputElement>(null);
+  const actor = useAdminName();
+  const [data, setData] = useState<ProductionData | null>(null),
+    [error, setError] = useState(""),
+    [busy, setBusy] = useState(false),
+    [message, setMessage] = useState("");
   return (
     <section className="operations-input">
       <h2>Reservation Production Reports</h2>
-      <p>One spreadsheet source for reservation history or forecast.</p>
-      <section className="panel operation-input production-spreadsheet">
+      <section className="panel operation-input">
         <h3>
-          <Upload size={16} aria-hidden="true" /> Reservation Production
-          Spreadsheet
+          <Upload size={16} /> Production spreadsheet · History
         </h3>
-        <fieldset>
-          <label>
-            Report type
-            <select
-              aria-label="Production report type"
-              value={kind}
-              onChange={(e) => setKind(e.target.value)}
-            >
-              <option value="history">
-                Reservation Production History Reports
-              </option>
-              <option value="forecast">
-                Reservation Production Forecast Reports
-              </option>
-            </select>
-          </label>
-          <div className="production-date-range">
-            <label>
-              {kind === "history" ? "History" : "Forecast"} From Date
-              <DatePicker
-                label="Production from date"
-                value={from}
-                onChange={setFrom}
-              />
-            </label>
-            <label>
-              {kind === "history" ? "History" : "Forecast"} To Date
-              <DatePicker
-                label="Production to date"
-                value={to}
-                onChange={setTo}
-              />
-            </label>
-          </div>
-          {from && to && from > to && (
-            <p className="error" role="alert">
-              To date must be on or after From date.
-            </p>
-          )}
-          <label>
-            Upload spreadsheet
-            <input
-              ref={input}
-              aria-label="Upload reservation production spreadsheet"
-              type="file"
-              accept=".xlsx,.xls,.csv,.ods"
-              onChange={(e) => {
-                const selected = e.target.files?.[0];
-                setFile(null);
-                setError("");
-                if (!selected) return;
-                const issue = spreadsheetSelectionError(selected);
-                if (issue) {
-                  setError(issue);
-                  e.target.value = "";
-                  return;
-                }
-                setFile({ name: selected.name, size: selected.size });
-              }}
-            />
-          </label>
-        </fieldset>
+        <p>
+          Upload XLSX with the supplied reservation-level columns.
+          Arrival/departure dates control daily stay analysis; dates are not
+          relabeled. Forecast imports remain unavailable until a forecast sample
+          is supplied.
+        </p>
+        <label>
+          Select production spreadsheet
+          <input
+            type="file"
+            aria-label="Upload reservation production spreadsheet"
+            accept=".xlsx"
+            disabled={busy}
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              setError("");
+              setMessage("");
+              setData(null);
+              e.target.value = "";
+              if (!file) return;
+              const issue = spreadsheetSelectionError(file);
+              if (issue) {
+                setError(issue);
+                return;
+              }
+              setBusy(true);
+              try {
+                setData(await parseProductionFile(file));
+              } catch (err) {
+                setError((err as Error).message);
+              } finally {
+                setBusy(false);
+              }
+            }}
+          />
+        </label>
+        {busy && <p role="status">Validating production data…</p>}
         {error && (
-          <p className="error" role="alert">
+          <p role="alert" className="error">
             {error}
           </p>
         )}
-        {file && (
-          <div role="status" className="notice">
+        {message && <p role="status">{message}</p>}
+        {data && (
+          <>
+            <h4>Review analytical snapshot</h4>
             <p>
-              Selected: {file.name} ({Math.ceil(file.size / 1024)} KB). This
-              file has not been uploaded, saved or imported.
+              {formatNumber(data.rows)} records · {data.checkedOut} checked out
+              · {data.cancelled} cancelled · {data.missingRevenue} unknown
+              revenue. Stay coverage {data.from} through departure {data.to}.
+            </p>
+            <p>
+              Completed stay value (all source stay dates):{" "}
+              {formatMoney(
+                data.days
+                  .filter((r) => r.status === "CHECKED OUT")
+                  .reduce((a, r) => a + r.revenue, 0),
+              )}
+              . Cancelled stay value is kept separate.
+            </p>
+            <ul>
+              {data.warnings.map((w) => (
+                <li key={w}>{w}</li>
+              ))}
+            </ul>
+            <p>
+              Only sanitized aggregates will be sent. No agent names, guest
+              names or booking references are retained. Publishing REPLACES the
+              entire current production snapshot; it does not merge quarters.
+              Upload a complete cumulative file when adding periods.
             </p>
             <button
-              className="button outline"
-              type="button"
-              onClick={() => {
-                setFile(null);
+              className="button primary"
+              disabled={busy}
+              onClick={async () => {
+                if (
+                  !window.confirm(
+                    "Replace the entire shared production snapshot with this reviewed file? Existing budgets are not changed.",
+                  )
+                )
+                  return;
+                setBusy(true);
                 setError("");
-                if (input.current) input.current.value = "";
+                try {
+                  await saveProduction(data);
+                  recordActivity(
+                    "change",
+                    actor ?? "Self-reported administrator",
+                    "Published production snapshot · " +
+                      data.from +
+                      " to " +
+                      data.to,
+                  );
+                  setMessage(
+                    "Shared production snapshot saved. Related views refresh within 60 seconds.",
+                  );
+                  setData(null);
+                } catch (e) {
+                  setError((e as Error).message);
+                } finally {
+                  setBusy(false);
+                }
               }}
             >
-              Remove file
+              Publish / Replace Production Snapshot
             </button>
-          </div>
+            <button
+              className="button outline"
+              disabled={busy}
+              onClick={() => setData(null)}
+            >
+              Discard
+            </button>
+          </>
         )}
-        <p className="notice">
-          Upload setup only — awaiting your sample spreadsheet to configure
-          column mapping and validation. Selecting a file does not update
-          reports, figures or the database. No file contents are read or sent.
+        <p>
+          The Q1 2026 source is already published on the website as an
+          analytical snapshot. Shared saving requires its database migration; a
+          failed save never updates public figures.
         </p>
       </section>
     </section>

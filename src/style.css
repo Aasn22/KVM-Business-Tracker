@@ -4641,3 +4641,59 @@ fieldset {
     display: none !important;
   }
 }
+.production-analysis .stats-grid {
+  margin: 18px 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.production-analysis .stat {
+  min-width: 0;
+}
+.production-analysis .stat > span {
+  font-size: 11px;
+}
+.production-analysis .stat strong {
+  display: block;
+  font-size: clamp(19px, 2.2vw, 29px);
+  overflow-wrap: anywhere;
+  margin-top: 10px;
+}
+.production-bar {
+  display: grid;
+  grid-template-columns: 70px minmax(0, 1fr) 110px;
+  gap: 10px;
+  align-items: center;
+  margin: 12px 0;
+  font-size: 11px;
+}
+.production-bar meter {
+  width: 100%;
+  height: 18px;
+}
+.production-caveats {
+  font-size: 11px;
+  line-height: 1.7;
+  padding-left: 18px;
+}
+.production-analysis .table-scroll {
+  margin: 16px 0;
+}
+.production-analysis .editor-actions {
+  margin: 18px 0;
+  flex-wrap: wrap;
+}
+@media (max-width: 600px) {
+  .production-analysis .stats-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .production-bar {
+    grid-template-columns: 55px minmax(0, 1fr) 90px;
+    gap: 6px;
+    font-size: 10px;
+  }
+}
+.production-bar meter::-webkit-meter-optimum-value {
+  background: #c5a46d;
+}
+.production-bar meter::-moz-meter-bar {
+  background: #c5a46d;
+}

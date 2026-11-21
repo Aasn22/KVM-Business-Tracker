@@ -51,6 +51,7 @@ import OperationalInput from "./OperationalInput";
 import PerformanceInput from "./PerformanceInput";
 import PageInsights from "./PageInsights";
 import PerformanceAnalysis from "./PerformanceAnalysis";
+import ProductionAnalysis from "./ProductionAnalysis";
 import { useAdminName } from "./AdminIdentity";
 import { recordActivity, recordPlatformVisit } from "./activity";
 import BusinessInsight from "./BusinessInsight";
@@ -1025,10 +1026,31 @@ export default function App({
               onBusyChange={setBusy}
             />
           )}
-          {view === "insight" && <BusinessInsight />}
-          {!countryOnly && ["overview", "total"].includes(view) && (
-            <PerformanceAnalysis year={year} market={market} />
+          {view === "insight" && (
+            <>
+              <ProductionAnalysis year={2026} compactMoney />
+              <BusinessInsight />
+            </>
           )}
+          {!countryOnly &&
+            ["overview", "total"].includes(view) &&
+            (year === 2026 ? (
+              <ProductionAnalysis year={year} market={market} />
+            ) : (
+              <>
+                <p className="notice">
+                  Q1 2026 production is available: select Budget year 2026.
+                  Other years have no supplied production spreadsheet.
+                  <button
+                    className="button outline"
+                    onClick={() => navigate(() => setYear(2026))}
+                  >
+                    View Q1 2026 production
+                  </button>
+                </p>
+                <PerformanceAnalysis year={year} market={market} />
+              </>
+            ))}
           {!countryOnly && ["overview", "total"].includes(view) && (
             <div className="notice">
               Budget planning / legacy workbook BOB below · Not the newly

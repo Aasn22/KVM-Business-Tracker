@@ -151,17 +151,13 @@ describe("primary source semantics", () => {
       parseStatPages(broken, "history", "market", row.date, row.date),
     ).toThrow("reconciliation");
   });
-  it("renders one spreadsheet selection area without active import or PDF panels", () => {
+  it("renders one working history spreadsheet import with review and explicit shared save", () => {
     const html = renderToStaticMarkup(<PerformanceInput />);
     expect(html.match(/type="file"/g)).toHaveLength(1);
-    expect(html).toContain("Reservation Production History Reports");
-    expect(html).toContain("Reservation Production Forecast Reports");
-    expect(html).toContain("Upload setup only");
+    expect(html).toContain("Production spreadsheet");
+    expect(html).toContain("Arrival/departure dates control");
     expect(html).not.toContain("Market Codes");
-    expect(html).not.toContain("Publish / Replace Source");
     expect(html).not.toContain('type="date"');
-    expect(html).toContain("Open calendar for Production from date");
-    expect(html).toContain("Open calendar for Production to date");
     const analysis = renderToStaticMarkup(<PerformanceAnalysis year={2026} />);
     expect(analysis).toContain("Primary Source Analysis");
     expect(analysis).toContain("legacy workbook BOB");
@@ -169,7 +165,7 @@ describe("primary source semantics", () => {
 });
 describe("spreadsheet selection validation", () => {
   it("accepts named spreadsheet formats but rejects PDF, empty and oversized files", () => {
-    for (const ext of ["xlsx", "XLS", "csv", "ods"])
+    for (const ext of ["xlsx", "XLSX"])
       expect(
         spreadsheetSelectionError({ name: `source.${ext}`, size: 100 }),
       ).toBe("");

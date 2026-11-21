@@ -110,7 +110,7 @@ describe("PIN entry", () => {
     expect(html).not.toContain("Data Input — local browser");
     expect(html).not.toContain("Publish previous browser uploads");
     expect(html).not.toContain("Admin market");
-    expect(html).toContain("Reservation Production Spreadsheet");
+    expect(html).toContain("Production spreadsheet");
     expect(html).toContain("Cancellation Data Input");
     expect(html).not.toContain("Email me a sign-in link");
     expect(html).not.toContain("Demo Admin Data Input");

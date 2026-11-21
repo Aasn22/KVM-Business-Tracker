@@ -22,6 +22,7 @@ import { formatMoney, formatNumber } from "./format";
 import { budgetYears, markets, months, type Entry } from "./model";
 import OperationalReports from "./OperationalReports";
 import PerformanceAnalysis from "./PerformanceAnalysis";
+import ProductionAnalysis from "./ProductionAnalysis";
 import type { SourceKind, SourceDimension } from "./performanceSources";
 import type { OperationKind } from "./operational";
 import { quickReports, quickReportPeriod } from "./quickReports";
@@ -577,6 +578,10 @@ export default function ReportLibrary({
     [recent, setRecent] = useState<ReportSnapshot[]>([]),
     [exporting, setExporting] = useState(false);
   const [customOpen, setCustomOpen] = useState(false);
+  const [productionPeriod, setProductionPeriod] = useState("q1");
+  const [productionOpen, setProductionOpen] = useState<
+    "country" | "room" | "meal" | "segment" | "pace" | null
+  >(null);
   const [primaryOpen, setPrimaryOpen] = useState<{
     kind: SourceKind;
     dimension: SourceDimension;
@@ -634,6 +639,23 @@ export default function ReportLibrary({
       }
     }
   }
+  if (productionOpen)
+    return (
+      <section>
+        <button
+          className="button outline"
+          onClick={() => setProductionOpen(null)}
+        >
+          Back to Reports Library
+        </button>
+        <ProductionAnalysis
+          year={2026}
+          market={market === "all" ? null : market}
+          initialDimension={productionOpen}
+          initialPeriod={productionPeriod}
+        />
+      </section>
+    );
   if (primaryOpen)
     return (
       <section className="primary-report-page">
@@ -931,6 +953,15 @@ export default function ReportLibrary({
           <section className="primary-report-entry">
             <button
               className="report-gold-button"
+              onClick={() => {
+                setProductionPeriod("q1");
+                setProductionOpen("country");
+              }}
+            >
+              Q1 2026 Reservation Production Reports
+            </button>
+            <button
+              className="report-gold-button"
               onClick={() =>
                 setPrimaryOpen({
                   kind: "history",
@@ -948,9 +979,10 @@ export default function ReportLibrary({
               Authoritative history/forecast analysis. Hotel, market, country,
               villa, segment and business-pace shortcuts use primary sources.
               Monthly/quarterly/yearly shortcuts also use primary stay-date
-              sources. Custom budget and meal-plan reports remain
-              planning/legacy inputs, clearly separate from reported
-              performance.
+              sources. For 2026, relevant Quick Reports use the supplied
+              production spreadsheet, including meal-plan breakdowns. Custom
+              budget reports remain planning data, separate from completed and
+              cancelled stays.
             </p>
           </section>
           <QuickReports
@@ -958,6 +990,23 @@ export default function ReportLibrary({
             loading={loading}
             onSelect={(id) => {
               const quick = quickReports.find((r) => r.id === id)!;
+              if (year === 2026 && (quick.primary || quick.id === "meal")) {
+                setProductionPeriod(
+                  quickReportPeriod(quick.periodMode, period),
+                );
+                setProductionOpen(
+                  quick.id === "pace"
+                    ? "pace"
+                    : quick.id === "meal"
+                      ? "meal"
+                      : quick.primary === "room"
+                        ? "room"
+                        : quick.primary === "market"
+                          ? "segment"
+                          : "country",
+                );
+                return;
+              }
               if (quick.primary) {
                 setPrimaryOpen({
                   kind: quick.primaryKind ?? "history",

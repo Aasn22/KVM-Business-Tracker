@@ -10,16 +10,25 @@ import {
 import { formatMoney, formatNumber, formatInsightMoney } from "./format";
 import DatePicker from "./DatePicker";
 import { periodMonths } from "./totals";
+import { markets } from "./model";
+import { geographicMarket } from "./performanceSources";
+import type { ProductionReportMode } from "./productionReports";
 export default function ProductionAnalysis({
   year = 2026,
   market = null,
   initialDimension = "country",
   compactMoney = false,
   initialPeriod = "q1",
+  reportTitle,
+  snapshotMode = false,
+  initialStatus = "CHECKED OUT",
 }: {
   year?: number;
   market?: string | null;
-  initialDimension?: "country" | "room" | "meal" | "segment" | "pace";
+  initialDimension?: ProductionReportMode;
+  reportTitle?: string;
+  snapshotMode?: boolean;
+  initialStatus?: "CHECKED OUT" | "CANCELLED";
   compactMoney?: boolean;
   initialPeriod?: string;
 }) {
@@ -30,7 +39,7 @@ export default function ProductionAnalysis({
   const [from, setFrom] = useState(`${year}-01-01`),
     [to, setTo] = useState(`${year}-03-31`),
     [dimension, setDimension] = useState(initialDimension),
-    [status, setStatus] = useState("CHECKED OUT");
+    [status, setStatus] = useState(initialStatus);
   const [countryFilter, setCountryFilter] = useState(""),
     [roomFilter, setRoomFilter] = useState(""),
     [mealFilter, setMealFilter] = useState("");
@@ -67,15 +76,15 @@ export default function ProductionAnalysis({
       }
     }
     void load();
-    window.addEventListener(productionChanged, load);
-    const timer = setInterval(load, 60000);
+    if (!snapshotMode) window.addEventListener(productionChanged, load);
+    const timer = snapshotMode ? null : setInterval(load, 60000);
     return () => {
       active = false;
-      clearInterval(timer);
+      if (timer) clearInterval(timer);
       window.removeEventListener(productionChanged, load);
     };
   }, []);
-  const summary = data
+  const baseSummary = data
     ? productionSummary(
         {
           ...data,
@@ -89,10 +98,55 @@ export default function ProductionAnalysis({
         from,
         to,
         market,
-        dimension === "pace" ? "country" : dimension,
+        ["pace", "market", "monthly"].includes(dimension)
+          ? "country"
+          : (dimension as "country" | "room" | "meal" | "segment"),
         status,
       )
     : null;
+  const summary = (() => {
+    if (!data || !baseSummary) return null;
+    if (!["market", "monthly"].includes(dimension)) return baseSummary;
+    const groups = new Map<
+      string,
+      { code: string; nights: number; revenue: number; arrivals: number }
+    >();
+    for (const r of data.days) {
+      if (
+        r.date < from ||
+        r.date > to ||
+        r.status !== status ||
+        (market && geographicMarket(r.country) !== market) ||
+        (countryFilter && r.country !== countryFilter) ||
+        (roomFilter && r.room !== roomFilter) ||
+        (mealFilter && r.meal !== mealFilter)
+      )
+        continue;
+      const code =
+        dimension === "monthly"
+          ? r.date.slice(0, 7)
+          : (markets.find((m) => m.id === geographicMarket(r.country))?.name ??
+            "Unmapped country");
+      const g = groups.get(code) ?? {
+        code,
+        nights: 0,
+        revenue: 0,
+        arrivals: 0,
+      };
+      g.nights += r.nights;
+      g.revenue += r.revenue;
+      g.arrivals += r.arrivals;
+      groups.set(code, g);
+    }
+    return {
+      ...baseSummary,
+      groups: [...groups.values()].sort((a, b) =>
+        dimension === "monthly"
+          ? a.code.localeCompare(b.code)
+          : b.revenue - a.revenue,
+      ),
+    };
+  })();
   const roomName = (code: string) =>
     property.villaCategories.find((v) => v.code === code)?.name ??
     `${code} · unmapped room code`;
@@ -152,8 +206,19 @@ export default function ProductionAnalysis({
   };
   return (
     <section className="panel primary-source-analysis production-analysis">
-      <h2>Reservation Production Analysis · {year}</h2>
-      <p>{source || "Loading published production data…"}</p>
+      <h2>
+        {reportTitle ?? "Commercial performance"} · {year}
+      </h2>
+      {snapshotMode && (
+        <p>
+          Generated from a fixed copy of the uploaded production figures for
+          this report. Changing the filters below recalculates this copy; later
+          uploads do not change it.
+        </p>
+      )}
+      <p role="status">
+        {source || "Loading uploaded figures and preparing report…"}
+      </p>
       {error && <p role="alert">{error}</p>}
       <div className="report-filters">
         <label>
@@ -179,6 +244,8 @@ export default function ProductionAnalysis({
             value={dimension}
             onChange={(e) => setDimension(e.target.value as typeof dimension)}
           >
+            <option value="market">Geographic markets</option>
+            <option value="monthly">Monthly performance</option>
             <option value="country">Country / nationality</option>
             <option value="room">Room type</option>
             <option value="meal">Meal plan</option>
@@ -217,7 +284,9 @@ export default function ProductionAnalysis({
           <select
             aria-label="Production status"
             value={status}
-            onChange={(e) => setStatus(e.target.value)}
+            onChange={(e) =>
+              setStatus(e.target.value as "CHECKED OUT" | "CANCELLED")
+            }
           >
             <option value="CHECKED OUT">Checked out · completed stays</option>
             <option value="CANCELLED">Cancelled · potential stays</option>

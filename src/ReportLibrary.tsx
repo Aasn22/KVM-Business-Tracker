@@ -21,8 +21,11 @@ import {
 import { formatMoney, formatNumber } from "./format";
 import { budgetYears, markets, months, type Entry } from "./model";
 import OperationalReports from "./OperationalReports";
-import PerformanceAnalysis from "./PerformanceAnalysis";
 import ProductionAnalysis from "./ProductionAnalysis";
+import {
+  productionReportMode,
+  type ProductionReportMode,
+} from "./productionReports";
 import type { SourceKind, SourceDimension } from "./performanceSources";
 import type { OperationKind } from "./operational";
 import { quickReports, quickReportPeriod } from "./quickReports";
@@ -579,16 +582,14 @@ export default function ReportLibrary({
     [exporting, setExporting] = useState(false);
   const [customOpen, setCustomOpen] = useState(false);
   const [productionPeriod, setProductionPeriod] = useState("q1");
-  const [productionOpen, setProductionOpen] = useState<
-    "country" | "room" | "meal" | "segment" | "pace" | null
-  >(null);
-  const [primaryOpen, setPrimaryOpen] = useState<{
-    kind: SourceKind;
-    dimension: SourceDimension;
-    byCode: boolean;
-    title: string;
-    period: string;
-  } | null>(null);
+  const [productionOpen, setProductionOpen] =
+    useState<ProductionReportMode | null>(null);
+  const [productionStatus, setProductionStatus] = useState<
+    "CHECKED OUT" | "CANCELLED"
+  >("CHECKED OUT");
+  const [productionTitle, setProductionTitle] = useState("");
+  const [basis, setBasis] = useState<"production" | "budget">("production");
+  const [reportYear, setReportYear] = useState(2026);
   const [operational, setOperational] = useState<OperationKind | null>(null);
   const [inputNotice, setInputNotice] = useState<string | null>(null);
   const controller = useRef<AbortController | null>(null);
@@ -607,6 +608,18 @@ export default function ReportLibrary({
     quick?: { title: string; period: string; limitation?: string },
   ) {
     if (stage !== null || loading) return;
+    if (basis === "production") {
+      setProductionStatus("CHECKED OUT");
+      setProductionTitle(
+        quick?.title ||
+          (custom && title.trim()) ||
+          reportTypes.find((t) => t.id === selected)?.title ||
+          "Report",
+      );
+      setProductionPeriod(quick?.period ?? period);
+      setProductionOpen(productionReportMode(selected));
+      return;
+    }
     const current = new AbortController();
     controller.current = current;
     setError("");
@@ -649,45 +662,13 @@ export default function ReportLibrary({
           Back to Reports Library
         </button>
         <ProductionAnalysis
-          year={2026}
+          year={reportYear}
           market={market === "all" ? null : market}
           initialDimension={productionOpen}
           initialPeriod={productionPeriod}
-        />
-      </section>
-    );
-  if (primaryOpen)
-    return (
-      <section className="primary-report-page">
-        <button className="button outline" onClick={() => setPrimaryOpen(null)}>
-          Back to Reports Library
-        </button>
-        <h2>
-          {primaryOpen.title} · {year}
-        </h2>
-        <label className="primary-report-year">
-          Source year
-          <select
-            aria-label="Primary report year"
-            value={year}
-            disabled={!onYearChange}
-            onChange={(e) => onYearChange?.(Number(e.target.value))}
-          >
-            {budgetYears.map((y) => (
-              <option key={y}>{y}</option>
-            ))}
-          </select>
-        </label>
-        <p>
-          History, forecast, geographic market, Retail/Wholesale and room-type
-          analysis. Missing sources stay unavailable.
-        </p>
-        <PerformanceAnalysis
-          year={year}
-          initialKind={primaryOpen.kind}
-          initialDimension={primaryOpen.dimension}
-          initialByCode={primaryOpen.byCode}
-          initialPeriod={primaryOpen.period}
+          reportTitle={productionTitle}
+          snapshotMode
+          initialStatus={productionStatus}
         />
       </section>
     );
@@ -821,6 +802,37 @@ export default function ReportLibrary({
               {customOpen ? "Hide Custom Report" : "Generate Your Own Report"}
             </button>
           </header>
+          <div className="report-controls report-source-controls">
+            <label>
+              Report data
+              <select
+                aria-label="Report data source"
+                value={basis}
+                onChange={(e) => setBasis(e.target.value as typeof basis)}
+              >
+                <option value="production">
+                  Uploaded reservation production
+                </option>
+                <option value="budget">Budget / legacy BOB planning</option>
+              </select>
+            </label>
+            <label>
+              Report year
+              <select
+                aria-label="Quick report year"
+                value={basis === "production" ? reportYear : year}
+                onChange={(e) =>
+                  basis === "production"
+                    ? setReportYear(Number(e.target.value))
+                    : onYearChange?.(Number(e.target.value))
+                }
+              >
+                {budgetYears.map((y) => (
+                  <option key={y}>{y}</option>
+                ))}
+              </select>
+            </label>
+          </div>
           {customOpen && (
             <section id="custom-report-builder">
               <p className="report-selected-source">{source}</p>
@@ -829,9 +841,12 @@ export default function ReportLibrary({
                   Report year
                   <select
                     aria-label="Report year"
-                    value={year}
-                    onChange={(e) => onYearChange?.(Number(e.target.value))}
-                    disabled={!onYearChange}
+                    value={basis === "production" ? reportYear : year}
+                    onChange={(e) =>
+                      basis === "production"
+                        ? setReportYear(Number(e.target.value))
+                        : onYearChange?.(Number(e.target.value))
+                    }
                   >
                     {budgetYears.map((y) => (
                       <option value={y} key={y}>
@@ -940,7 +955,7 @@ export default function ReportLibrary({
             </section>
           )}
           <p className="report-selection">
-            {year} ·{" "}
+            {basis === "production" ? reportYear : year} ·{" "}
             {market === "all"
               ? "All available markets"
               : markets.find((m) => m.id === market)?.name}{" "}
@@ -950,71 +965,20 @@ export default function ReportLibrary({
           {loading && (
             <p role="status">Loading saved data before generation…</p>
           )}
-          <section className="primary-report-entry">
-            <button
-              className="report-gold-button"
-              onClick={() => {
-                setProductionPeriod("q1");
-                setProductionOpen("country");
-              }}
-            >
-              Q1 2026 Reservation Production Reports
-            </button>
-            <button
-              className="report-gold-button"
-              onClick={() =>
-                setPrimaryOpen({
-                  kind: "history",
-                  dimension: "country",
-                  byCode: false,
-                  title: "Primary Reservation Source Reports",
-                  period: "year",
-                })
-              }
-            >
-              <FileChartColumn size={18} />
-              Primary Reservation Source Reports
-            </button>
-            <p>
-              Authoritative history/forecast analysis. Hotel, market, country,
-              villa, segment and business-pace shortcuts use primary sources.
-              Monthly/quarterly/yearly shortcuts also use primary stay-date
-              sources. For 2026, relevant Quick Reports use the supplied
-              production spreadsheet, including meal-plan breakdowns. Custom
-              budget reports remain planning data, separate from completed and
-              cancelled stays.
-            </p>
-          </section>
           <QuickReports
             group={customOpen ? group : "All"}
             loading={loading}
             onSelect={(id) => {
               const quick = quickReports.find((r) => r.id === id)!;
-              if (year === 2026 && (quick.primary || quick.id === "meal")) {
+              if (basis === "production" && !quick.unavailable) {
+                setProductionStatus(
+                  quick.id === "cancellation" ? "CANCELLED" : "CHECKED OUT",
+                );
+                setProductionTitle(quick.title);
                 setProductionPeriod(
                   quickReportPeriod(quick.periodMode, period),
                 );
-                setProductionOpen(
-                  quick.id === "pace"
-                    ? "pace"
-                    : quick.id === "meal"
-                      ? "meal"
-                      : quick.primary === "room"
-                        ? "room"
-                        : quick.primary === "market"
-                          ? "segment"
-                          : "country",
-                );
-                return;
-              }
-              if (quick.primary) {
-                setPrimaryOpen({
-                  kind: quick.primaryKind ?? "history",
-                  dimension: quick.primary,
-                  byCode: quick.id === "country",
-                  title: quick.title,
-                  period: quickReportPeriod(quick.periodMode, period),
-                });
+                setProductionOpen(productionReportMode(quick.id));
                 return;
               }
               if (quick.operational) {

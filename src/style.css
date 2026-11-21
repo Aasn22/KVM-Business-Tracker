@@ -4786,3 +4786,141 @@ fieldset {
 .property-setup .property-team .property-mini-table td {
   text-align: left;
 }
+/* Administrator pages: wrap controls, never hide overflowing forms or force the
+   document wider than the viewport. Wide reference tables scroll locally. */
+.property-setup,
+.operations-input,
+.operation-input,
+.property-team,
+.activity-log {
+  min-width: 0;
+  max-width: 100%;
+}
+.property-setup .table-scroll,
+.operation-input .table-scroll,
+.property-team .table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.property-setup-heading,
+.property-setup .section-heading {
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.property-setup .editor-actions,
+.operation-input .editor-actions {
+  flex-wrap: wrap;
+}
+.property-setup input,
+.property-setup select,
+.property-setup textarea,
+.operation-input input,
+.operation-input select {
+  min-width: 0;
+  max-width: 100%;
+}
+.operation-input p,
+.operation-input li,
+.property-setup .notice {
+  overflow-wrap: anywhere;
+}
+.property-team .property-mini-table {
+  table-layout: fixed;
+  min-width: 620px;
+}
+.property-team .property-mini-table th,
+.property-team .property-mini-table td {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.property-team .property-mini-table th:first-child {
+  width: 22%;
+}
+.property-team .property-mini-table th:nth-child(2) {
+  width: 30%;
+}
+.report-source-controls {
+  flex-wrap: wrap;
+}
+.report-source-controls label {
+  flex: 1 1 180px;
+}
+@media screen and (max-width: 1024px) {
+  .property-details-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+  .property-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+  .operation-input fieldset {
+    gap: 12px;
+  }
+  .property-setup .property-mini-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .property-setup .property-logo {
+    align-items: flex-start;
+  }
+  .property-setup .editor-footer {
+    margin: 14px 0 0;
+    padding: 12px 0;
+  }
+}
+@media screen and (max-width: 600px) {
+  .property-setup {
+    padding: 12px;
+  }
+  .property-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .property-setup .section-heading {
+    align-items: flex-start;
+  }
+  .property-setup .section-heading h2 {
+    flex: 1 1 100%;
+  }
+  .property-setup-heading .editor-actions {
+    width: 100%;
+  }
+  .property-setup .button,
+  .operation-input .button {
+    white-space: normal;
+    min-height: 44px;
+    max-width: 100%;
+  }
+  .operation-input {
+    padding: 12px;
+  }
+  .operation-input h3 {
+    margin: -12px -12px 12px;
+    padding: 10px;
+    font-size: 13px;
+  }
+  .operation-input input[type="file"],
+  .property-team input[type="file"] {
+    font-size: 12px;
+    padding: 8px;
+    width: 100%;
+  }
+  .admin-pin-entry,
+  .admin-pin-box {
+    max-width: 100%;
+    min-width: 0;
+  }
+  .admin-pin-page {
+    padding: 18px 12px;
+  }
+  .report-controls {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .production-analysis .report-filters {
+    padding: 0;
+  }
+  .production-bar {
+    grid-template-columns: minmax(60px, 1fr) minmax(20px, 1fr) 90px;
+  }
+}

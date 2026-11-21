@@ -20,7 +20,9 @@ import {
   type PerformanceRow,
 } from "./performanceSources";
 import { parseStatPages, type StatPage } from "./performanceParser";
-import PerformanceInput from "./PerformanceInput";
+import PerformanceInput, {
+  spreadsheetSelectionError,
+} from "./PerformanceInput";
 import PerformanceAnalysis from "./PerformanceAnalysis";
 const row: PerformanceRow = {
   date: "2026-11-01",
@@ -149,15 +151,40 @@ describe("primary source semantics", () => {
       parseStatPages(broken, "history", "market", row.date, row.date),
     ).toThrow("reconciliation");
   });
-  it("renders six separate panels and keeps missing room forecast unavailable", () => {
-    const html = renderToStaticMarkup(<PerformanceInput onBusy={() => {}} />);
-    expect(html.match(/Reservation History Reports/g)).toHaveLength(3);
-    expect(html.match(/Reservation Forecast Reports/g)).toHaveLength(3);
-    expect(html).toContain("Awaiting the Forecast by Room Types sample");
-    expect(html).toContain("never add their totals together");
+  it("renders one spreadsheet selection area without active import or PDF panels", () => {
+    const html = renderToStaticMarkup(<PerformanceInput />);
+    expect(html.match(/type="file"/g)).toHaveLength(1);
+    expect(html).toContain("Reservation Production History Reports");
+    expect(html).toContain("Reservation Production Forecast Reports");
+    expect(html).toContain("Upload setup only");
+    expect(html).not.toContain("Market Codes");
+    expect(html).not.toContain("Publish / Replace Source");
+    expect(html).not.toContain('type="date"');
+    expect(html).toContain("Open calendar for Production from date");
+    expect(html).toContain("Open calendar for Production to date");
     const analysis = renderToStaticMarkup(<PerformanceAnalysis year={2026} />);
     expect(analysis).toContain("Primary Source Analysis");
     expect(analysis).toContain("legacy workbook BOB");
+  });
+});
+describe("spreadsheet selection validation", () => {
+  it("accepts named spreadsheet formats but rejects PDF, empty and oversized files", () => {
+    for (const ext of ["xlsx", "XLS", "csv", "ods"])
+      expect(
+        spreadsheetSelectionError({ name: `source.${ext}`, size: 100 }),
+      ).toBe("");
+    expect(
+      spreadsheetSelectionError({ name: "source.pdf", size: 100 }),
+    ).toContain("spreadsheet");
+    expect(
+      spreadsheetSelectionError({ name: "source.xlsx", size: 0 }),
+    ).toContain("empty");
+    expect(
+      spreadsheetSelectionError({
+        name: "source.xlsx",
+        size: 31 * 1024 * 1024,
+      }),
+    ).toContain("30 MB");
   });
 });
 const db = new PGlite();

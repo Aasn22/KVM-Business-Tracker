@@ -1294,7 +1294,7 @@ export default function App({
           )}
           {localPin && view === "admin" && (
             <>
-              <PerformanceInput onBusy={setBusy} />
+              <PerformanceInput />
               <OperationalInput onBusyChange={setBusy} />
             </>
           )}

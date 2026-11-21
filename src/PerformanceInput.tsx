@@ -1,78 +1,56 @@
-import { useState } from "react";
-import { Upload, Save } from "lucide-react";
+import { useRef, useState } from "react";
+import { Upload } from "lucide-react";
 import DatePicker from "./DatePicker";
-import { parsePerformanceFile } from "./performanceParser";
-import { publishPerformance } from "./performanceClient";
-import {
-  summarizePerformance,
-  type PerformanceImport,
-  type SourceKind,
-  type SourceDimension,
-} from "./performanceSources";
-import { formatMoney, formatNumber } from "./format";
-import { recordActivity } from "./activity";
-import { useAdminName } from "./AdminIdentity";
-const names = {
-  market: "Market Codes",
-  room: "Room Types",
-  country: "Country Codes",
-};
-function SourceBox({
-  kind,
-  dimension,
-  onBusy,
-}: {
-  kind: SourceKind;
-  dimension: SourceDimension;
-  onBusy: (v: boolean) => void;
+
+export function spreadsheetSelectionError(file: {
+  name: string;
+  size: number;
 }) {
-  const [from, setFrom] = useState(""),
-    [to, setTo] = useState(""),
-    [busy, setBusy] = useState(false),
-    [error, setError] = useState(""),
-    [message, setMessage] = useState(""),
-    [preview, setPreview] = useState<PerformanceImport | null>(null);
-  const actor = useAdminName();
-  const unavailable = kind === "forecast" && dimension === "room";
-  async function upload(file?: File) {
-    if (!file) return;
-    setError("");
-    setMessage("");
-    if (!from || !to) {
-      setError("Choose the exact source From/To dates first");
-      return;
-    }
-    setBusy(true);
-    onBusy(true);
-    try {
-      setPreview(await parsePerformanceFile(file, kind, dimension, from, to));
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setBusy(false);
-      onBusy(false);
-    }
-  }
-  const totals = preview ? summarizePerformance(preview.rows) : null;
+  if (!/\.(xlsx|xls|csv|ods)$/i.test(file.name))
+    return "Select a spreadsheet: XLSX, XLS, CSV or ODS.";
+  if (!file.size) return "The selected file is empty.";
+  if (file.size > 30 * 1024 * 1024)
+    return "Select a spreadsheet no larger than 30 MB.";
+  return "";
+}
+
+export default function PerformanceInput() {
+  const [kind, setKind] = useState("history");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const [file, setFile] = useState<{ name: string; size: number } | null>(null);
+  const [error, setError] = useState("");
+  const input = useRef<HTMLInputElement>(null);
   return (
-    <section className="panel operation-input">
-      <h3>
-        Reservation {kind === "history" ? "History" : "Forecast"} Reports ·{" "}
-        {names[dimension]}
-      </h3>
-      {unavailable ? (
-        <p>
-          Awaiting the Forecast by Room Types sample. This source is
-          unavailable; country or market data is not used to invent room-type
-          figures.
-        </p>
-      ) : (
-        <>
-          <fieldset disabled={busy || !!preview}>
+    <section className="operations-input">
+      <h2>Reservation Production Reports</h2>
+      <p>One spreadsheet source for reservation history or forecast.</p>
+      <section className="panel operation-input production-spreadsheet">
+        <h3>
+          <Upload size={16} aria-hidden="true" /> Reservation Production
+          Spreadsheet
+        </h3>
+        <fieldset>
+          <label>
+            Report type
+            <select
+              aria-label="Production report type"
+              value={kind}
+              onChange={(e) => setKind(e.target.value)}
+            >
+              <option value="history">
+                Reservation Production History Reports
+              </option>
+              <option value="forecast">
+                Reservation Production Forecast Reports
+              </option>
+            </select>
+          </label>
+          <div className="production-date-range">
             <label>
               {kind === "history" ? "History" : "Forecast"} From Date
               <DatePicker
-                label={`${kind} ${dimension} from`}
+                label="Production from date"
                 value={from}
                 onChange={setFrom}
               />
@@ -80,141 +58,70 @@ function SourceBox({
             <label>
               {kind === "history" ? "History" : "Forecast"} To Date
               <DatePicker
-                label={`${kind} ${dimension} to`}
+                label="Production to date"
                 value={to}
                 onChange={setTo}
               />
             </label>
-            <label>
-              Upload selectable Opera PDF
-              <input
-                type="file"
-                accept=".pdf"
-                aria-label={`Upload ${kind} by ${dimension}`}
-                onChange={(e) => {
-                  void upload(e.target.files?.[0]);
-                  e.target.value = "";
-                }}
-              />
-            </label>
-          </fieldset>
-          {busy && (
-            <p role="status">Processing and reconciling daily columns…</p>
-          )}
-          {preview && (
-            <>
-              <h4>Review primary source</h4>
-              <p>
-                Run date {preview.asOf} · {preview.from} to {preview.to} ·{" "}
-                {preview.rows.length} dated codes ·{" "}
-                {formatNumber(totals!.rooms)} room nights ·{" "}
-                {formatMoney(totals!.revenue)} room revenue.
-              </p>
-              <p>
-                Publishing replaces this source dimension's matching stay dates.
-                Other dimensions are not added to this total. Budgets remain
-                unchanged. Signed revenue adjustments are retained.
-              </p>
-              <div className="table-scroll operation-source-preview">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Date</th>
-                      <th>Code</th>
-                      <th>Rooms</th>
-                      <th>Room revenue</th>
-                      <th>F&amp;B</th>
-                      <th>Other</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {preview.rows.slice(0, 100).map((r) => (
-                      <tr key={r.date + r.code}>
-                        <td>{r.date}</td>
-                        <td>{r.code}</td>
-                        <td>{r.rooms}</td>
-                        <td>{formatMoney(r.roomRevenue)}</td>
-                        <td>{formatMoney(r.foodRevenue)}</td>
-                        <td>{formatMoney(r.otherRevenue)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <p>First 100 rows shown; all validated records will publish.</p>
-              <button
-                className="button primary"
-                disabled={busy || !actor}
-                onClick={async () => {
-                  setBusy(true);
-                  onBusy(true);
-                  try {
-                    await publishPerformance(preview);
-                    recordActivity(
-                      "change",
-                      actor!,
-                      `${kind} ${dimension} source published · ${from} to ${to}`,
-                    );
-                    setPreview(null);
-                    setMessage(
-                      "Published. Refresh related pages to read the new primary source.",
-                    );
-                  } catch (e) {
-                    setError((e as Error).message);
-                  } finally {
-                    setBusy(false);
-                    onBusy(false);
-                  }
-                }}
-              >
-                <Save size={16} />
-                Publish / Replace Source
-              </button>
-              <button
-                className="button outline"
-                disabled={busy}
-                onClick={() => setPreview(null)}
-              >
-                Discard
-              </button>
-            </>
-          )}
-          {error && (
+          </div>
+          {from && to && from > to && (
             <p className="error" role="alert">
-              {error}
+              To date must be on or after From date.
             </p>
           )}
-          {message && (
-            <p className="notice" role="status">
-              {message}
-            </p>
-          )}
-        </>
-      )}
-    </section>
-  );
-}
-export default function PerformanceInput({
-  onBusy,
-}: {
-  onBusy: (v: boolean) => void;
-}) {
-  return (
-    <section className="operations-input">
-      <h2>Primary reservation performance sources</h2>
-      <p>
-        History = reported performance; forecast = saved on-books projection,
-        not realized revenue. All three dimensions describe the same
-        business—never add their totals together. Publication needs the
-        shared-performance database setup.
-      </p>
-      <div className="operation-input-grid">
-        {(["market", "room", "country"] as const).flatMap((d) =>
-          (["history", "forecast"] as const).map((k) => (
-            <SourceBox key={k + d} kind={k} dimension={d} onBusy={onBusy} />
-          )),
+          <label>
+            Upload spreadsheet
+            <input
+              ref={input}
+              aria-label="Upload reservation production spreadsheet"
+              type="file"
+              accept=".xlsx,.xls,.csv,.ods"
+              onChange={(e) => {
+                const selected = e.target.files?.[0];
+                setFile(null);
+                setError("");
+                if (!selected) return;
+                const issue = spreadsheetSelectionError(selected);
+                if (issue) {
+                  setError(issue);
+                  e.target.value = "";
+                  return;
+                }
+                setFile({ name: selected.name, size: selected.size });
+              }}
+            />
+          </label>
+        </fieldset>
+        {error && (
+          <p className="error" role="alert">
+            {error}
+          </p>
         )}
-      </div>
+        {file && (
+          <div role="status" className="notice">
+            <p>
+              Selected: {file.name} ({Math.ceil(file.size / 1024)} KB). This
+              file has not been uploaded, saved or imported.
+            </p>
+            <button
+              className="button outline"
+              type="button"
+              onClick={() => {
+                setFile(null);
+                setError("");
+                if (input.current) input.current.value = "";
+              }}
+            >
+              Remove file
+            </button>
+          </div>
+        )}
+        <p className="notice">
+          Upload setup only — awaiting your sample spreadsheet to configure
+          column mapping and validation. Selecting a file does not update
+          reports, figures or the database. No file contents are read or sent.
+        </p>
+      </section>
     </section>
   );
 }

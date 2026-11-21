@@ -4187,3 +4187,38 @@ fieldset {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+.production-spreadsheet {
+  width: 100%;
+}
+.production-spreadsheet h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.production-spreadsheet select {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  padding: 10px;
+  border: 1px solid #d5e1d9;
+  border-radius: 5px;
+  background: white;
+  color: inherit;
+}
+.production-date-range {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.production-spreadsheet .notice {
+  margin-top: 16px;
+  overflow-wrap: anywhere;
+}
+.production-spreadsheet .notice .button {
+  margin-top: 10px;
+}
+@media screen and (max-width: 600px) {
+  .production-date-range {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

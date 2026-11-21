@@ -131,6 +131,23 @@ export default function App({
   const [login, setLogin] = useState(false);
   const [help, setHelp] = useState(false);
   const [sidebar, setSidebar] = useState(false);
+  const [navGroup, setNavGroup] = useState<"portal" | "markets" | "admin">(
+    "portal",
+  );
+  const navRailRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (!sidebar) return;
+    function dismiss(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setSidebar(false);
+        navRailRef.current
+          ?.querySelector<HTMLButtonElement>('[aria-expanded="true"]')
+          ?.focus();
+      }
+    }
+    document.addEventListener("keydown", dismiss);
+    return () => document.removeEventListener("keydown", dismiss);
+  }, [sidebar]);
   const { appRef, cancelIntro } = useMenuIntro(setSidebar);
   const [pending, setPending] = useState<Entry[] | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -562,13 +579,78 @@ export default function App({
   const noAccess =
     !loading && !!market && !entries.some((e) => e.market_id === market);
   return (
-    <div className="app" ref={appRef}>
+    <div className="app rail-layout" ref={appRef}>
+      <nav
+        className="icon-rail"
+        aria-label="Navigation categories"
+        ref={navRailRef}
+      >
+        <a href="/" className="rail-brand" aria-label="KVM BUSINESS LENSE home">
+          <img
+            src="/kuda-villingili-logo.png"
+            alt="Kuda Villingili"
+            width={40}
+            height={40}
+          />
+        </a>
+        {(
+          [
+            { id: "portal", label: "Portal", Icon: Activity },
+            { id: "markets", label: "Markets", Icon: Globe2 },
+            { id: "admin", label: "Admin", Icon: ShieldCheck },
+          ] as const
+        ).map(({ id, label, Icon }) => (
+          <button
+            key={id}
+            type="button"
+            className={sidebar && navGroup === id ? "active" : ""}
+            aria-label={`Open ${label} navigation`}
+            title={label}
+            aria-expanded={sidebar && navGroup === id}
+            aria-controls="platform-navigation"
+            onClick={() => {
+              cancelIntro();
+              setNavGroup(id);
+              setSidebar(!(sidebar && navGroup === id));
+            }}
+          >
+            <Icon size={22} />
+            <span>{label}</span>
+          </button>
+        ))}
+      </nav>
+      {sidebar && (
+        <button
+          className="nav-dismiss"
+          aria-label="Close navigation panel"
+          onClick={() => {
+            cancelIntro();
+            setSidebar(false);
+          }}
+        />
+      )}
       <aside
         id="platform-navigation"
+        aria-label="Expanded navigation"
+        inert={!sidebar}
+        aria-hidden={!sidebar}
         onPointerDown={cancelIntro}
         onFocusCapture={cancelIntro}
         className={`sidebar ${sidebar ? "open" : ""}`}
       >
+        <div className="navigation-heading">
+          <strong>Navigation</strong>
+          <button
+            type="button"
+            aria-label="Close navigation"
+            onClick={() => {
+              cancelIntro();
+              setSidebar(false);
+            }}
+          >
+            <X size={20} />
+          </button>
+        </div>
         <a
           className="brand"
           href="#"
@@ -580,158 +662,158 @@ export default function App({
             });
           }}
         >
-          <img
-            className="brand-icon"
-            src="/kuda-villingili-logo.png"
-            alt="Kuda Villingili"
-            width={46}
-            height={46}
-          />
           <span>
             KVM BUSINESS LENSE<small>Commercial intelligence</small>
           </span>
         </a>
-        <div className="nav-label">KVM PORTAL</div>
-        <nav className="total-nav" aria-label="KVM Portal">
-          <button
-            className={view === "overview" && !market ? "active" : ""}
-            aria-label="Commercial Pulse"
-            aria-current={view === "overview" && !market ? "page" : undefined}
-            onClick={() =>
-              navigate(() => {
-                setMarket(null);
-                setView("overview");
-              })
-            }
-          >
-            <Activity size={18} />
-            Commercial Pulse
-          </button>
-          <button
-            className={view === "total" ? "active" : ""}
-            aria-current={view === "total" ? "page" : undefined}
-            onClick={() =>
-              navigate(() => {
-                setMarket(null);
-                setView("total");
-              })
-            }
-          >
-            <BarChart3 size={18} />
-            Management Lense
-          </button>
-          <button
-            className={view === "reports" && !market ? "active" : ""}
-            onClick={() =>
-              navigate(() => {
-                setView("reports");
-                setMarket(null);
-              })
-            }
-          >
-            <BarChart3 size={18} />
-            Reports Library
-          </button>
-          <button
-            className={view === "insight" && !market ? "active" : ""}
-            onClick={() =>
-              navigate(() => {
-                setView("insight");
-                setMarket(null);
-              })
-            }
-          >
-            <BookOpen size={18} />
-            Business Insight
-          </button>
-        </nav>
-        <div className="nav-label market-label">
-          MARKET INSIGHTS{" "}
-          <span>{markets.length.toString().padStart(2, "0")}</span>
-        </div>
-        <nav>
-          {visibleMarkets.map((m) => (
+        <div className="nav-section" hidden={navGroup !== "portal"}>
+          <div className="nav-label">KVM PORTAL</div>
+          <nav className="total-nav" aria-label="KVM Portal">
             <button
-              key={m.id}
-              className={view === "overview" && market === m.id ? "active" : ""}
-              onClick={() => openMarket(m.id)}
-            >
-              <span className="market-dot" style={{ background: m.color }} />
-              {m.name}
-              <ChevronRight size={14} />
-            </button>
-          ))}
-        </nav>
-
-        <div className="nav-label administrator-label">ADMINISTRATOR</div>
-        {publicDemo ? (
-          <>
-            <nav className="property-nav">
-              <a className="settings-nav" href="/property-setup">
-                <Building2 size={18} />
-                Property Setup
-              </a>
-            </nav>
-            <nav className="admin-nav">
-              <a className="settings-nav" href="/admin-data-input">
-                <LockKeyhole size={18} />
-                Data Input
-              </a>
-            </nav>
-          </>
-        ) : (
-          <>
-            <nav className="property-nav">
-              <button
-                className={view === "property" ? "active" : ""}
-                onClick={() =>
-                  navigate(() => {
-                    setMarket(null);
-                    setView("property");
-                  })
-                }
-              >
-                <Building2 size={18} />
-                Property Setup
-              </button>
-            </nav>
-            <nav className="admin-nav">
-              <button
-                className={view === "admin" ? "active" : ""}
-                onClick={() =>
-                  navigate(() => {
-                    setMarket(null);
-                    setView("admin");
-                  })
-                }
-              >
-                <LockKeyhole size={18} />
-                Data Input
-              </button>
-            </nav>
-          </>
-        )}
-        <nav aria-label="Administrator activity">
-          {publicDemo ? (
-            <a className="settings-nav" href="/activity-log">
-              <Clock3 size={18} />
-              Activity Log
-            </a>
-          ) : (
-            <button
-              className={view === "activity" ? "active" : ""}
+              className={view === "overview" && !market ? "active" : ""}
+              aria-label="Commercial Pulse"
+              aria-current={view === "overview" && !market ? "page" : undefined}
               onClick={() =>
                 navigate(() => {
-                  setView("activity");
+                  setMarket(null);
+                  setView("overview");
+                })
+              }
+            >
+              <Activity size={18} />
+              Commercial Pulse
+            </button>
+            <button
+              className={view === "total" ? "active" : ""}
+              aria-current={view === "total" ? "page" : undefined}
+              onClick={() =>
+                navigate(() => {
+                  setMarket(null);
+                  setView("total");
+                })
+              }
+            >
+              <BarChart3 size={18} />
+              Management Lense
+            </button>
+            <button
+              className={view === "reports" && !market ? "active" : ""}
+              onClick={() =>
+                navigate(() => {
+                  setView("reports");
                   setMarket(null);
                 })
               }
             >
-              <Clock3 size={18} />
-              Activity Log
+              <BarChart3 size={18} />
+              Reports Library
             </button>
+            <button
+              className={view === "insight" && !market ? "active" : ""}
+              onClick={() =>
+                navigate(() => {
+                  setView("insight");
+                  setMarket(null);
+                })
+              }
+            >
+              <BookOpen size={18} />
+              Business Insight
+            </button>
+          </nav>
+        </div>
+        <div className="nav-section" hidden={navGroup !== "markets"}>
+          <div className="nav-label market-label">
+            MARKET INSIGHTS{" "}
+            <span>{markets.length.toString().padStart(2, "0")}</span>
+          </div>
+          <nav>
+            {visibleMarkets.map((m) => (
+              <button
+                key={m.id}
+                className={
+                  view === "overview" && market === m.id ? "active" : ""
+                }
+                onClick={() => openMarket(m.id)}
+              >
+                <span className="market-dot" style={{ background: m.color }} />
+                {m.name}
+                <ChevronRight size={14} />
+              </button>
+            ))}
+          </nav>
+        </div>
+        <div className="nav-section" hidden={navGroup !== "admin"}>
+          <div className="nav-label administrator-label">ADMINISTRATOR</div>
+          {publicDemo ? (
+            <>
+              <nav className="property-nav">
+                <a className="settings-nav" href="/property-setup">
+                  <Building2 size={18} />
+                  Property Setup
+                </a>
+              </nav>
+              <nav className="admin-nav">
+                <a className="settings-nav" href="/admin-data-input">
+                  <LockKeyhole size={18} />
+                  Data Input
+                </a>
+              </nav>
+            </>
+          ) : (
+            <>
+              <nav className="property-nav">
+                <button
+                  className={view === "property" ? "active" : ""}
+                  onClick={() =>
+                    navigate(() => {
+                      setMarket(null);
+                      setView("property");
+                    })
+                  }
+                >
+                  <Building2 size={18} />
+                  Property Setup
+                </button>
+              </nav>
+              <nav className="admin-nav">
+                <button
+                  className={view === "admin" ? "active" : ""}
+                  onClick={() =>
+                    navigate(() => {
+                      setMarket(null);
+                      setView("admin");
+                    })
+                  }
+                >
+                  <LockKeyhole size={18} />
+                  Data Input
+                </button>
+              </nav>
+            </>
           )}
-        </nav>
+          <nav aria-label="Administrator activity">
+            {publicDemo ? (
+              <a className="settings-nav" href="/activity-log">
+                <Clock3 size={18} />
+                Activity Log
+              </a>
+            ) : (
+              <button
+                className={view === "activity" ? "active" : ""}
+                onClick={() =>
+                  navigate(() => {
+                    setView("activity");
+                    setMarket(null);
+                  })
+                }
+              >
+                <Clock3 size={18} />
+                Activity Log
+              </button>
+            )}
+          </nav>
+        </div>
         <div className="sidebar-bottom">
           <div className="secure">
             <ShieldCheck size={20} />

@@ -305,3 +305,7 @@ The six history/forecast dimension PDF panels have been replaced by one Reservat
 ## Data Input cleanup
 
 Removed the previous-browser-upload publication panel and browser-local market editor/selector from the PIN Data Input route. Existing stored entries and legacy operational batches are not deleted or automatically published. Current spreadsheet placeholder and daily cancellation/reservations-entered upload panels remain. Existing local planning edits, if any, remain local; no shared-storage capability was added by hiding these panels.
+
+## Contextual public-page Insights
+
+Floating right-centre INSIGHTS button uses the supplied bulb image with a CSS glow/zoom animation (not a downloaded or generated GIF). Reduced-motion disables animation; printing hides the widget. Public overview/market/management notes derive only from selected-year saved planning records and explicitly distinguish legacy BOB from actual/primary-source performance. Reports notes describe source/date coverage rather than claim to summarize a generated nested snapshot. Business Insight notes identify the existing research snapshot date. No external AI call or guessed values. Entire widget is absent on Administrator routes (Data Input, Property Setup, Activity Log, setup). Popover is non-modal, closeable by button/outside click/Escape, with mobile-safe width.

@@ -50,6 +50,7 @@ import { formatMoney, formatNumber, isMoneyMetric } from "./format";
 import ActivityLog from "./ActivityLog";
 import OperationalInput from "./OperationalInput";
 import PerformanceInput from "./PerformanceInput";
+import PageInsights from "./PageInsights";
 import PerformanceAnalysis from "./PerformanceAnalysis";
 import { useAdminName } from "./AdminIdentity";
 import { recordActivity, recordPlatformVisit } from "./activity";
@@ -1909,6 +1910,12 @@ export default function App({
             </section>
           )}
         </main>
+        <PageInsights
+          view={view}
+          entries={entries}
+          year={year}
+          market={market}
+        />
       </div>
       {login && (
         <div className="modal-backdrop">

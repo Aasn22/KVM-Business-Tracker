@@ -4403,3 +4403,114 @@ fieldset {
     width: 100% !important;
   }
 }
+/* Non-modal contextual notes. Small dock at the right edge; panel stays inside
+   the available content viewport, excluding the persistent navigation rail. */
+.page-insights {
+  position: fixed;
+  right: max(6px, env(safe-area-inset-right));
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 35;
+}
+.page-insights-trigger {
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  padding: 4px;
+  border-radius: 12px;
+  background: #fffef5ef;
+  box-shadow: 0 2px 10px #0b193019;
+}
+.page-insights-trigger img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  animation: insights-glow 3s ease-in-out infinite;
+}
+.page-insights-trigger span {
+  color: #263d61;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+@keyframes insights-glow {
+  0%,
+  100% {
+    transform: scale(0.94);
+    filter: drop-shadow(0 0 1px #b43caa22);
+  }
+  50% {
+    transform: scale(1.04);
+    filter: drop-shadow(0 0 6px #b43caa66);
+  }
+}
+.page-insights-panel {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: min(330px, calc(100vw - var(--rail-width) - 22px));
+  max-height: min(440px, calc(100dvh - 32px));
+  overflow-y: auto;
+  background: #0b1930;
+  border: 1px solid #d4bd91;
+  color: #e7d4b1;
+  padding: 14px;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px #0003;
+}
+.page-insights-panel header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.page-insights-panel h2 {
+  font-size: 16px;
+}
+.page-insights-close {
+  min-width: 44px;
+  min-height: 44px;
+  display: grid;
+  place-items: center;
+  color: inherit;
+}
+.page-insights-panel ul {
+  padding-left: 18px;
+  margin: 8px 0 14px;
+}
+.page-insights-panel li {
+  font-size: 12px;
+  line-height: 1.65;
+  margin: 10px 0;
+  overflow-wrap: anywhere;
+}
+.page-insights-panel small {
+  font-size: 10px;
+  line-height: 1.5;
+  display: block;
+  opacity: 0.8;
+}
+@media screen and (max-width: 600px) {
+  .page-insights-trigger img {
+    width: 34px;
+    height: 34px;
+  }
+  .page-insights-trigger span {
+    font-size: 8px;
+    letter-spacing: 0;
+  }
+  .page-insights-trigger {
+    padding: 4px 2px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .page-insights-trigger img {
+    animation: none;
+  }
+}
+@media print {
+  .page-insights {
+    display: none !important;
+  }
+}

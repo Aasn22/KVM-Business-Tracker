@@ -4169,3 +4169,21 @@ fieldset {
     flex-basis: 100%;
   }
 }
+/* Native selects have an intrinsic option width: constrain the control itself,
+   not just its grid/flex label, so long forecast labels cannot overlap. */
+.report-filters select,
+.report-controls select,
+.report-builder select,
+.report-builder input,
+.property-fields input,
+.property-fields textarea {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+@media screen and (min-width: 601px) and (max-width: 1024px) {
+  .primary-source-analysis .report-filters {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

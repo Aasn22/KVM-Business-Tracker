@@ -1298,22 +1298,10 @@ export default function App({
               <OperationalInput onBusyChange={setBusy} />
             </>
           )}
-          {!publicDemo && view === "admin" && (
+          {!publicDemo && !localPin && view === "admin" && (
             <section className="panel admin-access">
-              <h2>
-                {localPin
-                  ? "Data Input — local browser"
-                  : demo
-                    ? "Demo Data Input"
-                    : "Administrator workspace"}
-              </h2>
-              {localPin ? (
-                <div className="notice">
-                  Edits are saved on this browser only. They do not update the
-                  public website or other devices. Export a workbook to retain a
-                  backup.
-                </div>
-              ) : demo ? (
+              <h2>{demo ? "Demo Data Input" : "Administrator workspace"}</h2>
+              {demo ? (
                 <div className="notice">
                   Fictional demo only. This demonstrates admin entry without
                   authentication; edits stay in this browser and do not grant
@@ -1373,7 +1361,7 @@ export default function App({
             </section>
           )}
           {((view === "overview" && market && !countryOnly) ||
-            (view === "admin" && canEdit && market)) && (
+            (view === "admin" && !localPin && canEdit && market)) && (
             <>
               <button
                 className="back-link"

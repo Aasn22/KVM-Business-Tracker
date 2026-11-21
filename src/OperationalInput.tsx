@@ -208,7 +208,6 @@ export default function OperationalInput({
         highlighted fields; no guest names, confirmation numbers or staff names
         are stored. No BOB or market balance updates.
       </p>
-      <LegacyPublications />
       <div className="operation-input-grid">
         <InputBox kind="cancellations" onBusyChange={onBusyChange} />
         <InputBox kind="reservations" onBusyChange={onBusyChange} />
@@ -221,56 +220,6 @@ export default function OperationalInput({
         prevent double-counting. Reservations entered is not the same as all
         bookings confirmed.
       </p>
-    </section>
-  );
-}
-
-function LegacyPublications() {
-  const [batches, setBatches] = useState<
-      import("./operational").OperationBatch[]
-    >([]),
-    [message, setMessage] = useState(""),
-    [busy, setBusy] = useState(false);
-  useEffect(() => {
-    try {
-      setBatches(readOperations(localStorage));
-    } catch (e) {
-      setMessage((e as Error).message);
-    }
-  }, []);
-  if (!batches.length) return message ? <p role="alert">{message}</p> : null;
-  return (
-    <section className="panel operation-input">
-      <h3>Publish previous browser uploads</h3>
-      <p>
-        Older imports are not automatically shared. Publish each reviewed batch
-        to make it available to everyone. No guest or staff names are included.
-      </p>
-      {batches.map((b) => (
-        <div key={b.id}>
-          <span>
-            {b.kind} · {b.from} to {b.to} · {b.rows.length} rows
-          </span>
-          <button
-            className="button outline"
-            disabled={busy}
-            onClick={async () => {
-              setBusy(true);
-              try {
-                await publishOperationBatch(b);
-                setMessage("Published for public reports.");
-              } catch (e) {
-                setMessage((e as Error).message);
-              } finally {
-                setBusy(false);
-              }
-            }}
-          >
-            Publish this import
-          </button>
-        </div>
-      ))}
-      {message && <p role="status">{message}</p>}
     </section>
   );
 }

@@ -301,3 +301,7 @@ Existing budget planning/legacy workbook BOB remains below a clear separator, no
 ## Single production spreadsheet upload placeholder
 
 The six history/forecast dimension PDF panels have been replaced by one Reservation Production Spreadsheet section with History/Forecast selector and calendar-only From/To dates. It accepts file selection for XLSX/XLS/CSV/ODS (non-empty, up to 30 MB) only: no parsing, network upload, persistence or financial changes occur. Await the user's sample before mapping and enabling validation/publication. Clear selection on navigation/reload is expected. Existing daily cancellation/reservations-entered uploads and stored primary sources are unchanged; existing source analysis remains available but is not populated by this placeholder. Existing PDF parsers remain as internal code, not exposed upload options.
+
+## Data Input cleanup
+
+Removed the previous-browser-upload publication panel and browser-local market editor/selector from the PIN Data Input route. Existing stored entries and legacy operational batches are not deleted or automatically published. Current spreadsheet placeholder and daily cancellation/reservations-entered upload panels remain. Existing local planning edits, if any, remain local; no shared-storage capability was added by hiding these panels.

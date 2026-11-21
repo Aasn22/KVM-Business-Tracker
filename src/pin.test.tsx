@@ -104,11 +104,14 @@ describe("PIN entry", () => {
     expect(html).not.toContain("SECRET_EDITOR");
     expect(html).not.toContain('type="email"');
   });
-  it("labels local editing honestly and never demands Supabase sign-in", () => {
+  it("removes marked legacy panels while retaining the current upload controls", () => {
     vi.stubGlobal("window", { location: { pathname: "/admin-data-input" } });
     const html = renderToStaticMarkup(<App localPin />);
-    expect(html).toContain("Data Input — local browser");
-    expect(html).toContain("do not update the public website");
+    expect(html).not.toContain("Data Input — local browser");
+    expect(html).not.toContain("Publish previous browser uploads");
+    expect(html).not.toContain("Admin market");
+    expect(html).toContain("Reservation Production Spreadsheet");
+    expect(html).toContain("Cancellation Data Input");
     expect(html).not.toContain("Email me a sign-in link");
     expect(html).not.toContain("Demo Admin Data Input");
     expect(html).not.toContain("Fictional demo only");

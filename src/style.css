@@ -4781,3 +4781,8 @@ fieldset {
     gap: 18px;
   }
 }
+/* Keep private team headings aligned with their corresponding cell values. */
+.property-setup .property-team .property-mini-table th,
+.property-setup .property-team .property-mini-table td {
+  text-align: left;
+}

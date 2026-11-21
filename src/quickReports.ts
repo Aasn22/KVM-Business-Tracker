@@ -7,10 +7,19 @@ export const quickReports: {
   limitation?: string;
   unavailable?: string;
   operational?: "cancellations" | "reservations";
+  primary?: "country" | "market" | "room";
+  primaryKind?: "history" | "forecast";
 }[] = [
-  { id: "hotel", title: "Hotel Performance Reports", type: "executive" },
+  {
+    id: "hotel",
+    title: "Hotel Performance Reports",
+    type: "executive",
+    primary: "country",
+  },
   {
     id: "pace",
+    primary: "country",
+    primaryKind: "forecast",
     title: "Business Pace Reports",
     type: "monthly",
     limitation:
@@ -19,8 +28,7 @@ export const quickReports: {
   {
     id: "segment",
     title: "Market Segment Reports",
-    unavailable:
-      "Market segment classifications and segment-level figures are not collected. Add segment inputs before generating this report; country and geographic market totals are not segment data.",
+    primary: "market",
   },
   {
     id: "sales",
@@ -29,9 +37,24 @@ export const quickReports: {
       "Salesperson, account, channel and sales-target inputs are not collected. A sales performance report cannot be generated from geographic market totals alone.",
   },
   { id: "meal", title: "Meal Plan Reports", type: "meals" },
-  { id: "villa", title: "Villa Type Performance Reports", type: "villas" },
-  { id: "market", title: "Market Performance Reports", type: "markets" },
-  { id: "country", title: "Country Performance Reports", type: "countries" },
+  {
+    id: "villa",
+    title: "Villa Type Performance Reports",
+    type: "villas",
+    primary: "room",
+  },
+  {
+    id: "market",
+    title: "Market Performance Reports",
+    type: "markets",
+    primary: "country",
+  },
+  {
+    id: "country",
+    title: "Country Performance Reports",
+    type: "countries",
+    primary: "country",
+  },
   {
     id: "cancellation",
     title: "Cancellation Reports",

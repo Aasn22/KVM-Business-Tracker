@@ -21,6 +21,8 @@ import {
 import { formatMoney, formatNumber } from "./format";
 import { budgetYears, markets, months, type Entry } from "./model";
 import OperationalReports from "./OperationalReports";
+import PerformanceAnalysis from "./PerformanceAnalysis";
+import type { SourceKind, SourceDimension } from "./performanceSources";
 import type { OperationKind } from "./operational";
 import { quickReports, quickReportPeriod } from "./quickReports";
 import {
@@ -575,6 +577,12 @@ export default function ReportLibrary({
     [recent, setRecent] = useState<ReportSnapshot[]>([]),
     [exporting, setExporting] = useState(false);
   const [customOpen, setCustomOpen] = useState(false);
+  const [primaryOpen, setPrimaryOpen] = useState<{
+    kind: SourceKind;
+    dimension: SourceDimension;
+    byCode: boolean;
+    title: string;
+  } | null>(null);
   const [operational, setOperational] = useState<OperationKind | null>(null);
   const [inputNotice, setInputNotice] = useState<string | null>(null);
   const controller = useRef<AbortController | null>(null);
@@ -625,6 +633,40 @@ export default function ReportLibrary({
       }
     }
   }
+  if (primaryOpen)
+    return (
+      <section className="primary-report-page">
+        <button className="button outline" onClick={() => setPrimaryOpen(null)}>
+          Back to Reports Library
+        </button>
+        <h2>
+          {primaryOpen.title} · {year}
+        </h2>
+        <label className="primary-report-year">
+          Source year
+          <select
+            aria-label="Primary report year"
+            value={year}
+            disabled={!onYearChange}
+            onChange={(e) => onYearChange?.(Number(e.target.value))}
+          >
+            {budgetYears.map((y) => (
+              <option key={y}>{y}</option>
+            ))}
+          </select>
+        </label>
+        <p>
+          History, forecast, geographic market, Retail/Wholesale and room-type
+          analysis. Missing sources stay unavailable.
+        </p>
+        <PerformanceAnalysis
+          year={year}
+          initialKind={primaryOpen.kind}
+          initialDimension={primaryOpen.dimension}
+          initialByCode={primaryOpen.byCode}
+        />
+      </section>
+    );
   if (operational)
     return (
       <div className="report-library">
@@ -884,11 +926,42 @@ export default function ReportLibrary({
           {loading && (
             <p role="status">Loading saved data before generation…</p>
           )}
+          <section className="primary-report-entry">
+            <button
+              className="report-gold-button"
+              onClick={() =>
+                setPrimaryOpen({
+                  kind: "history",
+                  dimension: "country",
+                  byCode: false,
+                  title: "Primary Reservation Source Reports",
+                })
+              }
+            >
+              <FileChartColumn size={18} />
+              Primary Reservation Source Reports
+            </button>
+            <p>
+              Authoritative history/forecast analysis. Hotel, market, country,
+              villa, segment and business-pace shortcuts use primary sources.
+              Monthly/quarterly/yearly and custom budget reports still use
+              planning/legacy BOB, clearly separate from reported performance.
+            </p>
+          </section>
           <QuickReports
             group={customOpen ? group : "All"}
             loading={loading}
             onSelect={(id) => {
               const quick = quickReports.find((r) => r.id === id)!;
+              if (quick.primary) {
+                setPrimaryOpen({
+                  kind: quick.primaryKind ?? "history",
+                  dimension: quick.primary,
+                  byCode: quick.id === "country",
+                  title: quick.title,
+                });
+                return;
+              }
               if (quick.operational) {
                 setOperational(quick.operational);
                 return;

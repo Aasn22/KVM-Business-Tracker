@@ -49,6 +49,8 @@ import ReportLibrary from "./ReportLibrary";
 import { formatMoney, formatNumber, isMoneyMetric } from "./format";
 import ActivityLog from "./ActivityLog";
 import OperationalInput from "./OperationalInput";
+import PerformanceInput from "./PerformanceInput";
+import PerformanceAnalysis from "./PerformanceAnalysis";
 import { useAdminName } from "./AdminIdentity";
 import { recordActivity, recordPlatformVisit } from "./activity";
 import { useMenuIntro } from "./useMenuIntro";
@@ -1081,6 +1083,17 @@ export default function App({
             />
           )}
           {view === "insight" && <BusinessInsight />}
+          {!countryOnly && ["overview", "total"].includes(view) && (
+            <PerformanceAnalysis year={year} market={market} />
+          )}
+          {!countryOnly && ["overview", "total"].includes(view) && (
+            <div className="notice">
+              Budget planning / legacy workbook BOB below · Not the newly
+              uploaded reported-history or forecast source. Use Primary Source
+              Analysis above for authoritative dated performance. Budget figures
+              are never replaced by actuals.
+            </div>
+          )}
           {view === "total" && !countryOnly && (
             <TotalReview
               entries={entries}
@@ -1280,7 +1293,10 @@ export default function App({
             </>
           )}
           {localPin && view === "admin" && (
-            <OperationalInput onBusyChange={setBusy} />
+            <>
+              <PerformanceInput onBusy={setBusy} />
+              <OperationalInput onBusyChange={setBusy} />
+            </>
           )}
           {!publicDemo && view === "admin" && (
             <section className="panel admin-access">

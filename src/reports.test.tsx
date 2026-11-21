@@ -258,7 +258,7 @@ describe("executive saved-data reports", () => {
     for (const name of expected) expect(html).toContain(name);
   });
   it("discloses unavailable inputs and does not map segment, sales or cancellation to fabricated data", () => {
-    for (const id of ["segment", "sales"]) {
+    for (const id of ["sales"]) {
       const r = quickReports.find((q) => q.id === id)!;
       expect(r.type).toBeUndefined();
       expect(r.unavailable).toContain("not collected");
@@ -268,6 +268,9 @@ describe("executive saved-data reports", () => {
     );
     expect(quickReports.find((q) => q.id === "reservations")!.operational).toBe(
       "reservations",
+    );
+    expect(quickReports.find((q) => q.id === "segment")!.primary).toBe(
+      "market",
     );
     const pace = quickReports.find((q) => q.id === "pace")!;
     expect(pace.limitation).toContain("true pickup");

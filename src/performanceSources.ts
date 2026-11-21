@@ -1,4 +1,4 @@
-import { parseDate } from "./operational";
+import { parseDate } from "./operational.js";
 export const sourceKinds = ["history", "forecast"] as const;
 export const dimensions = ["market", "room", "country"] as const;
 export type SourceKind = (typeof sourceKinds)[number];

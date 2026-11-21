@@ -15,7 +15,14 @@ export async function fetchPerformance(
     `/api/performance?${new URLSearchParams({ kind, dimension, year: String(year) })}`,
     { cache: "no-store" },
   );
-  const body = await res.json();
+  let body;
+  try {
+    body = await res.json();
+  } catch {
+    throw Error(
+      "Primary source service unavailable. No values were loaded or published.",
+    );
+  }
   if (!res.ok) throw Error(body.message || "Performance source unavailable");
   if (!Array.isArray(body.rows)) throw Error("Invalid source response");
   return body.rows.map((r: Record<string, unknown>) => ({
@@ -29,7 +36,14 @@ export async function publishPerformance(data: PerformanceImport) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
-  const body = await res.json();
+  let body;
+  try {
+    body = await res.json();
+  } catch {
+    throw Error(
+      "Primary source service unavailable. No values were loaded or published.",
+    );
+  }
   if (!res.ok) throw Error(body.message || "Source was not published");
   window.dispatchEvent(new Event(performanceChanged));
 }

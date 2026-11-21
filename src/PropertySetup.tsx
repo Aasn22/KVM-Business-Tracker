@@ -4,6 +4,7 @@ import { useAdminName } from "./AdminIdentity";
 import { recordActivity } from "./activity";
 import { db } from "./api";
 import TeamDirectory from "./TeamDirectory";
+import PropertyTeam from "./PropertyTeam";
 import {
   defaultProperty,
   inventoryTotal,
@@ -416,120 +417,207 @@ export default function PropertySetup({
             </label>
           </div>
         </div>
-        <div className="section-heading">
-          <h2>Villa categories & inventory</h2>
-          {editing && (
-            <button
-              className="text-button"
-              onClick={() =>
-                update({
-                  ...draft,
-                  villaCategories: [
-                    ...draft.villaCategories,
-                    { name: "", units: 0 },
-                  ],
-                })
-              }
-            >
-              <Plus size={14} />
-              Add villa category
-            </button>
-          )}
-        </div>
-        <div className="table-scroll">
-          <table>
-            <thead>
-              <tr>
-                <th>Villa category</th>
-                <th>Code</th>
-                <th>Units</th>
-                {editing && <th>Remove</th>}
-              </tr>
-            </thead>
-            <tbody>
-              {data.villaCategories.map((c, i) => (
-                <tr key={i}>
-                  <th>
-                    {editing ? (
-                      <input
-                        aria-label={`Villa category ${i + 1}`}
-                        value={c.name}
-                        maxLength={150}
-                        onChange={(e) =>
-                          update({
-                            ...draft,
-                            villaCategories: draft.villaCategories.map(
-                              (v, j) =>
-                                j === i ? { ...v, name: e.target.value } : v,
-                            ),
-                          })
-                        }
-                      />
-                    ) : (
-                      c.name
-                    )}
-                  </th>
-                  <td>
-                    {editing ? (
-                      <input
-                        aria-label={`Villa code ${i + 1}`}
-                        value={c.code ?? ""}
-                        maxLength={10}
-                        onChange={(e) =>
-                          update({
-                            ...draft,
-                            villaCategories: draft.villaCategories.map(
-                              (v, j) =>
-                                j === i
-                                  ? { ...v, code: e.target.value.toUpperCase() }
-                                  : v,
-                            ),
-                          })
-                        }
-                      />
-                    ) : (
-                      c.code || "Not configured"
-                    )}
-                  </td>
-                  <td>
-                    {editing ? (
-                      <input
-                        type="number"
-                        aria-label={`Villa units ${i + 1}`}
-                        min={0}
-                        max={10000}
-                        step={1}
-                        value={Number.isNaN(c.units) ? "" : c.units}
-                        onChange={(e) =>
-                          update({
-                            ...draft,
-                            villaCategories: draft.villaCategories.map(
-                              (v, j) =>
-                                j === i
-                                  ? {
-                                      ...v,
-                                      units:
-                                        e.target.value === ""
-                                          ? NaN
-                                          : Number(e.target.value),
-                                    }
-                                  : v,
-                            ),
-                          })
-                        }
-                      />
-                    ) : (
-                      c.units
-                    )}
-                  </td>
+        <div className="property-mini-grid">
+          <section>
+            <div className="section-heading">
+              <h2>Villa categories & inventory</h2>
+              {editing && (
+                <button
+                  className="text-button"
+                  onClick={() =>
+                    update({
+                      ...draft,
+                      villaCategories: [
+                        ...draft.villaCategories,
+                        { name: "", units: 0 },
+                      ],
+                    })
+                  }
+                >
+                  <Plus size={14} />
+                  Add villa category
+                </button>
+              )}
+            </div>
+            <div className="table-scroll">
+              <table className="property-mini-table">
+                <thead>
+                  <tr>
+                    <th>Villa category</th>
+                    <th>Code</th>
+                    <th>Units</th>
+                    {editing && <th>Remove</th>}
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.villaCategories.map((c, i) => (
+                    <tr key={i}>
+                      <th>
+                        {editing ? (
+                          <input
+                            aria-label={`Villa category ${i + 1}`}
+                            value={c.name}
+                            maxLength={150}
+                            onChange={(e) =>
+                              update({
+                                ...draft,
+                                villaCategories: draft.villaCategories.map(
+                                  (v, j) =>
+                                    j === i
+                                      ? { ...v, name: e.target.value }
+                                      : v,
+                                ),
+                              })
+                            }
+                          />
+                        ) : (
+                          c.name
+                        )}
+                      </th>
+                      <td>
+                        {editing ? (
+                          <input
+                            aria-label={`Villa code ${i + 1}`}
+                            value={c.code ?? ""}
+                            maxLength={10}
+                            onChange={(e) =>
+                              update({
+                                ...draft,
+                                villaCategories: draft.villaCategories.map(
+                                  (v, j) =>
+                                    j === i
+                                      ? {
+                                          ...v,
+                                          code: e.target.value.toUpperCase(),
+                                        }
+                                      : v,
+                                ),
+                              })
+                            }
+                          />
+                        ) : (
+                          c.code || "Not configured"
+                        )}
+                      </td>
+                      <td>
+                        {editing ? (
+                          <input
+                            type="number"
+                            aria-label={`Villa units ${i + 1}`}
+                            min={0}
+                            max={10000}
+                            step={1}
+                            value={Number.isNaN(c.units) ? "" : c.units}
+                            onChange={(e) =>
+                              update({
+                                ...draft,
+                                villaCategories: draft.villaCategories.map(
+                                  (v, j) =>
+                                    j === i
+                                      ? {
+                                          ...v,
+                                          units:
+                                            e.target.value === ""
+                                              ? NaN
+                                              : Number(e.target.value),
+                                        }
+                                      : v,
+                                ),
+                              })
+                            }
+                          />
+                        ) : (
+                          c.units
+                        )}
+                      </td>
+                      {editing && (
+                        <td>
+                          <button
+                            aria-label={`Remove villa category ${i + 1}`}
+                            onClick={() =>
+                              update({
+                                ...draft,
+                                villaCategories: draft.villaCategories.filter(
+                                  (_, j) => j !== i,
+                                ),
+                              })
+                            }
+                          >
+                            <X size={15} />
+                          </button>
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+          <section>
+            <div className="section-heading">
+              <h2>Meal plans</h2>
+              {editing && (
+                <button
+                  className="text-button"
+                  onClick={() =>
+                    update({ ...draft, mealPlans: [...draft.mealPlans, ""] })
+                  }
+                >
+                  <Plus size={14} />
+                  Add meal plan
+                </button>
+              )}
+            </div>
+            <ul className="property-meals">
+              {data.mealPlans.map((p, i) => (
+                <li key={i}>
                   {editing && (
-                    <td>
+                    <input
+                      aria-label={`Meal plan code ${i + 1}`}
+                      value={draft.mealPlanCodes?.[p] ?? ""}
+                      maxLength={10}
+                      placeholder="Code"
+                      onChange={(e) =>
+                        update({
+                          ...draft,
+                          mealPlanCodes: {
+                            ...draft.mealPlanCodes,
+                            [p]: e.target.value.toUpperCase(),
+                          },
+                        })
+                      }
+                    />
+                  )}
+                  {editing ? (
+                    <>
+                      <input
+                        aria-label={`Meal plan ${i + 1}`}
+                        maxLength={150}
+                        value={p}
+                        onChange={(e) =>
+                          update({
+                            ...draft,
+                            mealPlanCodes: Object.fromEntries([
+                              ...Object.entries(
+                                draft.mealPlanCodes ?? {},
+                              ).filter(([key]) => key !== p),
+                              [
+                                e.target.value,
+                                draft.mealPlanCodes?.[p] ?? "NEW",
+                              ],
+                            ]),
+                            mealPlans: draft.mealPlans.map((v, j) =>
+                              j === i ? e.target.value : v,
+                            ),
+                          })
+                        }
+                      />
                       <button
-                        aria-label={`Remove villa category ${i + 1}`}
+                        aria-label={`Remove meal plan ${i + 1}`}
                         onClick={() =>
                           update({
                             ...draft,
-                            villaCategories: draft.villaCategories.filter(
+                            mealPlans: draft.mealPlans.filter(
                               (_, j) => j !== i,
                             ),
                           })
@@ -537,90 +625,22 @@ export default function PropertySetup({
                       >
                         <X size={15} />
                       </button>
-                    </td>
+                    </>
+                  ) : (
+                    <>
+                      {p}{" "}
+                      <strong>
+                        {data.mealPlanCodes?.[p] || "Not configured"}
+                      </strong>
+                    </>
                   )}
-                </tr>
+                </li>
               ))}
-            </tbody>
-          </table>
+            </ul>
+          </section>
         </div>
-        <div className="section-heading">
-          <h2>Meal plans</h2>
-          {editing && (
-            <button
-              className="text-button"
-              onClick={() =>
-                update({ ...draft, mealPlans: [...draft.mealPlans, ""] })
-              }
-            >
-              <Plus size={14} />
-              Add meal plan
-            </button>
-          )}
-        </div>
-        <ul className="property-meals">
-          {data.mealPlans.map((p, i) => (
-            <li key={i}>
-              {editing && (
-                <input
-                  aria-label={`Meal plan code ${i + 1}`}
-                  value={draft.mealPlanCodes?.[p] ?? ""}
-                  maxLength={10}
-                  placeholder="Code"
-                  onChange={(e) =>
-                    update({
-                      ...draft,
-                      mealPlanCodes: {
-                        ...draft.mealPlanCodes,
-                        [p]: e.target.value.toUpperCase(),
-                      },
-                    })
-                  }
-                />
-              )}
-              {editing ? (
-                <>
-                  <input
-                    aria-label={`Meal plan ${i + 1}`}
-                    maxLength={150}
-                    value={p}
-                    onChange={(e) =>
-                      update({
-                        ...draft,
-                        mealPlanCodes: Object.fromEntries([
-                          ...Object.entries(draft.mealPlanCodes ?? {}).filter(
-                            ([key]) => key !== p,
-                          ),
-                          [e.target.value, draft.mealPlanCodes?.[p] ?? "NEW"],
-                        ]),
-                        mealPlans: draft.mealPlans.map((v, j) =>
-                          j === i ? e.target.value : v,
-                        ),
-                      })
-                    }
-                  />
-                  <button
-                    aria-label={`Remove meal plan ${i + 1}`}
-                    onClick={() =>
-                      update({
-                        ...draft,
-                        mealPlans: draft.mealPlans.filter((_, j) => j !== i),
-                      })
-                    }
-                  >
-                    <X size={15} />
-                  </button>
-                </>
-              ) : (
-                <>
-                  {p}{" "}
-                  <strong>{data.mealPlanCodes?.[p] || "Not configured"}</strong>
-                </>
-              )}
-            </li>
-          ))}
-        </ul>
       </fieldset>
+      {localOnly && <PropertyTeam />}
       {!localOnly && (
         <TeamDirectory
           demo={demo}

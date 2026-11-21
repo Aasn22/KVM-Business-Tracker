@@ -4697,3 +4697,87 @@ fieldset {
 .production-bar meter::-moz-meter-bar {
   background: #c5a46d;
 }
+/* Compact property reference tables, not full-page spacious report tables. */
+.property-mini-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+  margin-top: 20px;
+}
+.property-mini-grid > section {
+  min-width: 0;
+}
+.property-setup .property-mini-grid .section-heading {
+  margin-top: 0;
+  padding: 0 0 10px;
+}
+.property-setup .property-mini-grid h2,
+.property-team h2 {
+  font-size: 14px;
+}
+.property-setup .property-mini-table {
+  width: 100%;
+  font-size: 11px;
+}
+.property-setup .property-mini-table th,
+.property-setup .property-mini-table td {
+  padding: 6px 8px;
+  height: auto;
+  line-height: 1.4;
+  vertical-align: middle;
+}
+.property-mini-table th:first-child,
+.property-mini-table td:first-child {
+  white-space: normal;
+  min-width: 110px;
+}
+.property-setup .property-mini-table input {
+  padding: 5px 6px;
+  font-size: 12px;
+}
+.property-setup .property-mini-table td input[type="number"] {
+  width: 62px;
+}
+.property-mini-grid .property-meals {
+  margin: 0;
+  gap: 3px;
+}
+.property-mini-grid .property-meals li {
+  padding: 7px 8px;
+  font-size: 11px;
+  gap: 6px;
+  min-height: 0;
+  border-radius: 3px;
+}
+.property-mini-grid .property-meals input {
+  padding: 5px 6px;
+  font-size: 12px;
+}
+.property-team {
+  margin-top: 20px;
+  border-top: 1px solid #dce5da;
+  padding-top: 14px;
+}
+.property-team .mini-table-note {
+  font-size: 11px;
+  line-height: 1.5;
+  color: #637b70;
+  margin: 8px 0;
+}
+.property-team .roster-import {
+  font-size: 11px;
+  margin: 12px 0;
+}
+.property-setup .team-directory table th,
+.property-setup .team-directory table td {
+  padding: 6px 8px;
+  font-size: 11px;
+  line-height: 1.4;
+}
+@media (max-width: 900px) {
+  .property-mini-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+  }
+}

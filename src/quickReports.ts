@@ -67,18 +67,21 @@ export const quickReports: {
   },
   {
     id: "monthly",
+    primary: "country",
     title: "Monthly Reports",
     type: "monthly",
     periodMode: "month",
   },
   {
     id: "quarterly",
+    primary: "country",
     title: "Quarterly Reports",
     type: "executive",
     periodMode: "quarter",
   },
   {
     id: "yearly",
+    primary: "country",
     title: "Yearly Reports",
     type: "executive",
     periodMode: "year",

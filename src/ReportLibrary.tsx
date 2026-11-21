@@ -582,6 +582,7 @@ export default function ReportLibrary({
     dimension: SourceDimension;
     byCode: boolean;
     title: string;
+    period: string;
   } | null>(null);
   const [operational, setOperational] = useState<OperationKind | null>(null);
   const [inputNotice, setInputNotice] = useState<string | null>(null);
@@ -664,6 +665,7 @@ export default function ReportLibrary({
           initialKind={primaryOpen.kind}
           initialDimension={primaryOpen.dimension}
           initialByCode={primaryOpen.byCode}
+          initialPeriod={primaryOpen.period}
         />
       </section>
     );
@@ -935,6 +937,7 @@ export default function ReportLibrary({
                   dimension: "country",
                   byCode: false,
                   title: "Primary Reservation Source Reports",
+                  period: "year",
                 })
               }
             >
@@ -944,8 +947,10 @@ export default function ReportLibrary({
             <p>
               Authoritative history/forecast analysis. Hotel, market, country,
               villa, segment and business-pace shortcuts use primary sources.
-              Monthly/quarterly/yearly and custom budget reports still use
-              planning/legacy BOB, clearly separate from reported performance.
+              Monthly/quarterly/yearly shortcuts also use primary stay-date
+              sources. Custom budget and meal-plan reports remain
+              planning/legacy inputs, clearly separate from reported
+              performance.
             </p>
           </section>
           <QuickReports
@@ -959,6 +964,7 @@ export default function ReportLibrary({
                   dimension: quick.primary,
                   byCode: quick.id === "country",
                   title: quick.title,
+                  period: quickReportPeriod(quick.periodMode, period),
                 });
                 return;
               }

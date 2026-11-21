@@ -9,19 +9,22 @@ import {
   type SourceDimension,
 } from "./performanceSources";
 import { formatMoney, formatNumber } from "./format";
-import { markets } from "./model";
+import { markets, months } from "./model";
+import { periodMonths } from "./totals";
 export default function PerformanceAnalysis({
   year,
   market = null,
   initialKind = "history",
   initialDimension = "country",
   initialByCode = false,
+  initialPeriod = "year",
 }: {
   year: number;
   market?: string | null;
   initialKind?: SourceKind;
   initialDimension?: SourceDimension;
   initialByCode?: boolean;
+  initialPeriod?: string;
 }) {
   const [kind, setKind] = useState<SourceKind>(initialKind),
     [dimension, setDimension] = useState<SourceDimension>(initialDimension),
@@ -30,6 +33,7 @@ export default function PerformanceAnalysis({
     [error, setError] = useState("");
   const [sourceRunDates, setSourceRunDates] = useState<string[]>([]);
   const [byCode, setByCode] = useState(initialByCode);
+  const [period, setPeriod] = useState(initialPeriod);
   const d = market ? "country" : dimension;
   useEffect(() => {
     let active = true;
@@ -62,9 +66,13 @@ export default function PerformanceAnalysis({
       window.removeEventListener(performanceChanged, load);
     };
   }, [kind, d, year]);
+  const selectedMonths = periodMonths(period);
+  const periodRows = rows.filter((r) =>
+    selectedMonths.includes(Number(r.date.slice(5, 7))),
+  );
   const filtered = market
-    ? rows.filter((r) => geographicMarket(r.code) === market)
-    : rows;
+    ? periodRows.filter((r) => geographicMarket(r.code) === market)
+    : periodRows;
   const summary = summarizePerformance(filtered);
   const grouped = new Map<string, PerformanceRow[]>();
   for (const r of filtered) {
@@ -96,6 +104,26 @@ export default function PerformanceAnalysis({
       </header>
       <div className="report-filters">
         <label>
+          Stay period
+          <select
+            aria-label="Primary stay period"
+            value={period}
+            onChange={(e) => setPeriod(e.target.value)}
+          >
+            <option value="year">Full year (available dates)</option>
+            {[1, 2, 3, 4].map((q) => (
+              <option key={q} value={`q${q}`}>
+                Quarter {q}
+              </option>
+            ))}
+            {months.map((m, i) => (
+              <option key={m} value={i + 1}>
+                {m}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
           Performance basis
           <select
             aria-label="Performance basis"
@@ -103,7 +131,9 @@ export default function PerformanceAnalysis({
             onChange={(e) => setKind(e.target.value as SourceKind)}
           >
             <option value="history">History · reported performance</option>
-            <option value="forecast">Forecast · on-books projection</option>
+            <option value="forecast">
+              Forecast · on-books projection (not pickup)
+            </option>
           </select>
         </label>
         {!market && (

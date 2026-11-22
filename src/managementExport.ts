@@ -10,6 +10,9 @@ export async function exportManagementReport(
     const sheet = workbook.addWorksheet(table.name);
     table.rows.forEach((row) => sheet.addRow(row));
     sheet.eachRow((r) => {
+      r.eachCell((c) => {
+        if (typeof c.value === "number") c.numFmt = "#,##0;(#,##0);0";
+      });
       // Only commercial revenue/ADR rows, never independent categories or counts.
       if (
         isMoneyMetric(String(r.getCell(2).value)) &&

@@ -49,6 +49,13 @@ export default function MarketPage({
       rev ? money(rev.bob - rev.budget) : "—",
       "BOB Minus Budget",
     ],
+    [
+      "Room Nights",
+      nights ? formatNumber(nights.bob) : "—",
+      nights
+        ? `Budget ${formatNumber(nights.budget)} · BOB ${formatNumber(nights.bob)}`
+        : "Budget / BOB unavailable",
+    ],
   ];
   return (
     <section className="market-page" aria-label={`${name} market performance`}>

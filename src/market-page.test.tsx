@@ -5,7 +5,7 @@ import { blank, markets, type Entry } from "./model";
 describe("shared market sample layout", () => {
   it("renders category/month selectors and four independent weekly cards without wide tables", () => {
     const data = blank("asia");
-    data.commercial[0].targets = [10, 20, 30, 40];
+    data.commercial[0].targets = [10.25, 20, 30, 40];
     data.commercial[1].targets = [1000, 2000, 3000, 4000];
     const html = renderToStaticMarkup(
       <MarketPage
@@ -28,7 +28,9 @@ describe("shared market sample layout", () => {
     expect(html).toContain("Villa Types");
     expect(html).toContain("Action Plans");
     expect(html).toContain("Target ADR");
-    expect(html).toContain("$100");
+    expect(html).toContain("$98");
+    expect(html).not.toContain("10.25");
+    expect(html).toContain("Room Nights</h3>");
     expect(html).toContain("WEEK 4 / 5");
     expect(html).not.toContain("<table");
     expect(html).toContain('aria-pressed="true"');

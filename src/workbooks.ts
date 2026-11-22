@@ -133,6 +133,12 @@ export async function exportWorkbook(entries: Entry[], name: string) {
     sheet.addRow(Object.keys(rows[0]));
     rows.forEach((r) => sheet.addRow(Object.values(r)));
   }
+  sheet.eachRow((r, i) => {
+    if (i > 1)
+      r.eachCell((c) => {
+        if (typeof c.value === "number") c.numFmt = "#,##0;(#,##0);0";
+      });
+  });
   for (const column of [4, 5, 6, 10, 11])
     sheet.getColumn(column).numFmt = dollarExcelFormat;
   const detail = workbook.addWorksheet("Breakdowns");
@@ -170,6 +176,10 @@ export async function exportWorkbook(entries: Entry[], name: string) {
     ),
   );
   detail.eachRow((r, index) => {
+    if (index > 1)
+      r.eachCell((c) => {
+        if (typeof c.value === "number") c.numFmt = "#,##0;(#,##0);0";
+      });
     if (
       index > 1 &&
       r.getCell(4).value === "commercial" &&

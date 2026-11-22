@@ -1,6 +1,6 @@
 // Display only: source values retain their full precision for calculations/exports.
 export const dollarExcelFormat = '"$"#,##0;("$"#,##0);"$"0';
-export function formatNumber(value: number | null, decimals = 2): string {
+export function formatNumber(value: number | null, decimals = 0): string {
   return value === null || !Number.isFinite(value)
     ? "—"
     : new Intl.NumberFormat("en-US", {

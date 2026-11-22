@@ -318,6 +318,9 @@ export async function exportVisualReport(report: ReportSnapshot) {
     t.rows.forEach((r) => sheet.addRow(r));
     sheet.eachRow((r, i) => {
       if (i < 2) return;
+      r.eachCell((cell) => {
+        if (typeof cell.value === "number") cell.numFmt = "#,##0;(#,##0);0";
+      });
       const moneyColumns = ["Markets", "Monthly"].includes(t.name)
         ? [2, 3, 4, 8, 9]
         : t.name === "Weekly snapshots"

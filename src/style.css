@@ -5222,3 +5222,248 @@ fieldset {
     max-width: 100%;
   }
 }
+/* Mini market cards. Touch targets remain usable while metric rows are dense. */
+.market-summary {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  margin: 8px 0 12px;
+}
+.market-summary h3 {
+  font-size: 12px;
+  padding: 6px 5px 3px;
+}
+.market-summary strong {
+  font-size: clamp(15px, 1.4vw, 21px);
+  padding: 2px 5px;
+}
+.market-summary span {
+  font-size: 10px;
+  padding: 3px 5px 6px;
+  line-height: 1.35;
+}
+.market-weeks {
+  gap: 10px;
+}
+.market-weeks h3 {
+  font-size: 12px;
+  padding: 8px 5px;
+}
+.market-weeks article > div {
+  padding: 4px 5px;
+}
+.market-weeks strong {
+  font-size: 13px;
+  line-height: 1.4;
+}
+.market-weeks span {
+  font-size: 10px;
+  line-height: 1.4;
+}
+.market-breakdowns h3 {
+  padding: 7px;
+  font-size: 12px;
+}
+.market-breakdowns dl {
+  gap: 5px;
+  margin: 6px;
+}
+.market-breakdowns dd {
+  font-size: 12px;
+  margin: 4px 0;
+}
+.market-category-weeks {
+  padding: 7px;
+  gap: 5px;
+}
+.market-category-weeks > div {
+  padding: 5px;
+}
+.market-category-weeks h4,
+.market-category-weeks p {
+  font-size: 10px;
+  line-height: 1.4;
+}
+.market-page .market-hint {
+  margin: 5px 0;
+  font-size: 10px;
+}
+@media screen and (max-width: 1024px) {
+  .market-summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media screen and (max-width: 600px) {
+  .market-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .market-summary article:last-child {
+    grid-column: 1/-1;
+  }
+  .market-summary strong {
+    font-size: 17px;
+  }
+  .market-summary h3 {
+    font-size: 11px;
+  }
+  .market-summary span {
+    font-size: 10px;
+  }
+  .market-weeks {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
+  }
+  .market-weeks strong {
+    font-size: 12px;
+  }
+  .market-weeks span {
+    font-size: 9px;
+  }
+  .market-weeks article > div {
+    padding: 5px 3px;
+  }
+}
+/* A single admin layout boundary overrides old page-specific flex/min-width rules. */
+.administrator-layout .main > main {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+}
+.administrator-layout .page-heading {
+  align-items: flex-start;
+  gap: 12px;
+}
+.administrator-layout .page-heading > div {
+  min-width: 0;
+  max-width: 100%;
+}
+.administrator-layout .property-setup {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+.administrator-layout .operation-input-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.administrator-layout .operation-input label {
+  min-width: 0;
+  max-width: 100%;
+}
+.administrator-layout .roster-import {
+  min-width: 0;
+  max-width: 100%;
+}
+.administrator-layout .roster-import input {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+@media screen and (max-width: 1024px) {
+  .administrator-layout .operation-input-grid,
+  .administrator-layout .property-details-grid,
+  .administrator-layout .property-mini-grid,
+  .administrator-layout .activity-panels {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .administrator-layout .property-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .administrator-layout .editor-actions {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+  }
+  .administrator-layout .editor-actions .button {
+    flex: 1 1 140px;
+  }
+  .administrator-layout .property-setup-heading {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .administrator-layout .property-setup fieldset {
+    min-width: 0;
+    width: 100%;
+  }
+}
+@media screen and (max-width: 600px) {
+  .administrator-layout .main > main {
+    padding: 10px 8px;
+  }
+  .administrator-layout .page-heading {
+    display: block;
+    margin-bottom: 14px;
+  }
+  .administrator-layout .heading-actions {
+    width: 100%;
+    margin: 10px 0 0;
+    justify-content: flex-start;
+  }
+  .administrator-layout .property-fields {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+  .administrator-layout .property-fields label {
+    min-width: 0;
+    width: 100%;
+  }
+  .administrator-layout .property-fields strong {
+    flex-wrap: wrap;
+    overflow-wrap: anywhere;
+  }
+  .administrator-layout .property-meals li {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .administrator-layout .property-meals input {
+    width: 100%;
+    grid-column: 1/-1;
+  }
+  .administrator-layout .section-heading {
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .administrator-layout .property-setup .notice {
+    padding: 10px;
+    font-size: 11px;
+    line-height: 1.5;
+  }
+  .administrator-layout .property-team .property-mini-table {
+    min-width: 0;
+    table-layout: fixed;
+  }
+  .administrator-layout .property-team .property-mini-table th,
+  .administrator-layout .property-team .property-mini-table td {
+    padding: 5px 3px;
+    font-size: 9px;
+    min-width: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .administrator-layout .property-team .property-mini-table th:first-child,
+  .administrator-layout .property-team .property-mini-table td:first-child {
+    min-width: 0;
+  }
+  .administrator-layout .property-team .property-mini-table th:nth-child(2) {
+    width: 25%;
+  }
+  .administrator-layout .operation-input .editor-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .administrator-layout .operation-input .button {
+    width: 100%;
+    margin: 6px 0;
+  }
+  .administrator-layout .activity-panel {
+    padding: 12px;
+  }
+  .admin-pin-box {
+    padding: 20px 16px;
+    border-radius: 12px;
+  }
+  .admin-pin-logo {
+    margin-bottom: 20px;
+    width: 80px;
+    height: 80px;
+  }
+}

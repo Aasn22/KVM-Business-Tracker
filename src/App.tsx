@@ -63,7 +63,7 @@ import SignInPage from "./SignInPage";
 import { loadPublicBudgets } from "./publicBudgets";
 import { formatUpdate, lastSavedUpdate } from "./updateStatus";
 const money = formatMoney;
-const num = (n: number) => formatNumber(n, 1);
+const num = (n: number) => formatNumber(n, 0);
 const compact = formatMoney;
 type View =
   | "overview"
@@ -748,7 +748,7 @@ export default function App({
   }
   return (
     <div
-      className={`app rail-layout ${view === "overview" && market ? "market-page-layout" : ""}`}
+      className={`app rail-layout ${view === "overview" && market ? "market-page-layout" : ""} ${["admin", "property", "activity"].includes(view) ? "administrator-layout" : ""}`}
       ref={appRef}
     >
       {renderNavigation(false)}

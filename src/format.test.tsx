@@ -25,6 +25,8 @@ describe("consistent currency and compact numbers", () => {
     expect(formatCompact(1200)).toBe("1.2K");
     expect(formatCompact(690000000)).toBe("690M");
     expect(formatNumber(1234)).toBe("1,234");
+    expect(formatNumber(150.25)).toBe("150");
+    expect(formatMoney(1013.78)).toBe("$1,014");
   });
   it("uses dollar amounts in market and management views while keeping counts distinct", () => {
     vi.stubGlobal("window", { location: { pathname: "/" } });

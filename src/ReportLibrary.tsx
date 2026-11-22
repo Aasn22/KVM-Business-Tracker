@@ -110,9 +110,9 @@ const colors = [
   "#a5b77d",
 ];
 const fmt = (v: number | null, currency = false) =>
-  currency ? formatMoney(v) : formatNumber(v, 1);
+  currency ? formatMoney(v) : formatNumber(v, 0);
 const detailFmt = (v: number | null, currency = false) =>
-  currency ? formatMoney(v) : formatNumber(v, 2);
+  currency ? formatMoney(v) : formatNumber(v, 0);
 const pct = (r: ReportMetric) =>
   r.budget && r.bob !== null
     ? `${((r.bob / r.budget) * 100).toFixed(1)}%`

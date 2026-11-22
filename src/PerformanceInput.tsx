@@ -26,13 +26,16 @@ export default function PerformanceInput() {
       <h2>Reservation Production Reports</h2>
       <section className="panel operation-input">
         <h3>
-          <Upload size={16} /> Production spreadsheet · History
+          <Upload size={16} /> Production spreadsheet · All reservation statuses
         </h3>
         <p>
           Upload XLSX with the supplied reservation-level columns.
           Arrival/departure dates control daily stay analysis; dates are not
-          relabeled. Forecast imports remain unavailable until a forecast sample
-          is supplied.
+          relabeled. All reservation statuses and new codes are retained,
+          including NO SHOW. Booked/cancelled dates are kept separately for
+          event reports. Each upload must be a complete export for its
+          arrival-date range; that range replaces older records, while other
+          dates/years are preserved.
         </p>
         <label>
           Select production spreadsheet
@@ -73,7 +76,19 @@ export default function PerformanceInput() {
         {message && <p role="status">{message}</p>}
         {data && (
           <>
-            <h4>Review analytical snapshot</h4>
+            <h4>Review import</h4>
+            <p>
+              Detected statuses:{" "}
+              {Object.entries(data.statuses ?? {})
+                .map(([s, n]) => `${s}: ${formatNumber(n)}`)
+                .join(" · ")}
+            </p>
+            <p>
+              Arrival replacement range: {data.coverage?.[0]?.from} through{" "}
+              {data.coverage?.[0]?.to}. Upload the complete range; without a
+              unique reservation ID partial overlapping files cannot safely be
+              merged.
+            </p>
             <p>
               {formatNumber(data.rows)} records · {data.checkedOut} checked out
               · {data.cancelled} cancelled · {data.missingRevenue} unknown
@@ -94,10 +109,12 @@ export default function PerformanceInput() {
               ))}
             </ul>
             <p>
-              Only sanitized aggregates will be sent. No agent names, guest
-              names or booking references are retained. Publishing REPLACES the
-              entire current production snapshot; it does not merge quarters.
-              Upload a complete cumulative file when adding periods.
+              Reservation dates, status, codes, agent/company and financial
+              figures are retained for the requested public reports. Guest
+              names/contact information are excluded. Publishing makes these
+              approved fields available to public visitors. New codes are
+              discoverable immediately but not guessed into Retail/Wholesale or
+              a geographic market.
             </p>
             <button
               className="button primary"
@@ -105,7 +122,7 @@ export default function PerformanceInput() {
               onClick={async () => {
                 if (
                   !window.confirm(
-                    "Replace the entire shared production snapshot with this reviewed file? Existing budgets are not changed.",
+                    `Publish ${data.rows} records and replace only arrivals from ${data.coverage?.[0]?.from} through ${data.coverage?.[0]?.to}? All other arrival dates/years and budgets are preserved. Confirm this file is a COMPLETE export for that range.`,
                   )
                 )
                   return;
@@ -122,7 +139,7 @@ export default function PerformanceInput() {
                       data.to,
                   );
                   setMessage(
-                    "Shared production snapshot saved. Related views refresh within 60 seconds.",
+                    "Production records saved and read back from the shared database. Related views refresh within 60 seconds.",
                   );
                   setData(null);
                 } catch (e) {
@@ -132,7 +149,7 @@ export default function PerformanceInput() {
                 }
               }}
             >
-              Publish / Replace Production Snapshot
+              Save Production Records
             </button>
             <button
               className="button outline"
@@ -144,9 +161,10 @@ export default function PerformanceInput() {
           </>
         )}
         <p>
-          The Q1 2026 source is already published on the website as an
-          analytical snapshot. Shared saving requires its database migration; a
-          failed save never updates public figures.
+          The published Q1 baseline is available until shared imports are
+          activated. Shared saving requires the production reservation import
+          migration; only a verified database save updates the reports for all
+          devices.
         </p>
       </section>
     </section>

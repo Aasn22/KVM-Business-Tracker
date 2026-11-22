@@ -48,6 +48,7 @@ const quickIcons = [
   BarChart3,
   Globe2,
   CircleX,
+  CircleX,
   Hotel,
   CalendarDays,
   PieChart,
@@ -80,7 +81,7 @@ export function QuickReports({
               : type?.group === group;
           })
           .map((r) => {
-            const Icon = quickIcons[quickReports.indexOf(r)];
+            const Icon = quickIcons[quickReports.indexOf(r)] ?? FileChartColumn;
             return (
               <button
                 className="quick-report-button"
@@ -583,9 +584,11 @@ export default function ReportLibrary({
   const [productionPeriod, setProductionPeriod] = useState("q1");
   const [productionOpen, setProductionOpen] =
     useState<ProductionReportMode | null>(null);
-  const [productionStatus, setProductionStatus] = useState<
-    "CHECKED OUT" | "CANCELLED"
-  >("CHECKED OUT");
+  const [productionStatus, setProductionStatus] =
+    useState<string>("CHECKED OUT");
+  const [productionBasis, setProductionBasis] = useState<
+    "stay" | "booking" | "cancellation"
+  >("stay");
   const [productionTitle, setProductionTitle] = useState("");
   const [basis, setBasis] = useState<"production" | "budget">("production");
   const [reportYear, setReportYear] = useState(2026);
@@ -609,6 +612,7 @@ export default function ReportLibrary({
     if (stage !== null || loading) return;
     if (basis === "production") {
       setProductionStatus("CHECKED OUT");
+      setProductionBasis("stay");
       setProductionTitle(
         quick?.title ||
           (custom && title.trim()) ||
@@ -668,6 +672,7 @@ export default function ReportLibrary({
           reportTitle={productionTitle}
           snapshotMode
           initialStatus={productionStatus}
+          initialBasis={productionBasis}
         />
       </section>
     );
@@ -971,7 +976,20 @@ export default function ReportLibrary({
               const quick = quickReports.find((r) => r.id === id)!;
               if (basis === "production" && !quick.unavailable) {
                 setProductionStatus(
-                  quick.id === "cancellation" ? "CANCELLED" : "CHECKED OUT",
+                  quick.id === "cancellation"
+                    ? "CANCELLED"
+                    : quick.id === "noshow"
+                      ? "NO SHOW"
+                      : ["pace", "reservations"].includes(quick.id)
+                        ? "ALL"
+                        : "CHECKED OUT",
+                );
+                setProductionBasis(
+                  quick.id === "cancellation"
+                    ? "cancellation"
+                    : ["pace", "reservations"].includes(quick.id)
+                      ? "booking"
+                      : "stay",
                 );
                 setProductionTitle(quick.title);
                 setProductionPeriod(

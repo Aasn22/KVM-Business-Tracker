@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
 import { loadProduction, productionChanged } from "./productionClient";
-import { productionSummary, type ProductionData } from "./production";
+import {
+  productionSummary,
+  productionRowsForBasis,
+  type ProductionBasis,
+  type ProductionData,
+} from "./production";
 import {
   defaultProperty,
   propertyStorageKey,
@@ -22,13 +27,15 @@ export default function ProductionAnalysis({
   reportTitle,
   snapshotMode = false,
   initialStatus = "CHECKED OUT",
+  initialBasis = "stay",
 }: {
   year?: number;
   market?: string | null;
   initialDimension?: ProductionReportMode;
   reportTitle?: string;
   snapshotMode?: boolean;
-  initialStatus?: "CHECKED OUT" | "CANCELLED";
+  initialStatus?: string;
+  initialBasis?: ProductionBasis;
   compactMoney?: boolean;
   initialPeriod?: string;
 }) {
@@ -40,6 +47,11 @@ export default function ProductionAnalysis({
     [to, setTo] = useState(`${year}-03-31`),
     [dimension, setDimension] = useState(initialDimension),
     [status, setStatus] = useState(initialStatus);
+  const [dateBasis, setDateBasis] = useState<ProductionBasis>(
+    initialDimension === "pace" ? "booking" : initialBasis,
+  );
+  const [sourceFilter, setSourceFilter] = useState("");
+  const [agentFilter, setAgentFilter] = useState("");
   const [countryFilter, setCountryFilter] = useState(""),
     [roomFilter, setRoomFilter] = useState(""),
     [mealFilter, setMealFilter] = useState("");
@@ -84,49 +96,68 @@ export default function ProductionAnalysis({
       window.removeEventListener(productionChanged, load);
     };
   }, []);
-  const baseSummary = data
-    ? productionSummary(
-        {
-          ...data,
-          days: data.days.filter(
-            (r) =>
-              (!countryFilter || r.country === countryFilter) &&
-              (!roomFilter || r.room === roomFilter) &&
-              (!mealFilter || r.meal === mealFilter),
-          ),
-        },
-        from,
-        to,
-        market,
-        ["pace", "market", "monthly"].includes(dimension)
-          ? "country"
-          : (dimension as "country" | "room" | "meal" | "segment"),
-        status,
-      )
-    : null;
+  const eventData = data ? productionRowsForBasis(data, dateBasis) : null;
+  const analysisData = data ? { ...data, days: eventData!.rows } : null;
+  const legacyUnavailable =
+    !!data &&
+    !data.reservations &&
+    (dateBasis !== "stay" ||
+      status === "NO SHOW" ||
+      ["source", "agent", "marketCode"].includes(dimension));
+  const baseSummary =
+    analysisData && !legacyUnavailable
+      ? productionSummary(
+          {
+            ...analysisData,
+            days: analysisData.days.filter(
+              (r) =>
+                (!countryFilter || r.country === countryFilter) &&
+                (!roomFilter || r.room === roomFilter) &&
+                (!mealFilter || r.meal === mealFilter) &&
+                (!sourceFilter || r.source === sourceFilter) &&
+                (!agentFilter || r.agent === agentFilter),
+            ),
+          },
+          from,
+          to,
+          market,
+          ["pace", "market", "monthly"].includes(dimension)
+            ? "country"
+            : (dimension as
+                | "country"
+                | "room"
+                | "meal"
+                | "segment"
+                | "source"
+                | "agent"
+                | "marketCode"),
+          status,
+        )
+      : null;
   const summary = (() => {
-    if (!data || !baseSummary) return null;
-    if (!["market", "monthly"].includes(dimension)) return baseSummary;
+    if (!analysisData || !baseSummary) return null;
+    if (!["market", "monthly", "pace"].includes(dimension)) return baseSummary;
     const groups = new Map<
       string,
       { code: string; nights: number; revenue: number; arrivals: number }
     >();
-    for (const r of data.days) {
+    for (const r of analysisData.days) {
       if (
         r.date < from ||
         r.date > to ||
-        r.status !== status ||
+        (status !== "ALL" && r.status !== status) ||
         (market && geographicMarket(r.country) !== market) ||
         (countryFilter && r.country !== countryFilter) ||
         (roomFilter && r.room !== roomFilter) ||
-        (mealFilter && r.meal !== mealFilter)
+        (mealFilter && r.meal !== mealFilter) ||
+        (sourceFilter && r.source !== sourceFilter) ||
+        (agentFilter && r.agent !== agentFilter)
       )
         continue;
-      const code =
-        dimension === "monthly"
-          ? r.date.slice(0, 7)
-          : (markets.find((m) => m.id === geographicMarket(r.country))?.name ??
-            "Unmapped country");
+      const code = ["monthly", "pace"].includes(dimension)
+        ? r.date.slice(0, 7)
+        : (markets.find((m) => m.id === geographicMarket(r.country))?.name ??
+          "Unmapped country");
       const g = groups.get(code) ?? {
         code,
         nights: 0,
@@ -141,7 +172,7 @@ export default function ProductionAnalysis({
     return {
       ...baseSummary,
       groups: [...groups.values()].sort((a, b) =>
-        dimension === "monthly"
+        ["monthly", "pace"].includes(dimension)
           ? a.code.localeCompare(b.code)
           : b.revenue - a.revenue,
       ),
@@ -162,37 +193,36 @@ export default function ProductionAnalysis({
         : code;
   const csv = () => {
     if (!summary) return;
-    const rows =
-      dimension === "pace"
-        ? [
-            [
-              "Confirmation date (whole surviving checked-out cohort)",
-              "Bookings",
-              "Stay value",
-            ],
-            ...data!.pace.map((r) => [r.date, r.bookings, r.revenue]),
-          ]
-        : [
-            [
-              "Code",
-              "Description",
-              "Reservation stay-nights",
-              "Allocated stay revenue",
-              "Arrivals",
-            ],
-            ...summary.groups.map((r) => [
-              r.code,
-              label(r.code),
-              r.nights,
-              r.revenue,
-              r.arrivals,
-            ]),
-          ];
+    const rows = [
+      ["Date basis", dateBasis],
+      [
+        "Code / grouping",
+        "Description",
+        "Stay-nights (event basis: whole stays)",
+        "Value (stay basis: allocated)",
+        "Reservation events",
+      ],
+      ...summary.groups.map((r) => [
+        r.code,
+        label(r.code),
+        r.nights,
+        r.revenue,
+        r.arrivals,
+      ]),
+    ];
     const blob = new Blob(
       [
         rows
           .map((r) =>
-            r.map((v) => '"' + String(v).replaceAll('"', '""') + '"').join(","),
+            r
+              .map((v) => {
+                const text =
+                  typeof v === "string" && /^[=+@\-\t\r]/.test(v)
+                    ? "'" + v
+                    : String(v);
+                return '"' + text.replaceAll('"', '""') + '"';
+              })
+              .join(","),
           )
           .join("\r\n"),
       ],
@@ -220,9 +250,37 @@ export default function ProductionAnalysis({
         {source || "Loading uploaded figures and preparing report…"}
       </p>
       {error && <p role="alert">{error}</p>}
+      <p>
+        {dateBasis === "stay"
+          ? "Stay-date reporting allocates revenue over each night."
+          : "Event-date reporting uses the full reservation value and stay-nights on its booking/cancellation date; these are not nights consumed on that date."}{" "}
+        Statuses other than CHECKED OUT are not counted as realized stay
+        revenue. Arrival-cohort coverage may be incomplete.
+      </p>
+      {legacyUnavailable && (
+        <p role="status">
+          This legacy baseline does not include these event dates, source/agent
+          details or No Show records. Import the original production spreadsheet
+          to populate this report; no zero total is inferred.
+        </p>
+      )}
       <div className="report-filters">
         <label>
-          Stay From
+          Date basis
+          <select
+            aria-label="Production date basis"
+            value={dateBasis}
+            onChange={(e) => setDateBasis(e.target.value as ProductionBasis)}
+          >
+            <option value="stay">
+              Stay dates (arrival included; departure excluded)
+            </option>
+            <option value="booking">Booking / confirmation date</option>
+            <option value="cancellation">Cancellation event date</option>
+          </select>
+        </label>
+        <label>
+          From
           <DatePicker
             label="Production analysis from"
             value={from}
@@ -230,7 +288,7 @@ export default function ProductionAnalysis({
           />
         </label>
         <label>
-          Stay To
+          To
           <DatePicker
             label="Production analysis to"
             value={to}
@@ -250,7 +308,10 @@ export default function ProductionAnalysis({
             <option value="room">Room type</option>
             <option value="meal">Meal plan</option>
             <option value="segment">Retail / Wholesale / other</option>
-            <option value="pace">Booking confirmation timing</option>
+            <option value="pace">Monthly event timing</option>
+            <option value="source">Source code</option>
+            <option value="agent">Agent / company</option>
+            <option value="marketCode">Opera market code</option>
           </select>
         </label>
         {data &&
@@ -259,6 +320,8 @@ export default function ProductionAnalysis({
               ["country", "Country", countryFilter, setCountryFilter],
               ["room", "Room type", roomFilter, setRoomFilter],
               ["meal", "Meal plan", mealFilter, setMealFilter],
+              ["source", "Source", sourceFilter, setSourceFilter],
+              ["agent", "Agent", agentFilter, setAgentFilter],
             ] as const
           ).map(([key, title, value, setter]) => (
             <label key={key}>
@@ -269,7 +332,7 @@ export default function ProductionAnalysis({
                 onChange={(e) => setter(e.target.value)}
               >
                 <option value="">All {title.toLowerCase()} codes</option>
-                {[...new Set(data.days.map((r) => r[key]))]
+                {[...new Set(data.days.map((r) => r[key] ?? "UNAVAILABLE"))]
                   .sort()
                   .map((code) => (
                     <option key={code} value={code}>
@@ -284,12 +347,23 @@ export default function ProductionAnalysis({
           <select
             aria-label="Production status"
             value={status}
-            onChange={(e) =>
-              setStatus(e.target.value as "CHECKED OUT" | "CANCELLED")
-            }
+            onChange={(e) => setStatus(e.target.value)}
           >
-            <option value="CHECKED OUT">Checked out · completed stays</option>
-            <option value="CANCELLED">Cancelled · potential stays</option>
+            <option value="ALL">All uploaded statuses</option>
+            {[
+              ...new Set([
+                "CHECKED OUT",
+                "CANCELLED",
+                "NO SHOW",
+                ...(data?.days.map((r) => r.status) ?? []),
+              ]),
+            ]
+              .sort()
+              .map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
           </select>
         </label>
       </div>
@@ -306,9 +380,11 @@ export default function ProductionAnalysis({
               </article>
               <article className="stat">
                 <span>
-                  {status === "CANCELLED"
-                    ? "Cancelled potential stay value"
-                    : "Allocated stay revenue"}
+                  {dateBasis === "stay"
+                    ? status === "CHECKED OUT"
+                      ? "Allocated completed stay value"
+                      : "Allocated booked value · not realized"
+                    : "Booked event value · not realized"}
                 </span>
                 <strong>{money(summary.revenue)}</strong>
               </article>
@@ -317,7 +393,11 @@ export default function ProductionAnalysis({
                 <strong>{formatNumber(summary.complimentary)}</strong>
               </article>
               <article className="stat">
-                <span>Arrivals within selected dates</span>
+                <span>
+                  {dateBasis === "stay"
+                    ? "Arrivals within selected dates"
+                    : "Reservation events"}
+                </span>
                 <strong>{formatNumber(summary.arrivals)}</strong>
               </article>
             </div>
@@ -327,83 +407,54 @@ export default function ProductionAnalysis({
                 zero-performance period.
               </p>
             )}
-            {dimension === "pace" ? (
-              <>
-                <h3>
-                  Confirmation-month timing for surviving checked-out bookings
-                </h3>
-                <p>
-                  Whole uploaded arrival cohort only; not filtered by the stay
-                  dates, market, code filters or status above. Not historical
-                  on-books pickup: cancelled and modified states at past
-                  snapshots are unknown.
-                </p>
-                {Array.from(
-                  new Set(data.pace.map((r) => r.date.slice(0, 7))),
-                ).map((month) => {
-                  const rows = data.pace.filter((r) =>
-                      r.date.startsWith(month),
-                    ),
-                    n = rows.reduce((a, r) => a + r.bookings, 0);
-                  return (
-                    <div className="production-bar" key={month}>
-                      <span>{month}</span>
-                      <meter
-                        min={0}
-                        max={data.checkedOut}
-                        value={n}
-                        aria-label={`${month} confirmations`}
-                      />
-                      <strong>{formatNumber(n)} bookings</strong>
-                    </div>
-                  );
-                })}
-              </>
-            ) : (
-              <>
-                <h3>
-                  {status === "CANCELLED" ? "Cancelled" : "Completed"}{" "}
-                  performance by {dimension}
-                </h3>
-                {summary.groups.slice(0, 15).map((r) => (
-                  <div className="production-bar" key={r.code}>
-                    <span>{r.code}</span>
-                    <meter
-                      min={0}
-                      max={Math.max(1, ...summary.groups.map((x) => x.revenue))}
-                      value={Math.max(0, r.revenue)}
-                      aria-label={`${label(r.code)} allocated revenue`}
-                    />
-                    <strong>{money(r.revenue)}</strong>
-                  </div>
-                ))}
-                <p>Top 15 by allocated revenue; complete breakdown below.</p>
-                <div className="table-scroll">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Code / description</th>
-                        <th>Stay-nights</th>
-                        <th>Allocated revenue</th>
-                        <th>Arrivals</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {summary.groups.map((r) => (
-                        <tr key={r.code}>
-                          <td>
-                            {r.code} · {label(r.code)}
-                          </td>
-                          <td>{formatNumber(r.nights)}</td>
-                          <td>{money(r.revenue)}</td>
-                          <td>{formatNumber(r.arrivals)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+
+            <>
+              <h3>
+                {status === "ALL" ? "All statuses" : status} performance by{" "}
+                {dimension}
+              </h3>
+              {summary.groups.slice(0, 15).map((r) => (
+                <div className="production-bar" key={r.code}>
+                  <span>{r.code}</span>
+                  <meter
+                    min={0}
+                    max={Math.max(1, ...summary.groups.map((x) => x.revenue))}
+                    value={Math.max(0, r.revenue)}
+                    aria-label={`${label(r.code)} allocated revenue`}
+                  />
+                  <strong>{money(r.revenue)}</strong>
                 </div>
-              </>
-            )}
+              ))}
+              <p>Top 15 by allocated revenue; complete breakdown below.</p>
+              <div className="table-scroll">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Code / description</th>
+                      <th>Stay-nights</th>
+                      <th>
+                        {dateBasis === "stay"
+                          ? "Allocated value"
+                          : "Whole reservation value"}
+                      </th>
+                      <th>{dateBasis === "stay" ? "Arrivals" : "Events"}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {summary.groups.map((r) => (
+                      <tr key={r.code}>
+                        <td>
+                          {r.code} · {label(r.code)}
+                        </td>
+                        <td>{formatNumber(r.nights)}</td>
+                        <td>{money(r.revenue)}</td>
+                        <td>{formatNumber(r.arrivals)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
             <div className="editor-actions">
               <button className="button outline" onClick={csv}>
                 Export CSV breakdown
@@ -413,9 +464,13 @@ export default function ProductionAnalysis({
               </button>
             </div>
             <p>
+              {eventData!.missingDates > 0
+                ? `${eventData!.missingDates} records lack the selected event date and are excluded. `
+                : ""}
               {data.rows} source records: {data.checkedOut} checked out /{" "}
-              {data.cancelled} cancelled. Export arrivals cover Q1 2026;
-              departures extend to {data.to}. Missing revenue records:{" "}
+              {data.cancelled} cancelled · {data.statuses?.["NO SHOW"] ?? 0} no
+              show (legacy baselines may lack status details). Source stay
+              coverage {data.from} to {data.to}. Missing revenue records:{" "}
               {data.missingRevenue}. Unknown codes are retained, not guessed.
             </p>
             <ul className="production-caveats">

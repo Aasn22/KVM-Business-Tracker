@@ -5590,3 +5590,52 @@ fieldset {
     font-size: 16px;
   }
 }
+.market-uploaded-summary {
+  margin: 12px 0;
+  border-bottom: 1px solid #d4bd9166;
+  padding-bottom: 8px;
+}
+.market-uploaded-summary > h3 {
+  font-size: 12px;
+  color: #85754e;
+}
+.market-page .market-uploaded-summary .market-summary {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.market-production-rows > div {
+  display: grid;
+  grid-template-columns: minmax(60px, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+  padding: 5px 8px;
+  background: #0b1930;
+  color: #d4bd91;
+  border-bottom: 1px solid #d4bd9130;
+  font-size: 11px;
+}
+@media (max-width: 600px) {
+  .market-page .market-uploaded-summary .market-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .market-page .market-uploaded-summary .market-summary article:last-child {
+    grid-column: auto;
+  }
+  .production-analysis .production-bar {
+    grid-template-columns: minmax(80px, 1fr) minmax(20px, 1fr) 85px;
+  }
+  .production-bar > span {
+    overflow-wrap: anywhere;
+  }
+}
+.property-discovered-codes {
+  margin: 12px 0;
+  font-size: 11px;
+}
+.property-discovered-codes summary {
+  cursor: pointer;
+  padding: 8px 0;
+}
+.property-discovered-codes p {
+  line-height: 1.6;
+  margin: 8px 0;
+  overflow-wrap: anywhere;
+}

@@ -5,6 +5,7 @@ import { recordActivity } from "./activity";
 import { db } from "./api";
 import TeamDirectory from "./TeamDirectory";
 import PropertyTeam from "./PropertyTeam";
+import DiscoveredCodes from "./DiscoveredCodes";
 import {
   defaultProperty,
   inventoryTotal,
@@ -640,7 +641,12 @@ export default function PropertySetup({
           </section>
         </div>
       </fieldset>
-      {localOnly && <PropertyTeam />}
+      {localOnly && (
+        <>
+          <DiscoveredCodes />
+          <PropertyTeam />
+        </>
+      )}
       {!localOnly && (
         <TeamDirectory
           demo={demo}

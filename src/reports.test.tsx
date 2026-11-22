@@ -242,6 +242,7 @@ describe("executive saved-data reports", () => {
       "Market Performance Reports",
       "Country Performance Reports",
       "Cancellation Reports",
+      "No Show Reports",
       "Reservations Confirmed Reports",
       "Monthly Reports",
       "Quarterly Reports",
@@ -252,8 +253,8 @@ describe("executive saved-data reports", () => {
       <QuickReports group="All" loading={false} onSelect={() => {}} />,
     );
     expect(html).toContain("QUICK REPORTS");
-    expect(html.match(/class="quick-report-button"/g)).toHaveLength(13);
-    expect(html.match(/<svg/g)).toHaveLength(13);
+    expect(html.match(/class="quick-report-button"/g)).toHaveLength(14);
+    expect(html.match(/<svg/g)).toHaveLength(14);
     expect(html).not.toContain("report-category-card");
     for (const name of expected) expect(html).toContain(name);
   });
@@ -261,7 +262,8 @@ describe("executive saved-data reports", () => {
     for (const id of ["sales"]) {
       const r = quickReports.find((q) => q.id === id)!;
       expect(r.type).toBeUndefined();
-      expect(r.unavailable).toContain("not collected");
+      expect(r.unavailable).toBeUndefined();
+      expect(r.limitation).toContain("no salesperson");
     }
     expect(quickReports.find((q) => q.id === "cancellation")!.operational).toBe(
       "cancellations",

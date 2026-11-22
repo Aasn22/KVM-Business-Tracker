@@ -33,8 +33,8 @@ export const quickReports: {
   {
     id: "sales",
     title: "Sales Performance Reports",
-    unavailable:
-      "Salesperson, account, channel and sales-target inputs are not collected. A sales performance report cannot be generated from geographic market totals alone.",
+    limitation:
+      "Agent/company production only; no salesperson attribution or sales targets inferred.",
   },
   { id: "meal", title: "Meal Plan Reports", type: "meals" },
   {
@@ -60,6 +60,7 @@ export const quickReports: {
     title: "Cancellation Reports",
     operational: "cancellations",
   },
+  { id: "noshow", title: "No Show Reports" },
   {
     id: "reservations",
     title: "Reservations Confirmed Reports",

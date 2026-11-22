@@ -1,15 +1,29 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { createClient } from "@supabase/supabase-js";
+import { gzipSync, gunzipSync } from "node:zlib";
 import { validSession } from "./pin-session.js";
+import {
+  productionFromReservations,
+  sanitizeProductionReservations,
+} from "../src/production.js";
+export function cleanProductionSnapshot(raw: unknown) {
+  const b = raw as { reservations?: unknown };
+  const reservations = sanitizeProductionReservations(b?.reservations);
+  return productionFromReservations(reservations);
+}
 export default async function handler(
   req: IncomingMessage & { body?: unknown },
   res: ServerResponse,
 ) {
   res.setHeader("Content-Type", "application/json");
   res.setHeader("Cache-Control", "no-store");
-  const send = (n: number, message: string, data?: unknown) => {
-    res.statusCode = n;
-    res.end(JSON.stringify({ message, ...(data ? { data } : {}) }));
+  const send = (status: number, message: string, extra = {}) => {
+    res.statusCode = status;
+    const text = JSON.stringify({ message, ...extra });
+    if (Buffer.byteLength(text) > 1000000) {
+      res.setHeader("Content-Encoding", "gzip");
+      res.end(gzipSync(text));
+    } else res.end(text);
   };
   if (!["GET", "POST"].includes(req.method ?? ""))
     return send(405, "Use GET or POST");
@@ -30,129 +44,112 @@ export default async function handler(
   if (!url || !key)
     return send(
       503,
-      "Shared production storage not configured. Published snapshot unchanged.",
+      "Shared production database is not configured. No data saved.",
     );
   const db = createClient(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
   try {
     if (req.method === "GET") {
-      const r = await db
+      const result = await db
         .from("production_snapshots")
-        .select("data")
+        .select("data,updated_at")
         .eq("id", "current")
         .maybeSingle();
-      if (r.error)
-        return send(503, "Shared production storage setup required.");
-      return send(200, "Snapshot loaded", r.data?.data);
+      if (result.error)
+        return send(
+          503,
+          "Production database table unavailable. Apply production database setup.",
+        );
+      const stored = result.data?.data;
+      if (!stored) return send(200, "No shared import yet", { data: null });
+      if (stored.schema === 2 && stored.reservations) {
+        const reservations = sanitizeProductionReservations(
+          stored.reservations,
+        );
+        return send(200, "Database records loaded", {
+          data: { schema: 2, reservations },
+          revision: result.data?.updated_at,
+        });
+      }
+      return send(200, "Legacy shared snapshot loaded", {
+        data: stored,
+        revision: result.data?.updated_at,
+      });
     }
     let raw = req.body;
     if (raw === undefined) {
       let s = "";
       for await (const c of req) {
         s += c;
-        if (Buffer.byteLength(s) > 3000000)
-          return send(413, "Maximum 3 MB analytical payload");
+        if (Buffer.byteLength(s) > 3500000)
+          return send(
+            413,
+            "Upload exceeds 3.5 MB normalized request. Split into complete non-overlapping arrival periods.",
+          );
       }
       raw = JSON.parse(s);
     }
     if (typeof raw === "string") raw = JSON.parse(raw);
-    if (Buffer.byteLength(JSON.stringify(raw)) > 3000000)
-      return send(413, "Maximum 3 MB analytical payload");
-    const data = cleanProductionSnapshot(raw);
-    const r = await db
-      .from("production_snapshots")
-      .upsert({ id: "current", data, updated_at: new Date().toISOString() });
-    if (r.error)
+    if (Buffer.byteLength(JSON.stringify(raw)) > 3500000)
+      return send(413, "Split upload into complete arrival periods.");
+    if (raw && typeof raw === "object" && "compressed" in raw) {
+      const packed = (raw as { compressed: unknown }).compressed;
+      if (typeof packed !== "string")
+        return send(400, "Invalid compressed source");
+      raw = JSON.parse(
+        gunzipSync(Buffer.from(packed, "base64"), {
+          maxOutputLength: 30000000,
+        }).toString("utf8"),
+      );
+    }
+    const reservations = sanitizeProductionReservations(
+      (raw as { reservations?: unknown }).reservations,
+    );
+    const dates = reservations.map((r) => r.arrival).sort(),
+      from = dates[0],
+      to = dates[dates.length - 1];
+    const result = await db.rpc("import_production_reservations", {
+      p_reservations: reservations,
+      p_from: from,
+      p_to: to,
+    });
+    if (result.error)
       return send(
         503,
-        "Shared production save failed. Apply production snapshot migration; published figures unchanged.",
+        "Production save is unavailable. Apply the production reservation import SQL setup; no successful save was confirmed.",
       );
-    return send(200, "Shared snapshot saved");
-  } catch {
-    return send(400, "Invalid production snapshot. Nothing saved.");
+    // Verify the stored payload before acknowledging publication. RPC hash/count comes from DB transaction.
+    const check = await db
+      .from("production_snapshots")
+      .select("data,updated_at")
+      .eq("id", "current")
+      .single();
+    if (check.error || !check.data?.data?.reservations)
+      return send(
+        503,
+        "Database write returned but read-back failed. Do not repeat until the stored import is checked.",
+      );
+    const persisted = sanitizeProductionReservations(
+      check.data.data.reservations,
+    ).filter((r) => r.arrival >= from && r.arrival <= to);
+    if (JSON.stringify(persisted) !== JSON.stringify(reservations))
+      return send(
+        409,
+        "Another import changed the same arrival range before verification. Refresh and inspect current data before retrying.",
+      );
+    return send(200, "Saved and verified in the shared database", {
+      from,
+      to,
+      rows: reservations.length,
+      revision: check.data.updated_at,
+    });
+  } catch (e) {
+    return send(
+      400,
+      e instanceof Error
+        ? e.message
+        : "Invalid production data. No import confirmed.",
+    );
   }
-}
-export function cleanProductionSnapshot(raw: unknown) {
-  const b = raw as Record<string, unknown>;
-  if (
-    !b ||
-    b.schema !== 1 ||
-    !Array.isArray(b.days) ||
-    !b.days.length ||
-    b.days.length > 15000 ||
-    !Array.isArray(b.pace) ||
-    b.pace.length > 4000
-  )
-    throw Error("invalid");
-  const date = (v: unknown) => {
-    if (
-      typeof v !== "string" ||
-      !/^\d{4}-\d{2}-\d{2}$/.test(v) ||
-      !Number.isFinite(Date.parse(v))
-    )
-      throw Error("date");
-    return v;
-  };
-  const num = (v: unknown, signed = false) => {
-    if (
-      typeof v !== "number" ||
-      !Number.isFinite(v) ||
-      (!signed && v < 0) ||
-      Math.abs(v) > 1e12
-    )
-      throw Error("number");
-    return v;
-  };
-  const code = (v: unknown, max = 32) => {
-    if (
-      typeof v !== "string" ||
-      !v.length ||
-      v.length > max ||
-      !/^[-A-Za-z0-9 /]+$/.test(v)
-    )
-      throw Error("code");
-    return v;
-  };
-  const days = b.days.map((x: Record<string, unknown>) => {
-    if (
-      !["CHECKED OUT", "CANCELLED"].includes(String(x.status)) ||
-      typeof x.complimentary !== "boolean"
-    )
-      throw Error("status");
-    return {
-      date: date(x.date),
-      status: x.status,
-      country: code(x.country),
-      room: code(x.room),
-      meal: code(x.meal),
-      segment: code(x.segment),
-      complimentary: x.complimentary,
-      nights: num(x.nights),
-      revenue: num(x.revenue, true),
-      missingRevenue: num(x.missingRevenue),
-      arrivals: num(x.arrivals),
-    };
-  });
-  return {
-    schema: 1,
-    from: date(b.from),
-    to: date(b.to),
-    rows: num(b.rows),
-    checkedOut: num(b.checkedOut),
-    cancelled: num(b.cancelled),
-    missingRevenue: num(b.missingRevenue),
-    warnings: [
-      "Arrival cohort only; incomplete occupancy coverage.",
-      "One record per reservation; room quantities unavailable.",
-      "Daily revenue allocated evenly across stay nights, not daily PMS actuals.",
-      "Cancelled values are potential stay values, not realized revenue.",
-    ],
-    days,
-    pace: b.pace.map((x: Record<string, unknown>) => ({
-      date: date(x.date),
-      bookings: num(x.bookings),
-      revenue: num(x.revenue, true),
-    })),
-  };
 }

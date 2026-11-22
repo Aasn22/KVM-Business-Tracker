@@ -44,14 +44,14 @@ const row = (changes: Record<number, unknown> = {}) => {
   return r;
 };
 describe("production workbook analytics", () => {
-  it("allocates revenue by actual stay day, excludes departure, and never retains private fields", () => {
+  it("allocates revenue by stay day, excludes departure and retains approved agent field", () => {
     const d = buildProduction(headers, [row()]);
     expect(d.days.map((r) => r.date)).toEqual(["2026-01-01", "2026-01-02"]);
     expect(
       productionSummary(d, "2026-01-02", "2026-01-02", "asia", "room"),
     ).toMatchObject({ nights: 1, revenue: 100, arrivals: 0 });
     expect(productionSummary(d, "2026-01-03", "2026-01-03").nights).toBe(0);
-    expect(JSON.stringify(d)).not.toContain("PRIVATE AGENT");
+    expect(d.reservations![0].agent).toBe("PRIVATE AGENT");
     expect(d.pace[0]).toMatchObject({ bookings: 1, revenue: 200 });
   });
   it("retains complimentary/house-use stays and does not zero unknown regular revenue", () => {
@@ -79,11 +79,11 @@ describe("production workbook analytics", () => {
       productionSummary(d, d.from, d.to, null, "country", "CANCELLED").revenue,
     ).toBe(200);
   });
-  it("rejects mismatched nights or unsupported statuses instead of inventing dates/forecast", () => {
+  it("rejects mismatched nights but accepts reservation statuses", () => {
     expect(() => buildProduction(headers, [row({ 4: 3 })])).toThrow("Nights");
-    expect(() => buildProduction(headers, [row({ 1: "RESERVED" })])).toThrow(
-      "status",
-    );
+    expect(
+      buildProduction(headers, [row({ 1: "RESERVED" })]).statuses?.RESERVED,
+    ).toBe(1);
   });
   it("sanitizes server payload, removes private keys, and rejects bad values", () => {
     const d = buildProduction(headers, [row()]);
@@ -96,7 +96,7 @@ describe("production workbook analytics", () => {
     expect(() =>
       cleanProductionSnapshot({
         ...d,
-        days: [{ ...d.days[0], revenue: Infinity }],
+        reservations: [{ ...d.reservations![0], revenue: Infinity }],
       }),
     ).toThrow();
   });

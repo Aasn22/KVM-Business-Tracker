@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ArrowLeft } from "lucide-react";
+import MarketProduction from "./MarketProduction";
 import { adr, months, summarize, type Entry, type Row } from "./model";
 import { formatMoney, formatNumber, isMoneyMetric } from "./format";
 export default function MarketPage({
@@ -93,7 +94,13 @@ export default function MarketPage({
           </button>
         ))}
       </nav>
-      <h2>Monthly performance</h2>
+      <MarketProduction
+        market={market}
+        year={year}
+        month={month}
+        category={category}
+      />
+      <h2>Monthly performance · planning targets / workbook BOB</h2>
       <p className="market-hint">
         BOB = business on the books. ADR is calculated automatically. Saved
         planning / workbook BOB—not uploaded completed stays.

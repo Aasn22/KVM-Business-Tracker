@@ -50,7 +50,6 @@ import ActivityLog from "./ActivityLog";
 import OperationalInput from "./OperationalInput";
 import PerformanceInput from "./PerformanceInput";
 import PageInsights from "./PageInsights";
-import PerformanceAnalysis from "./PerformanceAnalysis";
 import ProductionAnalysis from "./ProductionAnalysis";
 import MarketPage from "./MarketPage";
 import { useAdminName } from "./AdminIdentity";
@@ -827,6 +826,11 @@ export default function App({
                   Database manually sourced from Opera (PMS) · Maintained by
                   Revenue Director &amp; Team.
                 </>
+              ) : localPin && view === "admin" ? (
+                <>
+                  <strong>Production imports</strong> · Shared reports update
+                  only after a verified database save.
+                </>
               ) : localPin ? (
                 <>
                   <strong>Local editing</strong> · Real workbook figures plus
@@ -865,6 +869,10 @@ export default function App({
                   aria-hidden="true"
                 />
                 {formatUpdate(publicUpdatedAt)}
+              </span>
+            ) : localPin && view === "admin" ? (
+              <span className="last-update">
+                Dates derived from each uploaded record
               </span>
             ) : localPin ? (
               <span className="last-update" role="status">
@@ -945,11 +953,11 @@ export default function App({
             </div>
             <div className="heading-actions">
               {view !== "property" &&
-                view !== "insight" &&
                 view !== "activity" &&
+                view !== "admin" &&
                 view !== "reports" && (
                   <label className="year-control">
-                    <span>Budget year</span>
+                    <span>Reporting year</span>
                     <select
                       aria-label="Budget year"
                       disabled={busy}
@@ -1032,36 +1040,19 @@ export default function App({
           )}
           {view === "insight" && (
             <>
-              <ProductionAnalysis year={2026} compactMoney />
+              <ProductionAnalysis year={year} compactMoney />
               <BusinessInsight />
             </>
           )}
-          {!countryOnly &&
-            ["overview", "total"].includes(view) &&
-            !market &&
-            (year === 2026 ? (
-              <ProductionAnalysis year={year} market={market} />
-            ) : (
-              <>
-                <p className="notice">
-                  Q1 2026 production is available: select Budget year 2026.
-                  Other years have no supplied production spreadsheet.
-                  <button
-                    className="button outline"
-                    onClick={() => navigate(() => setYear(2026))}
-                  >
-                    View Q1 2026 production
-                  </button>
-                </p>
-                <PerformanceAnalysis year={year} market={market} />
-              </>
-            ))}
+          {!countryOnly && ["overview", "total"].includes(view) && !market && (
+            <ProductionAnalysis year={year} market={market} />
+          )}
           {!countryOnly && !market && ["overview", "total"].includes(view) && (
             <div className="notice">
               Budget planning / legacy workbook BOB below · Not the newly
-              uploaded reported-history or forecast source. Use Primary Source
-              Analysis above for authoritative dated performance. Budget figures
-              are never replaced by actuals.
+              uploaded reported-history or forecast source. Use Production
+              Analysis above for dated uploaded performance. Budget figures are
+              never replaced by actuals.
             </div>
           )}
           {view === "total" && !countryOnly && (
@@ -1343,15 +1334,13 @@ export default function App({
                   entries={entries}
                   onBack={() => navigate(() => setMarket(null))}
                 />
-                {year === 2026 && (
-                  <details className="market-source-details">
-                    <summary>
-                      Uploaded completed-stay analysis · separate from budgets
-                      and BOB
-                    </summary>
-                    <ProductionAnalysis year={year} market={market} />
-                  </details>
-                )}
+                <details className="market-source-details">
+                  <summary>
+                    Uploaded completed-stay analysis · separate from budgets and
+                    BOB
+                  </summary>
+                  <ProductionAnalysis year={year} market={market} />
+                </details>
               </>
             )}
           {((view === "overview" &&

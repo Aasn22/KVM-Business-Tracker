@@ -52,6 +52,7 @@ import PerformanceInput from "./PerformanceInput";
 import PageInsights from "./PageInsights";
 import PerformanceAnalysis from "./PerformanceAnalysis";
 import ProductionAnalysis from "./ProductionAnalysis";
+import MarketPage from "./MarketPage";
 import { useAdminName } from "./AdminIdentity";
 import { recordActivity, recordPlatformVisit } from "./activity";
 import BusinessInsight from "./BusinessInsight";
@@ -746,7 +747,10 @@ export default function App({
     );
   }
   return (
-    <div className="app rail-layout" ref={appRef}>
+    <div
+      className={`app rail-layout ${view === "overview" && market ? "market-page-layout" : ""}`}
+      ref={appRef}
+    >
       {renderNavigation(false)}
       {navigationOpen && (
         <>
@@ -1034,6 +1038,7 @@ export default function App({
           )}
           {!countryOnly &&
             ["overview", "total"].includes(view) &&
+            !market &&
             (year === 2026 ? (
               <ProductionAnalysis year={year} market={market} />
             ) : (
@@ -1051,7 +1056,7 @@ export default function App({
                 <PerformanceAnalysis year={year} market={market} />
               </>
             ))}
-          {!countryOnly && ["overview", "total"].includes(view) && (
+          {!countryOnly && !market && ["overview", "total"].includes(view) && (
             <div className="notice">
               Budget planning / legacy workbook BOB below · Not the newly
               uploaded reported-history or forecast source. Use Primary Source
@@ -1325,7 +1330,36 @@ export default function App({
               )}
             </section>
           )}
-          {((view === "overview" && market && !countryOnly) ||
+          {view === "overview" &&
+            market &&
+            !countryOnly &&
+            (publicDemo || demo || session) && (
+              <>
+                <MarketPage
+                  key={market + year}
+                  market={market}
+                  name={selected?.name ?? market}
+                  year={year}
+                  entries={entries}
+                  onBack={() => navigate(() => setMarket(null))}
+                />
+                {year === 2026 && (
+                  <details className="market-source-details">
+                    <summary>
+                      Uploaded completed-stay analysis · separate from budgets
+                      and BOB
+                    </summary>
+                    <ProductionAnalysis year={year} market={market} />
+                  </details>
+                )}
+              </>
+            )}
+          {((view === "overview" &&
+            market &&
+            !countryOnly &&
+            !publicDemo &&
+            !demo &&
+            !session) ||
             (view === "admin" && !localPin && canEdit && market)) && (
             <>
               <button

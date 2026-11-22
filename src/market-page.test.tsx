@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
-import MarketPage from "./MarketPage";
+import MarketPage, { MarketBreakdownCard } from "./MarketPage";
 import { blank, markets, type Entry } from "./model";
 describe("shared market sample layout", () => {
   it("renders category/month selectors and four independent weekly cards without wide tables", () => {
@@ -48,6 +48,21 @@ describe("shared market sample layout", () => {
       );
       expect(html).toContain("Missing data is not zero");
       expect(html).toContain("—");
+    }
+  });
+});
+
+describe("compact category cards", () => {
+  it("uses five compact rows for villa, country and meal breakdowns, not four week boxes", () => {
+    for (const key of ["villas", "countries", "meals"] as const) {
+      for (const row of blank("asia")[key]) {
+        const html = renderToStaticMarkup(<MarketBreakdownCard row={row} />);
+        expect(html).toContain("market-mini-breakdown");
+        expect(html.match(/role="row"/g)).toHaveLength(5);
+        expect(html).toContain("Target");
+        expect(html).toContain("Variance");
+        expect(html).not.toContain("market-category-weeks");
+      }
     }
   });
 });

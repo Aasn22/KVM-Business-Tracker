@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ArrowLeft } from "lucide-react";
-import { adr, months, summarize, type Entry } from "./model";
+import { adr, months, summarize, type Entry, type Row } from "./model";
 import { formatMoney, formatNumber, isMoneyMetric } from "./format";
 export default function MarketPage({
   market,
@@ -153,47 +153,7 @@ export default function MarketPage({
       ) : (
         <div className="market-breakdowns">
           {current[category].map((r, i) => (
-            <article key={i}>
-              <h3>{r.label}</h3>
-              <dl>
-                {[
-                  ["Budget", r.budget],
-                  ["BOB", r.bob],
-                  ["Variance", r.bob - r.budget],
-                ].map(([label, value]) => (
-                  <div key={String(label)}>
-                    <dt>{label}</dt>
-                    <dd>
-                      {isMoneyMetric(r.label)
-                        ? formatMoney(Number(value))
-                        : formatNumber(Number(value))}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
-              <div className="market-category-weeks">
-                {[0, 1, 2, 3].map((w) => (
-                  <div key={w}>
-                    <h4>
-                      Week {w + 1}
-                      {w === 3 ? " / 5" : ""}
-                    </h4>
-                    <p>
-                      Target:{" "}
-                      {isMoneyMetric(r.label)
-                        ? money(r.targets[w])
-                        : formatNumber(r.targets[w])}
-                    </p>
-                    <p>
-                      BOB:{" "}
-                      {isMoneyMetric(r.label)
-                        ? money(r.weekly[w])
-                        : formatNumber(r.weekly[w])}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </article>
+            <MarketBreakdownCard key={i} row={r} />
           ))}
         </div>
       )}
@@ -203,5 +163,52 @@ export default function MarketPage({
         months available.
       </p>
     </section>
+  );
+}
+
+export function MarketBreakdownCard({ row: r }: { row: Row }) {
+  const value = (n: number | undefined) =>
+    n === undefined
+      ? "—"
+      : isMoneyMetric(r.label)
+        ? formatMoney(n)
+        : formatNumber(n);
+  return (
+    <article className="market-mini-breakdown">
+      <h3>{r.label}</h3>
+      <dl>
+        {[
+          ["Budget", r.budget],
+          ["BOB", r.bob],
+          ["Variance", r.bob - r.budget],
+        ].map(([label, n]) => (
+          <div key={String(label)}>
+            <dt>{label}</dt>
+            <dd>{value(Number(n))}</dd>
+          </div>
+        ))}
+      </dl>
+      <div
+        className="market-week-rows"
+        role="table"
+        aria-label={`${r.label} weekly snapshots`}
+      >
+        <div role="row" className="market-week-row market-week-labels">
+          <span role="columnheader">Week</span>
+          <span role="columnheader">Target</span>
+          <span role="columnheader">BOB</span>
+        </div>
+        {[0, 1, 2, 3].map((w) => (
+          <div role="row" className="market-week-row" key={w}>
+            <span role="rowheader">
+              {w + 1}
+              {w === 3 ? " / 5" : ""}
+            </span>
+            <span role="cell">{value(r.targets[w])}</span>
+            <span role="cell">{value(r.weekly[w])}</span>
+          </div>
+        ))}
+      </div>
+    </article>
   );
 }

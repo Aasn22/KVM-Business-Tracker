@@ -5467,3 +5467,126 @@ fieldset {
     height: 80px;
   }
 }
+/* Compact ALL market categories: weekly breakdowns are rows, never large tiles. */
+.market-page .market-categories {
+  gap: 6px;
+}
+.market-page .market-categories button,
+.market-page .market-months button {
+  min-height: 32px;
+  padding: 5px;
+  font-size: 11px;
+}
+.market-page .market-summary {
+  gap: 7px;
+  margin: 7px 0 10px;
+}
+.market-page .market-summary h3 {
+  padding: 5px 4px 2px;
+  font-size: 11px;
+}
+.market-page .market-summary strong {
+  font-size: 18px;
+  padding: 2px 4px;
+}
+.market-page .market-summary span {
+  padding: 2px 4px 5px;
+  font-size: 10px;
+}
+.market-page .market-breakdowns {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  align-items: start;
+}
+.market-page .market-mini-breakdown h3 {
+  margin: 0;
+  padding: 7px 6px;
+  font-size: 12px;
+  line-height: 1.35;
+  border-bottom: 1px solid #d4bd9144;
+}
+.market-page .market-mini-breakdown dl {
+  margin: 7px 6px;
+  gap: 5px;
+}
+.market-page .market-mini-breakdown dt {
+  font-size: 10px;
+}
+.market-page .market-mini-breakdown dd {
+  font-size: 12px;
+  margin: 3px 0;
+  line-height: 1.3;
+}
+.market-week-rows {
+  margin: 0 6px 6px;
+}
+.market-week-row {
+  display: grid;
+  grid-template-columns: minmax(36px, 0.7fr) repeat(2, minmax(0, 1fr));
+  gap: 5px;
+  padding: 4px 5px;
+  border-top: 1px solid #d4bd9130;
+  align-items: center;
+  font-size: 11px;
+  line-height: 1.35;
+}
+.market-week-row span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.market-week-row span:first-child {
+  text-align: left;
+}
+.market-week-labels {
+  color: #d4bd91;
+  font-size: 10px;
+}
+.market-page .market-action {
+  padding: 12px;
+}
+.market-page .market-action h3 {
+  font-size: 13px;
+}
+.market-page .market-action p {
+  font-size: 12px;
+  line-height: 1.6;
+  margin-top: 8px;
+}
+.market-page .market-weeks h3 {
+  padding: 7px 4px;
+}
+.market-page .market-weeks article > div {
+  padding: 3px 4px;
+}
+@media screen and (min-width: 1450px) {
+  .market-page .market-breakdowns {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+@media screen and (max-width: 1024px) {
+  .market-page .market-breakdowns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media screen and (max-width: 600px) {
+  .market-page .market-breakdowns {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+  .market-page .market-categories button,
+  .market-page .market-months button {
+    min-height: 40px;
+    font-size: 11px;
+  }
+  .market-page .market-mini-breakdown h3 {
+    padding: 7px;
+    font-size: 12px;
+  }
+  .market-page .market-week-row {
+    font-size: 11px;
+    padding: 5px;
+  }
+  .market-page .market-summary strong {
+    font-size: 16px;
+  }
+}

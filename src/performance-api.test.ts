@@ -52,6 +52,41 @@ afterEach(() => {
   factory.mockReset();
 });
 describe("public primary-source reads and admin replacement", () => {
+  it("returns only the newest source revision for lightweight polling", async () => {
+    env();
+    const maybeSingle = vi.fn(async () => ({
+      data: { updated_at: "revision-1" },
+      error: null,
+    }));
+    factory.mockReturnValue({
+      from: () => ({
+        select: () => ({
+          eq: () => ({
+            eq: () => ({
+              gte: () => ({
+                lte: () => ({
+                  order: () => ({
+                    limit: () => ({ maybeSingle }),
+                  }),
+                }),
+              }),
+            }),
+          }),
+        }),
+      }),
+    });
+    const r = response();
+    await handler(
+      {
+        ...request(),
+        url: `${request().url}&revision=1`,
+      } as unknown as IncomingMessage,
+      r.res,
+    );
+    expect(r.res.statusCode).toBe(200);
+    expect(r.json()).toMatchObject({ revision: "revision-1" });
+    expect(maybeSingle).toHaveBeenCalledOnce();
+  });
   it("fails closed for anonymous publication", async () => {
     const r = response();
     await handler(request("POST", body), r.res);

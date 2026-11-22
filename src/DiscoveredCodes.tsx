@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
-import { loadProduction, productionChanged } from "./productionClient";
+import {
+  loadProduction,
+  productionChanged,
+  watchProduction,
+} from "./productionClient";
 export default function DiscoveredCodes() {
   const [codes, setCodes] = useState<Record<string, string[]>>({});
   useEffect(() => {
@@ -32,9 +36,11 @@ export default function DiscoveredCodes() {
       }
     }
     void load();
+    const stopWatching = watchProduction(load);
     window.addEventListener(productionChanged, load);
     return () => {
       active = false;
+      stopWatching();
       window.removeEventListener(productionChanged, load);
     };
   }, []);

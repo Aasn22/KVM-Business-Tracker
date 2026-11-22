@@ -124,6 +124,14 @@ export default function App({
   const [tab, setTab] = useState<Tab>("commercial");
   const [draft, setDraft] = useState<MonthData | null>(null);
   const [dirty, setDirty] = useState(false);
+  const liveSelection = useRef({
+    dirty: false,
+    market: null as string | null,
+    month: 1,
+  });
+  useEffect(() => {
+    liveSelection.current = { dirty, market, month };
+  }, [dirty, market, month]);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -348,6 +356,54 @@ export default function App({
       active = false;
     };
   }, [demo, session, year, publicDemo, localPin]);
+  useEffect(() => {
+    const client = db;
+    if (!session || !client || demo || publicDemo || localPin) return;
+    let active = true;
+    const channel = client
+      .channel(`market-months-${session.user.id}-${year}-${Date.now()}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "market_months",
+          filter: `year=eq.${year}`,
+        },
+        (payload) => {
+          const changed = (
+            payload.new && Object.keys(payload.new).length
+              ? payload.new
+              : payload.old
+          ) as Partial<Entry>;
+          const selection = liveSelection.current;
+          if (selection.dirty) {
+            if (
+              changed.market_id === selection.market &&
+              changed.month === selection.month
+            )
+              setError(
+                "This month changed on another device. Refresh before saving your edits.",
+              );
+            return;
+          }
+          void loadYear(year)
+            .then((updated) => {
+              if (!active) return;
+              setEntries(updated);
+              setToast("Shared budgets updated from another device.");
+            })
+            .catch((e) => {
+              if (active) setError((e as Error).message);
+            });
+        },
+      )
+      .subscribe();
+    return () => {
+      active = false;
+      void client.removeChannel(channel);
+    };
+  }, [session, year, demo, publicDemo, localPin]);
   const current = entries.find(
     (e) => e.market_id === market && e.month === month,
   );
@@ -470,6 +526,7 @@ export default function App({
         );
       setEntries(next);
       setDirty(false);
+      liveSelection.current.dirty = false;
       setToast(
         demo
           ? localPin

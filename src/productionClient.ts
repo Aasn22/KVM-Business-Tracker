@@ -4,6 +4,46 @@ import {
   type ProductionData,
 } from "./production";
 export const productionChanged = "kvm-production-updated";
+export async function loadProductionRevision(): Promise<string | null> {
+  const response = await fetch("/api/production?revision=1", {
+    cache: "no-store",
+  });
+  if (!response.ok) throw Error("Production revision unavailable");
+  const body = await response.json();
+  return typeof body.revision === "string" ? body.revision : null;
+}
+export function watchProduction(onChange: () => void) {
+  let active = true;
+  let checking = false;
+  let revision: string | null | undefined;
+  async function check() {
+    if (!active || checking || document.visibilityState === "hidden") return;
+    checking = true;
+    try {
+      const next = await loadProductionRevision();
+      if (revision === undefined) revision = next;
+      else if (next !== revision) {
+        revision = next;
+        onChange();
+      }
+    } catch {
+      // The regular data request reports configuration and availability errors.
+    } finally {
+      checking = false;
+    }
+  }
+  void check();
+  const timer = window.setInterval(() => void check(), 15000);
+  const onVisibilityChange = () => {
+    if (document.visibilityState === "visible") void check();
+  };
+  document.addEventListener("visibilitychange", onVisibilityChange);
+  return () => {
+    active = false;
+    window.clearInterval(timer);
+    document.removeEventListener("visibilitychange", onVisibilityChange);
+  };
+}
 export async function loadProduction(): Promise<{
   data: ProductionData;
   source: string;

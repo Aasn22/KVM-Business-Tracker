@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
-import { loadProduction, productionChanged } from "./productionClient";
+import {
+  loadProduction,
+  productionChanged,
+  watchProduction,
+} from "./productionClient";
 import {
   productionSummary,
   productionRowsForBasis,
@@ -35,11 +39,11 @@ export default function MarketProduction({
       }
     }
     void refresh();
+    const stopWatching = watchProduction(refresh);
     window.addEventListener(productionChanged, refresh);
-    const timer = setInterval(refresh, 60000);
     return () => {
       active = false;
-      clearInterval(timer);
+      stopWatching();
       window.removeEventListener(productionChanged, refresh);
     };
   }, []);

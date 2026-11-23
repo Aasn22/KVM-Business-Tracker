@@ -1,0 +1,63 @@
+import { describe, it, expect } from "vitest";
+import { renderToStaticMarkup } from "react-dom/server";
+import Entrance, {
+  ConfidentialityNotice,
+  entranceDuration,
+  RouteEntrance,
+} from "./Entrance";
+describe("branded entrance", () => {
+  it("renders transparent logo on entrance and makes underlying content inert", () => {
+    const html = renderToStaticMarkup(
+      <Entrance>
+        <button>Private workspace</button>
+      </Entrance>,
+    );
+    expect(html).toContain("/kuda-villingili-logo.png");
+    expect(html).toContain('alt="Kuda Villingili"');
+    expect(html).toContain('inert=""');
+    expect(html).toContain('aria-hidden="true"');
+    expect(html).not.toContain("DO NOT SHARE");
+    expect(html).not.toContain("Continue to platform");
+    expect(html).toContain("<p>KVM BUSINESS LENSE</p>");
+  });
+  it("shows a separate professional notice with a continue action", () => {
+    const html = renderToStaticMarkup(
+      <ConfidentialityNotice onContinue={() => {}} />,
+    );
+    expect(html).toContain("Private &amp; Confidential");
+    expect(html).toContain("authorized business use only");
+    expect(html).toContain("Continue to platform");
+    expect(html).not.toContain("entrance-logo");
+  });
+  it("uses a short finite welcome duration", () => {
+    expect(entranceDuration).toBe(2400);
+  });
+  it("does not stack the platform confidentiality gate before the report welcome", () => {
+    const html = renderToStaticMarkup(
+      <RouteEntrance pathname="/reports">
+        <p>Report welcome</p>
+      </RouteEntrance>,
+    );
+    expect(html).toContain("Report welcome");
+    expect(html).not.toContain("entrance-screen");
+    expect(html).not.toContain("inert");
+    const root = renderToStaticMarkup(
+      <RouteEntrance pathname="/">
+        <p>Dashboard</p>
+      </RouteEntrance>,
+    );
+    expect(root).toContain("entrance-screen");
+    expect(root).toContain('inert=""');
+  });
+  it.each(["/admin-data-input", "/property-setup", "/activity-log"])(
+    "opens %s directly without entrance",
+    (pathname) => {
+      const html = renderToStaticMarkup(
+        <RouteEntrance pathname={pathname}>
+          <p>PIN entry</p>
+        </RouteEntrance>,
+      );
+      expect(html).toBe("<p>PIN entry</p>");
+    },
+  );
+});

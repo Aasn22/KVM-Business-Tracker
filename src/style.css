@@ -5782,3 +5782,24 @@ fieldset {
     break-inside: avoid;
   }
 }
+/* Pulse: navy belongs only to the title strip, not the card body. */
+.pulse-mini-metrics article {
+  background: transparent;
+  color: #243d40;
+  border: 1px solid #bea575;
+  padding: 0 0 4px;
+}
+.pulse-mini-metrics article > span {
+  background: #0b1930;
+  color: #e7d4b1;
+  padding: 5px 3px;
+  margin-bottom: 3px;
+}
+.pulse-mini-column {
+  background: transparent;
+  color: #243d40;
+}
+.pulse-mini-column h3 {
+  background: #0b1930;
+  color: #e7d4b1;
+}

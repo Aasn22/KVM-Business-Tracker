@@ -55,6 +55,26 @@ export default async function handler(
         !dimensions.includes(dimension)
       )
         return send(400, "Invalid source selection");
+      if (query.get("revision") === "1") {
+        const latest = await db
+          .from("performance_source_rows")
+          .select("updated_at")
+          .eq("kind", kind)
+          .eq("dimension", dimension)
+          .gte("date", `${year}-01-01`)
+          .lte("date", `${year}-12-31`)
+          .order("updated_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (latest.error)
+          return send(
+            503,
+            "Performance source setup required. Apply the shared-performance migration.",
+          );
+        return send(200, "Performance revision loaded", {
+          revision: latest.data?.updated_at ?? null,
+        });
+      }
       // Pagination is explicit: never silently truncate a year of country records.
       const rows: unknown[] = [];
       for (let start = 0; start < 100000; start += 1000) {

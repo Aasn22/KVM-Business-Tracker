@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
-import { fetchPerformance, performanceChanged } from "./performanceClient";
+import {
+  fetchPerformance,
+  performanceChanged,
+  watchPerformance,
+} from "./performanceClient";
 import {
   bookingSegment,
   geographicMarket,
@@ -58,11 +62,11 @@ export default function PerformanceAnalysis({
       }
     }
     void load();
+    const stopWatching = watchPerformance(kind, d, year, load);
     window.addEventListener(performanceChanged, load);
-    const timer = setInterval(() => void load(), 60000);
     return () => {
       active = false;
-      clearInterval(timer);
+      stopWatching();
       window.removeEventListener(performanceChanged, load);
     };
   }, [kind, d, year]);

@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
-import { loadProduction, productionChanged } from "./productionClient";
+import {
+  loadProduction,
+  productionChanged,
+  watchProduction,
+} from "./productionClient";
 import {
   productionSummary,
   productionRowsForBasis,
@@ -88,11 +92,11 @@ export default function ProductionAnalysis({
       }
     }
     void load();
+    const stopWatching = snapshotMode ? null : watchProduction(load);
     if (!snapshotMode) window.addEventListener(productionChanged, load);
-    const timer = snapshotMode ? null : setInterval(load, 60000);
     return () => {
       active = false;
-      if (timer) clearInterval(timer);
+      stopWatching?.();
       window.removeEventListener(productionChanged, load);
     };
   }, []);

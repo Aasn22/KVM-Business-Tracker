@@ -51,6 +51,26 @@ export default async function handler(
   });
   try {
     if (req.method === "GET") {
+      const revisionOnly = new URL(
+        req.url ?? "/",
+        "https://local.invalid",
+      ).searchParams.has("revision");
+      if (revisionOnly) {
+        const revision = await db
+          .from("production_snapshots")
+          .select("updated_at")
+          .eq("id", "current")
+          .maybeSingle();
+        if (revision.error)
+          return send(
+            503,
+            "Production database table unavailable. Apply production database setup.",
+          );
+        return send(200, "Production revision loaded", {
+          data: null,
+          revision: revision.data?.updated_at ?? null,
+        });
+      }
       const result = await db
         .from("production_snapshots")
         .select("data,updated_at")

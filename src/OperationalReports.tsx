@@ -90,6 +90,47 @@ export default function OperationalReports({
     window.addEventListener(operationChanged, refresh);
     return () => window.removeEventListener(operationChanged, refresh);
   }, [kind]);
+  useEffect(() => {
+    if (!report || report.source !== "Published shared uploads") return;
+    const reportRange = { from: report.from, to: report.to };
+    let active = true;
+    let loadingSharedReport = false;
+    async function refreshSharedReport() {
+      if (loadingSharedReport || document.visibilityState === "hidden") return;
+      loadingSharedReport = true;
+      try {
+        const rows = await loadSharedOperations(
+          kind,
+          reportRange.from,
+          reportRange.to,
+        );
+        if (active)
+          setReport((current) =>
+            current && current.source === "Published shared uploads"
+              ? {
+                  ...current,
+                  rows: structuredClone(rows),
+                  at: new Date().toISOString(),
+                }
+              : current,
+          );
+      } catch {
+        // Keep the last successfully loaded shared report visible while offline.
+      } finally {
+        loadingSharedReport = false;
+      }
+    }
+    const timer = window.setInterval(() => void refreshSharedReport(), 15000);
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") void refreshSharedReport();
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, [kind, report?.from, report?.to, report?.source]);
   const rows = report?.rows ?? [],
     grouped = Array.from(new Set(rows.map((r) => r.roomType))).map((label) => ({
       label,
@@ -217,8 +258,10 @@ export default function OperationalReports({
       {report && (
         <>
           <p>
-            Snapshot generated {report.at} · {report.from} to {report.to} ·{" "}
-            {report.source}
+            {report.source === "Published shared uploads"
+              ? "Shared report · live sync checked"
+              : "Snapshot generated"}{" "}
+            {report.at} · {report.from} to {report.to} · {report.source}
           </p>
           <CancellationSummary kind={kind} rows={rows} />
           <section className="visual-panel">

@@ -49,6 +49,29 @@ afterEach(() => {
   factory.mockReset();
 });
 describe("database production publication", () => {
+  it("returns a lightweight revision without the snapshot payload", async () => {
+    env();
+    const select = vi.fn(() => ({
+      eq: () => ({
+        maybeSingle: async () => ({
+          data: { updated_at: "revision-1" },
+          error: null,
+        }),
+      }),
+    }));
+    factory.mockReturnValue({ from: () => ({ select }) });
+    const r = response();
+    await handler(
+      {
+        ...request(),
+        url: "/api/production?revision=1",
+      } as unknown as IncomingMessage,
+      r.res,
+    );
+    expect(r.res.statusCode).toBe(200);
+    expect(select).toHaveBeenCalledWith("updated_at");
+    expect(r.json()).toMatchObject({ data: null, revision: "revision-1" });
+  });
   it("allows public reads of approved record fields but strips guest/secret keys", async () => {
     env();
     factory.mockReturnValue({

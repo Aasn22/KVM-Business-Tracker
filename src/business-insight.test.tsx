@@ -56,7 +56,7 @@ describe("dated Business Insight", () => {
     const html = renderToStaticMarkup(<App publicDemo />);
     expect(html).toContain("Business Insight</h1>");
     expect(html).toContain("Sources &amp; methodology");
-    expect(html).not.toContain("Budget year");
+    expect(html).toContain("Reporting year");
     expect(html).not.toContain("Export report");
   });
 });

@@ -52,6 +52,7 @@ import PerformanceInput from "./PerformanceInput";
 import PageInsights from "./PageInsights";
 import ProductionAnalysis from "./ProductionAnalysis";
 import MarketPage from "./MarketPage";
+import PulsePage from "./PulsePage";
 import { useAdminName } from "./AdminIdentity";
 import { recordActivity, recordPlatformVisit } from "./activity";
 import BusinessInsight from "./BusinessInsight";
@@ -868,1016 +869,1066 @@ export default function App({
             </button>
           </div>
         </header>
-        <main>
-          <div
-            className={`mode-banner ${demo ? "" : "live"} ${publicDemo || localPin ? "compact-status" : ""}`}
-          >
-            <div className="mode-copy">
-              <ShieldCheck size={15} />
-              {view === "insight" ? (
-                <>
-                  Public hospitality research · Sources and periods cited below.
-                </>
-              ) : publicDemo ? (
-                <>
-                  Database manually sourced from Opera (PMS) · Maintained by
-                  Revenue Director &amp; Team.
-                </>
-              ) : localPin && view === "admin" ? (
-                <>
-                  <strong>Production imports</strong> · Shared reports update
-                  only after a verified database save.
-                </>
-              ) : localPin ? (
-                <>
-                  <strong>Local editing</strong> · Real workbook figures plus
-                  this browser’s saved edits. Not synchronized or published.
-                </>
-              ) : demo ? (
-                <>
-                  <strong>
-                    {publicDemo ? "Public read-only demo" : "Interactive demo"}
-                  </strong>{" "}
-                  · Fictional figures. No real budgets are published.
-                  {!publicDemo && " Changes stay in this browser."}
-                </>
-              ) : (
-                <>
-                  <strong>Private workspace</strong> ·{" "}
-                  {session
-                    ? "Your market permissions are enforced by the database."
-                    : "Sign in to see or update budget figures."}
-                </>
-              )}
-            </div>
-            {view === "insight" ? (
-              <span className="last-update">
-                Reviewed: {insightReviewed} · Snapshot
-              </span>
-            ) : publicDemo ? (
-              <span className="last-update" role="status">
-                <span
-                  className="update-indicator animated"
-                  title={
-                    publicFeed
-                      ? "Saved database status; not an Opera live feed"
-                      : "Workbook snapshot; no live connection"
-                  }
-                  aria-hidden="true"
-                />
-                {formatUpdate(publicUpdatedAt)}
-              </span>
-            ) : localPin && view === "admin" ? (
-              <span className="last-update">
-                Dates derived from each uploaded record
-              </span>
-            ) : localPin ? (
-              <span className="last-update" role="status">
-                <span
-                  className="update-indicator animated"
-                  aria-hidden="true"
-                />
-                {formatUpdate(lastSavedUpdate(entries), true)}
-              </span>
-            ) : demo ? (
-              <button
-                onClick={() =>
-                  navigate(() => {
-                    setMarket(null);
-                    setView("setup");
-                  })
-                }
+        <main
+          className={
+            view === "overview" && !market && !countryOnly
+              ? "pulse-only-main"
+              : undefined
+          }
+        >
+          {view === "overview" && !market && !countryOnly ? (
+            <PulsePage />
+          ) : (
+            <>
+              <div
+                className={`mode-banner ${demo ? "" : "live"} ${publicDemo || localPin ? "compact-status" : ""}`}
               >
-                Connect live data <ArrowUpRight size={13} />
-              </button>
-            ) : (
-              !session && (
-                <button onClick={() => setLogin(true)}>
-                  Sign in <ArrowUpRight size={13} />
-                </button>
-              )
-            )}
-          </div>
-          <div
-            className={`page-heading ${view === "overview" && !market ? "pulse-heading" : ""}`}
-          >
-            <div>
-              <div className="eyebrow">
-                {selected
-                  ? "MARKET PERFORMANCE"
-                  : view === "overview"
-                    ? "YOUR COMMERCIAL PULSE"
-                    : "COMMERCIAL WORKSPACE"}
-              </div>
-              <h1>
-                {view === "insight"
-                  ? "Business Insight"
-                  : view === "property"
-                    ? "Property Setup"
-                    : view === "admin"
-                      ? "Data Input"
-                      : selected
-                        ? selected.name
-                        : view === "total"
-                          ? "Management Lense"
-                          : view === "overview"
-                            ? "Commercial performance, from historical benchmarks to future targets."
-                            : view === "reports"
-                              ? "Reports Library"
-                              : view === "activity"
-                                ? "Activity Log"
-                                : "Make it your workspace."}
-              </h1>
-              <p>
-                {view === "insight"
-                  ? "Maldives tourism, global hospitality and commercial risk intelligence — with sources and reporting dates."
-                  : view === "property"
-                    ? "Property profile and configuration. Viewable by all signed-in users; editable only by Super Admin."
-                    : view === "admin"
-                      ? "The only workspace for entering numbers, importing workbooks, and updating action plans."
-                      : selected
-                        ? "View saved performance. All data input is managed by an administrator."
-                        : view === "total"
-                          ? "One automatic review of saved performance across all markets."
-                          : view === "overview"
-                            ? "A unified executive view of property budgets, market pace, and revenue forecasts."
-                            : view === "reports"
-                              ? "Visual intelligence for leadership and revenue teams."
-                              : view === "activity"
-                                ? "Access, updates and recent changes recorded on this browser."
-                                : "Connect secure accounts and bring your spreadsheets to life."}
-              </p>
-            </div>
-            <div className="heading-actions">
-              {view !== "property" &&
-                view !== "activity" &&
-                view !== "admin" &&
-                view !== "reports" && (
-                  <label className="year-control">
-                    <span>Reporting year</span>
-                    <select
-                      aria-label="Budget year"
-                      disabled={busy}
-                      value={year}
-                      onChange={(e) =>
-                        navigate(() => setYear(Number(e.target.value)))
+                <div className="mode-copy">
+                  <ShieldCheck size={15} />
+                  {view === "insight" ? (
+                    <>
+                      Public hospitality research · Sources and periods cited
+                      below.
+                    </>
+                  ) : publicDemo ? (
+                    <>
+                      Database manually sourced from Opera (PMS) · Maintained by
+                      Revenue Director &amp; Team.
+                    </>
+                  ) : localPin && view === "admin" ? (
+                    <>
+                      <strong>Production imports</strong> · Shared reports
+                      update only after a verified database save.
+                    </>
+                  ) : localPin ? (
+                    <>
+                      <strong>Local editing</strong> · Real workbook figures
+                      plus this browser’s saved edits. Not synchronized or
+                      published.
+                    </>
+                  ) : demo ? (
+                    <>
+                      <strong>
+                        {publicDemo
+                          ? "Public read-only demo"
+                          : "Interactive demo"}
+                      </strong>{" "}
+                      · Fictional figures. No real budgets are published.
+                      {!publicDemo && " Changes stay in this browser."}
+                    </>
+                  ) : (
+                    <>
+                      <strong>Private workspace</strong> ·{" "}
+                      {session
+                        ? "Your market permissions are enforced by the database."
+                        : "Sign in to see or update budget figures."}
+                    </>
+                  )}
+                </div>
+                {view === "insight" ? (
+                  <span className="last-update">
+                    Reviewed: {insightReviewed} · Snapshot
+                  </span>
+                ) : publicDemo ? (
+                  <span className="last-update" role="status">
+                    <span
+                      className="update-indicator animated"
+                      title={
+                        publicFeed
+                          ? "Saved database status; not an Opera live feed"
+                          : "Workbook snapshot; no live connection"
                       }
-                    >
-                      {budgetYears.map((y) => (
-                        <option key={y}>{y}</option>
-                      ))}
-                    </select>
-                  </label>
-                )}
-              {view !== "setup" &&
-                view !== "activity" &&
-                view !== "total" &&
-                view !== "insight" &&
-                view !== "reports" &&
-                view !== "admin" &&
-                view !== "property" && (
+                      aria-hidden="true"
+                    />
+                    {formatUpdate(publicUpdatedAt)}
+                  </span>
+                ) : localPin && view === "admin" ? (
+                  <span className="last-update">
+                    Dates derived from each uploaded record
+                  </span>
+                ) : localPin ? (
+                  <span className="last-update" role="status">
+                    <span
+                      className="update-indicator animated"
+                      aria-hidden="true"
+                    />
+                    {formatUpdate(lastSavedUpdate(entries), true)}
+                  </span>
+                ) : demo ? (
                   <button
-                    className="button outline"
-                    disabled={busy || !entries.length}
                     onClick={() =>
-                      download(
-                        selected
-                          ? entries.filter((e) => e.market_id === market)
-                          : entries,
-                        `KVM-${selected?.id ?? "all-markets"}-${year}`,
-                      )
-                    }
-                  >
-                    <ArrowDownToLine size={16} />
-                    Export report
-                  </button>
-                )}
-            </div>
-          </div>
-          {error && (
-            <div role="alert" className="error">
-              {error}
-              <button aria-label="Dismiss error" onClick={() => setError("")}>
-                <X size={16} />
-              </button>
-            </div>
-          )}
-          {toast && (
-            <div role="status" className="toast">
-              <Check size={16} />
-              {toast}
-            </div>
-          )}
-          {loading && (
-            <div role="status" className="loading">
-              Loading your market data…
-            </div>
-          )}
-          {countryOnly && ["overview", "reports", "total"].includes(view) && (
-            <CountryPerformance
-              key={`${session?.user.id}-${financialScope}`}
-              year={year}
-              scope={financialScope as "india" | "kazakhstan"}
-              editable={false}
-              demo={demo && !localPin}
-            />
-          )}
-          {!publicDemo && !localPin && view === "admin" && canEdit && (
-            <CountryPerformance year={year} editable demo={demo} />
-          )}
-          {!publicDemo && view === "property" && (
-            <PropertySetup
-              key={session?.user.id ?? "demo"}
-              demo={demo}
-              localOnly={localPin}
-              userId={session?.user.id ?? null}
-              onDirtyChange={setDirty}
-              onBusyChange={setBusy}
-            />
-          )}
-          {view === "insight" && (
-            <>
-              <ProductionAnalysis year={year} compactMoney />
-              <BusinessInsight />
-            </>
-          )}
-          {!countryOnly && ["overview", "total"].includes(view) && !market && (
-            <ProductionAnalysis year={year} market={market} />
-          )}
-          {!countryOnly && !market && ["overview", "total"].includes(view) && (
-            <div className="notice">
-              Budget planning / legacy workbook BOB below · Not the newly
-              uploaded reported-history or forecast source. Use Production
-              Analysis above for dated uploaded performance. Budget figures are
-              never replaced by actuals.
-            </div>
-          )}
-          {view === "total" && !countryOnly && (
-            <TotalReview
-              entries={entries}
-              year={year}
-              loading={loading}
-              demo={demo && !localPin}
-            />
-          )}
-          {view === "overview" && !market && !countryOnly && (
-            <>
-              <section className="stats-grid">
-                <Stat
-                  title="Total revenue budget"
-                  value={compact(totals.budget)}
-                  detail={`${year} annual target`}
-                  icon={<Globe2 size={19} />}
-                  accent
-                />
-                <Stat
-                  title="Business on the books"
-                  value={compact(totals.bob)}
-                  detail="Revenue secured to date"
-                  icon={<TrendingUp size={19} />}
-                />
-                <Stat
-                  title="Budget achievement"
-                  value={`${percentage(totals.bob, totals.budget).toFixed(1)}%`}
-                  detail={`${compact(Math.max(0, totals.budget - totals.bob))} remaining to target`}
-                  icon={<BarChart3 size={19} />}
-                />
-                <Stat
-                  title="Room nights on books"
-                  value={num(totals.booked)}
-                  detail={`of ${num(totals.nights)} budgeted nights`}
-                  icon={<Building2 size={19} />}
-                />
-              </section>
-              <div className="section-heading">
-                <div>
-                  <h2>
-                    Market Insights{" "}
-                    <span>{markets.length.toString().padStart(2, "0")}</span>
-                  </h2>
-                  <p>Select a market to explore its budget and performance.</p>
-                </div>
-                <span className="subtle">
-                  <span className="tiny-dot" />{" "}
-                  {publicDemo
-                    ? "Published real figures"
-                    : localPin
-                      ? "Browser-local workbook figures"
-                      : demo
-                        ? "Sample performance"
-                        : session
-                          ? "Your accessible markets"
-                          : "Sign-in required"}
-                </span>
-              </div>
-              <section className="market-grid">
-                {visibleMarkets.map((m) => {
-                  const data = entries.filter((e) => e.market_id === m.id);
-                  const t = summarize(data);
-                  const progress = percentage(t.bob, t.budget);
-                  return (
-                    <button
-                      key={m.id}
-                      className="market-card"
-                      onClick={() => openMarket(m.id)}
-                    >
-                      <div className="card-top">
-                        <span
-                          className="market-badge"
-                          style={{ color: m.color, background: m.color + "16" }}
-                        >
-                          {m.tag}
-                        </span>
-                        <span className="card-arrow">
-                          <ArrowUpRight size={19} />
-                        </span>
-                      </div>
-                      <h3>{m.name}</h3>
-                      <p>{m.region}</p>
-                      <div className="card-budget">
-                        <span>Annual revenue budget</span>
-                        <strong>{data.length ? money(t.budget) : "—"}</strong>
-                      </div>
-                      <div className="card-figures">
-                        <div>
-                          <span>On the books</span>
-                          <b>
-                            {data.length
-                              ? compact(t.bob)
-                              : publicDemo || localPin
-                                ? "Not available"
-                                : "Sign in for access"}
-                          </b>
-                        </div>
-                        <div>
-                          <span>Achievement</span>
-                          <b style={{ color: m.color }}>
-                            {progress.toFixed(1)}%
-                          </b>
-                        </div>
-                      </div>
-                      <div className="progress">
-                        <span
-                          style={{
-                            width: `${Math.min(100, progress)}%`,
-                            background: m.color,
-                          }}
-                        />
-                      </div>
-                      <footer>
-                        <span>
-                          <span
-                            className="tiny-dot"
-                            style={{ background: m.color }}
-                          />
-                          {publicDemo
-                            ? "Published budget"
-                            : localPin
-                              ? "Local workbook"
-                              : demo
-                                ? "Demo market"
-                                : "Secure market"}
-                        </span>
-                        <span>
-                          View market <ChevronRight size={13} />
-                        </span>
-                      </footer>
-                    </button>
-                  );
-                })}
-              </section>
-              <section className="panel performance">
-                <div className="section-heading">
-                  <div>
-                    <h2>Revenue at a glance</h2>
-                    <p>Monthly budget compared with business on the books</p>
-                  </div>
-                  <div className="legend">
-                    <span>
-                      <i />
-                      Budget
-                    </span>
-                    <span>
-                      <i />
-                      BOB
-                    </span>
-                  </div>
-                </div>
-                <div
-                  className="chart"
-                  role="img"
-                  aria-label="Monthly revenue budget and business on books bar chart"
-                >
-                  {months.map((m, i) => {
-                    const t = summarize(
-                      entries.filter((e) => e.month === i + 1),
-                    );
-                    const max = Math.max(
-                      ...months.map(
-                        (_, j) =>
-                          summarize(entries.filter((e) => e.month === j + 1))
-                            .budget,
-                      ),
-                      1,
-                    );
-                    return (
-                      <div className="chart-column" key={m}>
-                        <div
-                          className="bars"
-                          title={`${m}: budget ${money(t.budget)}, BOB ${money(t.bob)}`}
-                        >
-                          <span
-                            style={{ height: `${(t.budget / max) * 100}%` }}
-                          />
-                          <span style={{ height: `${(t.bob / max) * 100}%` }} />
-                        </div>
-                        <span>{m.slice(0, 3)}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </section>
-              <div className="footer-note">
-                <ShieldCheck size={14} />{" "}
-                {publicDemo
-                  ? "Published workbook figures · Manually maintained; no automated PMS feed."
-                  : localPin
-                    ? "Real workbook figures plus browser-local edits. Not a shared live feed."
-                    : demo
-                      ? "Exploring with fictional sample data. Connect your database before importing private budgets."
-                      : "Figures shown only for markets assigned to your account."}
-                <span>Revenue figures shown with $</span>
-              </div>
-            </>
-          )}
-          {localPin && view === "admin" && (
-            <>
-              <PerformanceInput />
-              <OperationalInput onBusyChange={setBusy} />
-            </>
-          )}
-          {!publicDemo && !localPin && view === "admin" && (
-            <section className="panel admin-access">
-              <h2>{demo ? "Demo Data Input" : "Administrator workspace"}</h2>
-              {demo ? (
-                <div className="notice">
-                  Fictional demo only. This demonstrates admin entry without
-                  authentication; edits stay in this browser and do not grant
-                  live administrator access.
-                </div>
-              ) : !session ? (
-                <>
-                  <p>
-                    Sign in with an administrator account to enter data. Market
-                    manager accounts are view-only.
-                  </p>
-                  <button
-                    className="button primary"
-                    onClick={() => setLogin(true)}
-                  >
-                    Sign in as administrator
-                  </button>
-                </>
-              ) : !adminRole ? (
-                <p role="status">Verifying administrator access…</p>
-              ) : !isAdmin ? (
-                <p role="alert">
-                  {roleError ||
-                    "Administrator access required. You can view assigned markets and generate reports, but only an administrator may enter or import data."}
-                </p>
-              ) : (
-                <p>
-                  Administrator access verified. All changes are versioned and
-                  audit logged.
-                </p>
-              )}
-              {canEdit && (
-                <label className="admin-market-label">
-                  Market for data input
-                  <select
-                    aria-label="Admin market"
-                    value={market ?? ""}
-                    disabled={busy || loading}
-                    onChange={(e) =>
                       navigate(() => {
-                        setMarket(e.target.value || null);
-                        setTab("commercial");
+                        setMarket(null);
+                        setView("setup");
                       })
                     }
                   >
-                    <option value="" disabled>
-                      Select a market
-                    </option>
-                    {markets.map((m) => (
-                      <option key={m.id} value={m.id}>
-                        {m.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              )}
-            </section>
-          )}
-          {view === "overview" &&
-            market &&
-            !countryOnly &&
-            (publicDemo || demo || session) && (
-              <>
-                <MarketPage
-                  key={market + year}
-                  market={market}
-                  name={selected?.name ?? market}
-                  year={year}
-                  entries={entries}
-                  onBack={() => navigate(() => setMarket(null))}
-                />
-                <details className="market-source-details">
-                  <summary>
-                    Uploaded completed-stay analysis · separate from budgets and
-                    BOB
-                  </summary>
-                  <ProductionAnalysis year={year} market={market} />
-                </details>
-              </>
-            )}
-          {((view === "overview" &&
-            market &&
-            !countryOnly &&
-            !publicDemo &&
-            !demo &&
-            !session) ||
-            (view === "admin" && !localPin && canEdit && market)) && (
-            <>
-              <button
-                className="back-link"
-                onClick={() =>
-                  navigate(() => {
-                    setMarket(null);
-                    setView("overview");
-                  })
-                }
-              >
-                <ArrowLeft size={14} />
-                All markets
-              </button>
-              {!publicDemo && !demo && !session ? (
-                <section className="panel empty">
-                  <LockKeyhole size={30} />
-                  <h2>Your market, securely managed.</h2>
-                  <p>
-                    Sign in with your manager account to see {selected?.name}{" "}
-                    budgets.
-                  </p>
-                  <button
-                    className="button primary"
-                    onClick={() => setLogin(true)}
-                  >
-                    Sign in to market
+                    Connect live data <ArrowUpRight size={13} />
                   </button>
-                </section>
-              ) : (
+                ) : (
+                  !session && (
+                    <button onClick={() => setLogin(true)}>
+                      Sign in <ArrowUpRight size={13} />
+                    </button>
+                  )
+                )}
+              </div>
+              <div
+                className={`page-heading ${view === "overview" && !market ? "pulse-heading" : ""}`}
+              >
+                <div>
+                  <div className="eyebrow">
+                    {selected
+                      ? "MARKET PERFORMANCE"
+                      : view === "overview"
+                        ? "YOUR COMMERCIAL PULSE"
+                        : "COMMERCIAL WORKSPACE"}
+                  </div>
+                  <h1>
+                    {view === "insight"
+                      ? "Business Insight"
+                      : view === "property"
+                        ? "Property Setup"
+                        : view === "admin"
+                          ? "Data Input"
+                          : selected
+                            ? selected.name
+                            : view === "total"
+                              ? "Management Lense"
+                              : view === "overview"
+                                ? "Commercial performance, from historical benchmarks to future targets."
+                                : view === "reports"
+                                  ? "Reports Library"
+                                  : view === "activity"
+                                    ? "Activity Log"
+                                    : "Make it your workspace."}
+                  </h1>
+                  <p>
+                    {view === "insight"
+                      ? "Maldives tourism, global hospitality and commercial risk intelligence — with sources and reporting dates."
+                      : view === "property"
+                        ? "Property profile and configuration. Viewable by all signed-in users; editable only by Super Admin."
+                        : view === "admin"
+                          ? "The only workspace for entering numbers, importing workbooks, and updating action plans."
+                          : selected
+                            ? "View saved performance. All data input is managed by an administrator."
+                            : view === "total"
+                              ? "One automatic review of saved performance across all markets."
+                              : view === "overview"
+                                ? "A unified executive view of property budgets, market pace, and revenue forecasts."
+                                : view === "reports"
+                                  ? "Visual intelligence for leadership and revenue teams."
+                                  : view === "activity"
+                                    ? "Access, updates and recent changes recorded on this browser."
+                                    : "Connect secure accounts and bring your spreadsheets to life."}
+                  </p>
+                </div>
+                <div className="heading-actions">
+                  {view !== "property" &&
+                    view !== "activity" &&
+                    view !== "admin" &&
+                    view !== "reports" && (
+                      <label className="year-control">
+                        <span>Reporting year</span>
+                        <select
+                          aria-label="Budget year"
+                          disabled={busy}
+                          value={year}
+                          onChange={(e) =>
+                            navigate(() => setYear(Number(e.target.value)))
+                          }
+                        >
+                          {budgetYears.map((y) => (
+                            <option key={y}>{y}</option>
+                          ))}
+                        </select>
+                      </label>
+                    )}
+                  {view !== "setup" &&
+                    view !== "activity" &&
+                    view !== "total" &&
+                    view !== "insight" &&
+                    view !== "reports" &&
+                    view !== "admin" &&
+                    view !== "property" && (
+                      <button
+                        className="button outline"
+                        disabled={busy || !entries.length}
+                        onClick={() =>
+                          download(
+                            selected
+                              ? entries.filter((e) => e.market_id === market)
+                              : entries,
+                            `KVM-${selected?.id ?? "all-markets"}-${year}`,
+                          )
+                        }
+                      >
+                        <ArrowDownToLine size={16} />
+                        Export report
+                      </button>
+                    )}
+                </div>
+              </div>
+              {error && (
+                <div role="alert" className="error">
+                  {error}
+                  <button
+                    aria-label="Dismiss error"
+                    onClick={() => setError("")}
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              )}
+              {toast && (
+                <div role="status" className="toast">
+                  <Check size={16} />
+                  {toast}
+                </div>
+              )}
+              {loading && (
+                <div role="status" className="loading">
+                  Loading your market data…
+                </div>
+              )}
+              {countryOnly &&
+                ["overview", "reports", "total"].includes(view) && (
+                  <CountryPerformance
+                    key={`${session?.user.id}-${financialScope}`}
+                    year={year}
+                    scope={financialScope as "india" | "kazakhstan"}
+                    editable={false}
+                    demo={demo && !localPin}
+                  />
+                )}
+              {!publicDemo && !localPin && view === "admin" && canEdit && (
+                <CountryPerformance year={year} editable demo={demo} />
+              )}
+              {!publicDemo && view === "property" && (
+                <PropertySetup
+                  key={session?.user.id ?? "demo"}
+                  demo={demo}
+                  localOnly={localPin}
+                  userId={session?.user.id ?? null}
+                  onDirtyChange={setDirty}
+                  onBusyChange={setBusy}
+                />
+              )}
+              {view === "insight" && (
                 <>
-                  <section className="stats-grid market-stats">
+                  <ProductionAnalysis year={year} compactMoney />
+                  <BusinessInsight />
+                </>
+              )}
+              {!countryOnly &&
+                ["overview", "total"].includes(view) &&
+                !market && <ProductionAnalysis year={year} market={market} />}
+              {!countryOnly &&
+                !market &&
+                ["overview", "total"].includes(view) && (
+                  <div className="notice">
+                    Budget planning / legacy workbook BOB below · Not the newly
+                    uploaded reported-history or forecast source. Use Production
+                    Analysis above for dated uploaded performance. Budget
+                    figures are never replaced by actuals.
+                  </div>
+                )}
+              {view === "total" && !countryOnly && (
+                <TotalReview
+                  entries={entries}
+                  year={year}
+                  loading={loading}
+                  demo={demo && !localPin}
+                />
+              )}
+              {view === "overview" && !market && !countryOnly && (
+                <>
+                  <section className="stats-grid">
                     <Stat
-                      title="Annual revenue budget"
-                      value={
-                        noAccess
-                          ? "—"
-                          : compact(
-                              summarize(
-                                entries.filter((e) => e.market_id === market),
-                              ).budget,
-                            )
-                      }
-                      detail={`${selected?.name} · ${year}`}
+                      title="Total revenue budget"
+                      value={compact(totals.budget)}
+                      detail={`${year} annual target`}
+                      icon={<Globe2 size={19} />}
+                      accent
                     />
                     <Stat
-                      title="Monthly revenue budget"
-                      value={
-                        !current && !canEdit
-                          ? "—"
-                          : money(activeData.commercial[1].budget)
-                      }
-                      detail={`${months[month - 1]} target`}
+                      title="Business on the books"
+                      value={compact(totals.bob)}
+                      detail="Revenue secured to date"
+                      icon={<TrendingUp size={19} />}
                     />
                     <Stat
-                      title="Monthly BOB revenue"
-                      value={
-                        !current && !canEdit
-                          ? "—"
-                          : money(activeData.commercial[1].bob)
-                      }
-                      detail={
-                        !current && !canEdit
-                          ? "Not available"
-                          : `${percentage(activeData.commercial[1].bob, activeData.commercial[1].budget).toFixed(1)}% of budget`
-                      }
+                      title="Budget achievement"
+                      value={`${percentage(totals.bob, totals.budget).toFixed(1)}%`}
+                      detail={`${compact(Math.max(0, totals.budget - totals.bob))} remaining to target`}
+                      icon={<BarChart3 size={19} />}
                     />
                     <Stat
-                      title="Revenue variance"
-                      value={
-                        !current && !canEdit
-                          ? "—"
-                          : money(
-                              activeData.commercial[1].bob -
-                                activeData.commercial[1].budget,
-                            )
-                      }
-                      detail="BOB minus budget"
+                      title="Room nights on books"
+                      value={num(totals.booked)}
+                      detail={`of ${num(totals.nights)} budgeted nights`}
+                      icon={<Building2 size={19} />}
                     />
                   </section>
-                  {noAccess && (
-                    <div className="notice">
-                      No saved data is available for this market and year. An
-                      administrator must enter or import data through Data
-                      Input. Missing data is not a confirmed zero budget.
+                  <div className="section-heading">
+                    <div>
+                      <h2>
+                        Market Insights{" "}
+                        <span>
+                          {markets.length.toString().padStart(2, "0")}
+                        </span>
+                      </h2>
+                      <p>
+                        Select a market to explore its budget and performance.
+                      </p>
                     </div>
-                  )}
-                  <section className="panel editor">
-                    <fieldset disabled={busy || loading}>
-                      <div className="editor-heading">
-                        <div>
-                          <h2>Monthly performance</h2>
-                          <p>
-                            BOB = business on the books. ADR is calculated
-                            automatically.
-                          </p>
-                        </div>
-                        {canEdit ? (
-                          <div className="editor-actions">
-                            <button
-                              className="button outline"
-                              disabled={busy}
-                              onClick={() => fileRef.current?.click()}
+                    <span className="subtle">
+                      <span className="tiny-dot" />{" "}
+                      {publicDemo
+                        ? "Published real figures"
+                        : localPin
+                          ? "Browser-local workbook figures"
+                          : demo
+                            ? "Sample performance"
+                            : session
+                              ? "Your accessible markets"
+                              : "Sign-in required"}
+                    </span>
+                  </div>
+                  <section className="market-grid">
+                    {visibleMarkets.map((m) => {
+                      const data = entries.filter((e) => e.market_id === m.id);
+                      const t = summarize(data);
+                      const progress = percentage(t.bob, t.budget);
+                      return (
+                        <button
+                          key={m.id}
+                          className="market-card"
+                          onClick={() => openMarket(m.id)}
+                        >
+                          <div className="card-top">
+                            <span
+                              className="market-badge"
+                              style={{
+                                color: m.color,
+                                background: m.color + "16",
+                              }}
                             >
-                              <Upload size={15} />
-                              Import Excel
-                            </button>
-                            <input
-                              ref={fileRef}
-                              type="file"
-                              hidden
-                              accept=".xlsx"
-                              aria-label="Import market workbook"
-                              onChange={(e) =>
-                                void importFile(e.target.files?.[0])
-                              }
-                            />
-                            <button
-                              className="button primary"
-                              disabled={busy || !dirty || loading}
-                              onClick={save}
-                            >
-                              <Save size={15} />
-                              {busy ? "Working…" : "Save changes"}
-                            </button>
+                              {m.tag}
+                            </span>
+                            <span className="card-arrow">
+                              <ArrowUpRight size={19} />
+                            </span>
                           </div>
-                        ) : (
-                          <span className="read-only-badge">
-                            <LockKeyhole size={14} />
-                            Read-only · Data Input manages all changes
-                          </span>
-                        )}
+                          <h3>{m.name}</h3>
+                          <p>{m.region}</p>
+                          <div className="card-budget">
+                            <span>Annual revenue budget</span>
+                            <strong>
+                              {data.length ? money(t.budget) : "—"}
+                            </strong>
+                          </div>
+                          <div className="card-figures">
+                            <div>
+                              <span>On the books</span>
+                              <b>
+                                {data.length
+                                  ? compact(t.bob)
+                                  : publicDemo || localPin
+                                    ? "Not available"
+                                    : "Sign in for access"}
+                              </b>
+                            </div>
+                            <div>
+                              <span>Achievement</span>
+                              <b style={{ color: m.color }}>
+                                {progress.toFixed(1)}%
+                              </b>
+                            </div>
+                          </div>
+                          <div className="progress">
+                            <span
+                              style={{
+                                width: `${Math.min(100, progress)}%`,
+                                background: m.color,
+                              }}
+                            />
+                          </div>
+                          <footer>
+                            <span>
+                              <span
+                                className="tiny-dot"
+                                style={{ background: m.color }}
+                              />
+                              {publicDemo
+                                ? "Published budget"
+                                : localPin
+                                  ? "Local workbook"
+                                  : demo
+                                    ? "Demo market"
+                                    : "Secure market"}
+                            </span>
+                            <span>
+                              View market <ChevronRight size={13} />
+                            </span>
+                          </footer>
+                        </button>
+                      );
+                    })}
+                  </section>
+                  <section className="panel performance">
+                    <div className="section-heading">
+                      <div>
+                        <h2>Revenue at a glance</h2>
+                        <p>
+                          Monthly budget compared with business on the books
+                        </p>
                       </div>
-                      <div className="month-tabs">
-                        {months.map((m, i) => (
-                          <button
-                            key={m}
-                            disabled={busy}
-                            className={month === i + 1 ? "active" : ""}
-                            onClick={() => navigate(() => setMonth(i + 1))}
-                          >
-                            {m.slice(0, 3)}
-                          </button>
-                        ))}
-                      </div>
-                      <div className="editor-subheader">
-                        <div className="detail-tabs">
-                          {(
-                            [
-                              ["commercial", "Commercial targets"],
-                              ["villas", "Villa types"],
-                              ["countries", "Countries"],
-                              ["meals", "Meal plans"],
-                              ["notes", "Action plan"],
-                            ] as const
-                          ).map(([id, label]) => (
-                            <button
-                              key={id}
-                              className={tab === id ? "active" : ""}
-                              onClick={() => setTab(id)}
-                            >
-                              {label}
-                            </button>
-                          ))}
-                        </div>
-                        <span className="save-status">
-                          {!canEdit
-                            ? "Read-only"
-                            : dirty
-                              ? "Unsaved changes"
-                              : current
-                                ? "Saved"
-                                : "Not yet saved"}
+                      <div className="legend">
+                        <span>
+                          <i />
+                          Budget
+                        </span>
+                        <span>
+                          <i />
+                          BOB
                         </span>
                       </div>
-                      {!current && !canEdit ? (
-                        <div className="empty">
-                          No figures supplied for {selected?.name} ·{" "}
-                          {months[month - 1]} {year}. Enter data through Data
-                          Input; missing figures are not zero.
-                        </div>
-                      ) : tab === "notes" ? (
-                        <div className="notes">
-                          <label htmlFor="notes">
-                            Performance review & corrective actions
-                          </label>
-                          <p>
-                            {canEdit
-                              ? "Record reasons for variance, next steps, and owners."
-                              : "Saved by an administrator."}
-                          </p>
-                          {canEdit ? (
-                            <textarea
-                              id="notes"
-                              maxLength={10000}
-                              value={activeData.notes}
-                              onChange={(e) => {
-                                setDraft({
-                                  ...activeData,
-                                  notes: e.target.value,
-                                });
-                                setDirty(true);
-                              }}
-                              placeholder="What will help this market reach its target?"
-                            />
-                          ) : (
-                            <p className="read-only-notes">
-                              {activeData.notes || "No action plan recorded."}
-                            </p>
-                          )}
-                        </div>
-                      ) : (
-                        <>
-                          <div className="table-scroll">
-                            <table className="editable-table">
-                              <thead>
-                                <tr>
-                                  <th>
-                                    {tab === "commercial"
-                                      ? "KPI"
-                                      : tab === "villas"
-                                        ? "Villa category"
-                                        : tab === "countries"
-                                          ? "Country"
-                                          : "Meal plan"}
-                                  </th>
-                                  <th>Budget</th>
-                                  <th>BOB to date</th>
-                                  <th>Variance</th>
-                                  {[1, 2, 3, 4].map((w) => (
-                                    <th key={w} colSpan={2}>
-                                      Week {w === 4 ? "4/5" : w}
-                                    </th>
-                                  ))}
-                                </tr>
-                                <tr className="subhead">
-                                  <th />
-                                  <th />
-                                  <th />
-                                  <th />
-                                  {[1, 2, 3, 4].map((w) => (
-                                    <FragmentPair key={w} />
-                                  ))}
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {activeData[tab].map((r, i) => (
-                                  <tr key={i}>
-                                    <th>{r.label}</th>
-                                    <td>
-                                      <Numeric
-                                        editable={canEdit}
-                                        label={`${r.label} budget`}
-                                        value={r.budget}
-                                        onChange={(v) =>
-                                          updateRow(i, { ...r, budget: v })
-                                        }
-                                      />
-                                    </td>
-                                    <td>
-                                      <Numeric
-                                        editable={canEdit}
-                                        label={`${r.label} BOB`}
-                                        value={r.bob}
-                                        onChange={(v) =>
-                                          updateRow(i, { ...r, bob: v })
-                                        }
-                                      />
-                                    </td>
-                                    <td
-                                      className={
-                                        r.bob - r.budget < 0
-                                          ? "negative"
-                                          : "positive"
-                                      }
-                                    >
-                                      {isMoneyMetric(r.label)
-                                        ? money(r.bob - r.budget)
-                                        : num(r.bob - r.budget)}
-                                    </td>
-                                    {r.targets.map((v, w) => (
-                                      <CellPair
-                                        key={w}
-                                        r={r}
-                                        w={w}
-                                        target={v}
-                                        editable={canEdit}
-                                        update={(next) => updateRow(i, next)}
-                                      />
-                                    ))}
-                                  </tr>
-                                ))}
-                                {tab === "commercial" && (
-                                  <tr className="derived">
-                                    <th>
-                                      ADR <span>calculated</span>
-                                    </th>
-                                    <td>
-                                      {money(
-                                        adr(
-                                          activeData.commercial[1].budget,
-                                          activeData.commercial[0].budget,
-                                        ),
-                                      )}
-                                    </td>
-                                    <td>
-                                      {money(
-                                        adr(
-                                          activeData.commercial[1].bob,
-                                          activeData.commercial[0].bob,
-                                        ),
-                                      )}
-                                    </td>
-                                    <td>—</td>
-                                    {[0, 1, 2, 3].map((w) => (
-                                      <AdrPair
-                                        key={w}
-                                        data={activeData}
-                                        w={w}
-                                      />
-                                    ))}
-                                  </tr>
-                                )}
-                              </tbody>
-                            </table>
+                    </div>
+                    <div
+                      className="chart"
+                      role="img"
+                      aria-label="Monthly revenue budget and business on books bar chart"
+                    >
+                      {months.map((m, i) => {
+                        const t = summarize(
+                          entries.filter((e) => e.month === i + 1),
+                        );
+                        const max = Math.max(
+                          ...months.map(
+                            (_, j) =>
+                              summarize(
+                                entries.filter((e) => e.month === j + 1),
+                              ).budget,
+                          ),
+                          1,
+                        );
+                        return (
+                          <div className="chart-column" key={m}>
+                            <div
+                              className="bars"
+                              title={`${m}: budget ${money(t.budget)}, BOB ${money(t.bob)}`}
+                            >
+                              <span
+                                style={{ height: `${(t.budget / max) * 100}%` }}
+                              />
+                              <span
+                                style={{ height: `${(t.bob / max) * 100}%` }}
+                              />
+                            </div>
+                            <span>{m.slice(0, 3)}</span>
                           </div>
-                          {canEdit && tab !== "commercial" && (
-                            <div className="add-row">
+                        );
+                      })}
+                    </div>
+                  </section>
+                  <div className="footer-note">
+                    <ShieldCheck size={14} />{" "}
+                    {publicDemo
+                      ? "Published workbook figures · Manually maintained; no automated PMS feed."
+                      : localPin
+                        ? "Real workbook figures plus browser-local edits. Not a shared live feed."
+                        : demo
+                          ? "Exploring with fictional sample data. Connect your database before importing private budgets."
+                          : "Figures shown only for markets assigned to your account."}
+                    <span>Revenue figures shown with $</span>
+                  </div>
+                </>
+              )}
+              {localPin && view === "admin" && (
+                <>
+                  <PerformanceInput />
+                  <OperationalInput onBusyChange={setBusy} />
+                </>
+              )}
+              {!publicDemo && !localPin && view === "admin" && (
+                <section className="panel admin-access">
+                  <h2>
+                    {demo ? "Demo Data Input" : "Administrator workspace"}
+                  </h2>
+                  {demo ? (
+                    <div className="notice">
+                      Fictional demo only. This demonstrates admin entry without
+                      authentication; edits stay in this browser and do not
+                      grant live administrator access.
+                    </div>
+                  ) : !session ? (
+                    <>
+                      <p>
+                        Sign in with an administrator account to enter data.
+                        Market manager accounts are view-only.
+                      </p>
+                      <button
+                        className="button primary"
+                        onClick={() => setLogin(true)}
+                      >
+                        Sign in as administrator
+                      </button>
+                    </>
+                  ) : !adminRole ? (
+                    <p role="status">Verifying administrator access…</p>
+                  ) : !isAdmin ? (
+                    <p role="alert">
+                      {roleError ||
+                        "Administrator access required. You can view assigned markets and generate reports, but only an administrator may enter or import data."}
+                    </p>
+                  ) : (
+                    <p>
+                      Administrator access verified. All changes are versioned
+                      and audit logged.
+                    </p>
+                  )}
+                  {canEdit && (
+                    <label className="admin-market-label">
+                      Market for data input
+                      <select
+                        aria-label="Admin market"
+                        value={market ?? ""}
+                        disabled={busy || loading}
+                        onChange={(e) =>
+                          navigate(() => {
+                            setMarket(e.target.value || null);
+                            setTab("commercial");
+                          })
+                        }
+                      >
+                        <option value="" disabled>
+                          Select a market
+                        </option>
+                        {markets.map((m) => (
+                          <option key={m.id} value={m.id}>
+                            {m.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
+                </section>
+              )}
+              {view === "overview" &&
+                market &&
+                !countryOnly &&
+                (publicDemo || demo || session) && (
+                  <>
+                    <MarketPage
+                      key={market + year}
+                      market={market}
+                      name={selected?.name ?? market}
+                      year={year}
+                      entries={entries}
+                      onBack={() => navigate(() => setMarket(null))}
+                    />
+                    <details className="market-source-details">
+                      <summary>
+                        Uploaded completed-stay analysis · separate from budgets
+                        and BOB
+                      </summary>
+                      <ProductionAnalysis year={year} market={market} />
+                    </details>
+                  </>
+                )}
+              {((view === "overview" &&
+                market &&
+                !countryOnly &&
+                !publicDemo &&
+                !demo &&
+                !session) ||
+                (view === "admin" && !localPin && canEdit && market)) && (
+                <>
+                  <button
+                    className="back-link"
+                    onClick={() =>
+                      navigate(() => {
+                        setMarket(null);
+                        setView("overview");
+                      })
+                    }
+                  >
+                    <ArrowLeft size={14} />
+                    All markets
+                  </button>
+                  {!publicDemo && !demo && !session ? (
+                    <section className="panel empty">
+                      <LockKeyhole size={30} />
+                      <h2>Your market, securely managed.</h2>
+                      <p>
+                        Sign in with your manager account to see{" "}
+                        {selected?.name} budgets.
+                      </p>
+                      <button
+                        className="button primary"
+                        onClick={() => setLogin(true)}
+                      >
+                        Sign in to market
+                      </button>
+                    </section>
+                  ) : (
+                    <>
+                      <section className="stats-grid market-stats">
+                        <Stat
+                          title="Annual revenue budget"
+                          value={
+                            noAccess
+                              ? "—"
+                              : compact(
+                                  summarize(
+                                    entries.filter(
+                                      (e) => e.market_id === market,
+                                    ),
+                                  ).budget,
+                                )
+                          }
+                          detail={`${selected?.name} · ${year}`}
+                        />
+                        <Stat
+                          title="Monthly revenue budget"
+                          value={
+                            !current && !canEdit
+                              ? "—"
+                              : money(activeData.commercial[1].budget)
+                          }
+                          detail={`${months[month - 1]} target`}
+                        />
+                        <Stat
+                          title="Monthly BOB revenue"
+                          value={
+                            !current && !canEdit
+                              ? "—"
+                              : money(activeData.commercial[1].bob)
+                          }
+                          detail={
+                            !current && !canEdit
+                              ? "Not available"
+                              : `${percentage(activeData.commercial[1].bob, activeData.commercial[1].budget).toFixed(1)}% of budget`
+                          }
+                        />
+                        <Stat
+                          title="Revenue variance"
+                          value={
+                            !current && !canEdit
+                              ? "—"
+                              : money(
+                                  activeData.commercial[1].bob -
+                                    activeData.commercial[1].budget,
+                                )
+                          }
+                          detail="BOB minus budget"
+                        />
+                      </section>
+                      {noAccess && (
+                        <div className="notice">
+                          No saved data is available for this market and year.
+                          An administrator must enter or import data through
+                          Data Input. Missing data is not a confirmed zero
+                          budget.
+                        </div>
+                      )}
+                      <section className="panel editor">
+                        <fieldset disabled={busy || loading}>
+                          <div className="editor-heading">
+                            <div>
+                              <h2>Monthly performance</h2>
+                              <p>
+                                BOB = business on the books. ADR is calculated
+                                automatically.
+                              </p>
+                            </div>
+                            {canEdit ? (
+                              <div className="editor-actions">
+                                <button
+                                  className="button outline"
+                                  disabled={busy}
+                                  onClick={() => fileRef.current?.click()}
+                                >
+                                  <Upload size={15} />
+                                  Import Excel
+                                </button>
+                                <input
+                                  ref={fileRef}
+                                  type="file"
+                                  hidden
+                                  accept=".xlsx"
+                                  aria-label="Import market workbook"
+                                  onChange={(e) =>
+                                    void importFile(e.target.files?.[0])
+                                  }
+                                />
+                                <button
+                                  className="button primary"
+                                  disabled={busy || !dirty || loading}
+                                  onClick={save}
+                                >
+                                  <Save size={15} />
+                                  {busy ? "Working…" : "Save changes"}
+                                </button>
+                              </div>
+                            ) : (
+                              <span className="read-only-badge">
+                                <LockKeyhole size={14} />
+                                Read-only · Data Input manages all changes
+                              </span>
+                            )}
+                          </div>
+                          <div className="month-tabs">
+                            {months.map((m, i) => (
                               <button
-                                className="text-button"
-                                onClick={() => {
-                                  const label = window.prompt(
-                                    "Name of the new category",
-                                  );
-                                  if (label?.trim() && label.length <= 200) {
+                                key={m}
+                                disabled={busy}
+                                className={month === i + 1 ? "active" : ""}
+                                onClick={() => navigate(() => setMonth(i + 1))}
+                              >
+                                {m.slice(0, 3)}
+                              </button>
+                            ))}
+                          </div>
+                          <div className="editor-subheader">
+                            <div className="detail-tabs">
+                              {(
+                                [
+                                  ["commercial", "Commercial targets"],
+                                  ["villas", "Villa types"],
+                                  ["countries", "Countries"],
+                                  ["meals", "Meal plans"],
+                                  ["notes", "Action plan"],
+                                ] as const
+                              ).map(([id, label]) => (
+                                <button
+                                  key={id}
+                                  className={tab === id ? "active" : ""}
+                                  onClick={() => setTab(id)}
+                                >
+                                  {label}
+                                </button>
+                              ))}
+                            </div>
+                            <span className="save-status">
+                              {!canEdit
+                                ? "Read-only"
+                                : dirty
+                                  ? "Unsaved changes"
+                                  : current
+                                    ? "Saved"
+                                    : "Not yet saved"}
+                            </span>
+                          </div>
+                          {!current && !canEdit ? (
+                            <div className="empty">
+                              No figures supplied for {selected?.name} ·{" "}
+                              {months[month - 1]} {year}. Enter data through
+                              Data Input; missing figures are not zero.
+                            </div>
+                          ) : tab === "notes" ? (
+                            <div className="notes">
+                              <label htmlFor="notes">
+                                Performance review & corrective actions
+                              </label>
+                              <p>
+                                {canEdit
+                                  ? "Record reasons for variance, next steps, and owners."
+                                  : "Saved by an administrator."}
+                              </p>
+                              {canEdit ? (
+                                <textarea
+                                  id="notes"
+                                  maxLength={10000}
+                                  value={activeData.notes}
+                                  onChange={(e) => {
                                     setDraft({
                                       ...activeData,
-                                      [tab]: [
-                                        ...activeData[tab],
-                                        row(label.trim()),
-                                      ],
+                                      notes: e.target.value,
                                     });
                                     setDirty(true);
-                                  }
-                                }}
-                              >
-                                <Plus size={14} />
-                                Add category
-                              </button>
-                              <span>
-                                Breakdown figures are independent; reconcile
-                                them with commercial totals.
-                              </span>
+                                  }}
+                                  placeholder="What will help this market reach its target?"
+                                />
+                              ) : (
+                                <p className="read-only-notes">
+                                  {activeData.notes ||
+                                    "No action plan recorded."}
+                                </p>
+                              )}
                             </div>
+                          ) : (
+                            <>
+                              <div className="table-scroll">
+                                <table className="editable-table">
+                                  <thead>
+                                    <tr>
+                                      <th>
+                                        {tab === "commercial"
+                                          ? "KPI"
+                                          : tab === "villas"
+                                            ? "Villa category"
+                                            : tab === "countries"
+                                              ? "Country"
+                                              : "Meal plan"}
+                                      </th>
+                                      <th>Budget</th>
+                                      <th>BOB to date</th>
+                                      <th>Variance</th>
+                                      {[1, 2, 3, 4].map((w) => (
+                                        <th key={w} colSpan={2}>
+                                          Week {w === 4 ? "4/5" : w}
+                                        </th>
+                                      ))}
+                                    </tr>
+                                    <tr className="subhead">
+                                      <th />
+                                      <th />
+                                      <th />
+                                      <th />
+                                      {[1, 2, 3, 4].map((w) => (
+                                        <FragmentPair key={w} />
+                                      ))}
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {activeData[tab].map((r, i) => (
+                                      <tr key={i}>
+                                        <th>{r.label}</th>
+                                        <td>
+                                          <Numeric
+                                            editable={canEdit}
+                                            label={`${r.label} budget`}
+                                            value={r.budget}
+                                            onChange={(v) =>
+                                              updateRow(i, { ...r, budget: v })
+                                            }
+                                          />
+                                        </td>
+                                        <td>
+                                          <Numeric
+                                            editable={canEdit}
+                                            label={`${r.label} BOB`}
+                                            value={r.bob}
+                                            onChange={(v) =>
+                                              updateRow(i, { ...r, bob: v })
+                                            }
+                                          />
+                                        </td>
+                                        <td
+                                          className={
+                                            r.bob - r.budget < 0
+                                              ? "negative"
+                                              : "positive"
+                                          }
+                                        >
+                                          {isMoneyMetric(r.label)
+                                            ? money(r.bob - r.budget)
+                                            : num(r.bob - r.budget)}
+                                        </td>
+                                        {r.targets.map((v, w) => (
+                                          <CellPair
+                                            key={w}
+                                            r={r}
+                                            w={w}
+                                            target={v}
+                                            editable={canEdit}
+                                            update={(next) =>
+                                              updateRow(i, next)
+                                            }
+                                          />
+                                        ))}
+                                      </tr>
+                                    ))}
+                                    {tab === "commercial" && (
+                                      <tr className="derived">
+                                        <th>
+                                          ADR <span>calculated</span>
+                                        </th>
+                                        <td>
+                                          {money(
+                                            adr(
+                                              activeData.commercial[1].budget,
+                                              activeData.commercial[0].budget,
+                                            ),
+                                          )}
+                                        </td>
+                                        <td>
+                                          {money(
+                                            adr(
+                                              activeData.commercial[1].bob,
+                                              activeData.commercial[0].bob,
+                                            ),
+                                          )}
+                                        </td>
+                                        <td>—</td>
+                                        {[0, 1, 2, 3].map((w) => (
+                                          <AdrPair
+                                            key={w}
+                                            data={activeData}
+                                            w={w}
+                                          />
+                                        ))}
+                                      </tr>
+                                    )}
+                                  </tbody>
+                                </table>
+                              </div>
+                              {canEdit && tab !== "commercial" && (
+                                <div className="add-row">
+                                  <button
+                                    className="text-button"
+                                    onClick={() => {
+                                      const label = window.prompt(
+                                        "Name of the new category",
+                                      );
+                                      if (
+                                        label?.trim() &&
+                                        label.length <= 200
+                                      ) {
+                                        setDraft({
+                                          ...activeData,
+                                          [tab]: [
+                                            ...activeData[tab],
+                                            row(label.trim()),
+                                          ],
+                                        });
+                                        setDirty(true);
+                                      }
+                                    }}
+                                  >
+                                    <Plus size={14} />
+                                    Add category
+                                  </button>
+                                  <span>
+                                    Breakdown figures are independent; reconcile
+                                    them with commercial totals.
+                                  </span>
+                                </div>
+                              )}
+                            </>
                           )}
-                        </>
-                      )}
-                      <div className="editor-footer">
-                        <span>
-                          <LockKeyhole size={13} />
-                          {!canEdit
-                            ? "Read-only · Changes are made only in Data Input"
-                            : localPin
-                              ? "Local edits stay in your browser"
-                              : demo
-                                ? "Demo admin edits stay in your browser"
-                                : "Admin changes are versioned and audit logged"}{" "}
-                          · Currency: $
-                        </span>
-                        {canEdit && (
-                          <button className="text-button" onClick={refresh}>
-                            Discard & reload
-                          </button>
-                        )}
-                      </div>
-                    </fieldset>
-                  </section>
+                          <div className="editor-footer">
+                            <span>
+                              <LockKeyhole size={13} />
+                              {!canEdit
+                                ? "Read-only · Changes are made only in Data Input"
+                                : localPin
+                                  ? "Local edits stay in your browser"
+                                  : demo
+                                    ? "Demo admin edits stay in your browser"
+                                    : "Admin changes are versioned and audit logged"}{" "}
+                              · Currency: $
+                            </span>
+                            {canEdit && (
+                              <button className="text-button" onClick={refresh}>
+                                Discard & reload
+                              </button>
+                            )}
+                          </div>
+                        </fieldset>
+                      </section>
+                    </>
+                  )}
                 </>
+              )}
+              {view === "reports" && !countryOnly && (
+                <ReportLibrary
+                  onYearChange={setYear}
+                  entries={entries}
+                  year={year}
+                  loading={loading}
+                  source={
+                    localPin
+                      ? "Browser-local saved inputs; not shared"
+                      : publicDemo
+                        ? reportSource
+                        : demo
+                          ? "Fictional demonstration data"
+                          : "Saved authorized market data"
+                  }
+                />
+              )}
+              {view === "activity" && !publicDemo && <ActivityLog />}
+              {!publicDemo && view === "setup" && (
+                <section className="panel setup">
+                  <div className="setup-icon">
+                    <ShieldCheck size={27} />
+                  </div>
+                  <h2>
+                    {demo
+                      ? "Ready for your real numbers."
+                      : "Your secure workspace."}
+                  </h2>
+                  <p>
+                    The interface is ready. Live accounts and shared data
+                    require a Supabase project.
+                  </p>
+                  <ol>
+                    <li>
+                      <strong>Connect a database</strong>
+                      <p>
+                        Run the repository’s <code>supabase/schema.sql</code> in
+                        your Supabase project. It creates market tables,
+                        permission policies, version checks, and an audit log.
+                      </p>
+                    </li>
+                    <li>
+                      <strong>Configure this application</strong>
+                      <p>
+                        Set <code>VITE_SUPABASE_URL</code> and{" "}
+                        <code>VITE_SUPABASE_PUBLISHABLE_KEY</code> as project
+                        environment variables, then redeploy. Never use a secret
+                        or service-role key in the browser.
+                      </p>
+                    </li>
+                    <li>
+                      <strong>Invite and assign managers</strong>
+                      <p>
+                        Create manager accounts in Supabase Auth. A database
+                        administrator assigns each account to one or more
+                        markets. No self-assignment is possible. See the README
+                        for SQL examples.
+                      </p>
+                    </li>
+                    <li>
+                      <strong>Import your market workbooks</strong>
+                      <p>
+                        An administrator uses Data Input to choose the matching
+                        market and year, then Import Excel. All other pages are
+                        read-only. FULL BUDGET is a reference workbook, not a
+                        market import.
+                      </p>
+                    </li>
+                  </ol>
+                  <div className="notice">
+                    USD is the initial reporting currency; no currency
+                    conversion is applied. Confirm the currency before
+                    importing. Your original workbooks have not been committed
+                    or uploaded.
+                  </div>
+                  <a
+                    className="button primary"
+                    href="https://github.com/Aasn22/KVM-Business-Tracker#readme"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Read setup guide <ArrowUpRight size={16} />
+                  </a>
+                </section>
               )}
             </>
           )}
-          {view === "reports" && !countryOnly && (
-            <ReportLibrary
-              onYearChange={setYear}
-              entries={entries}
-              year={year}
-              loading={loading}
-              source={
-                localPin
-                  ? "Browser-local saved inputs; not shared"
-                  : publicDemo
-                    ? reportSource
-                    : demo
-                      ? "Fictional demonstration data"
-                      : "Saved authorized market data"
-              }
-            />
-          )}
-          {view === "activity" && !publicDemo && <ActivityLog />}
-          {!publicDemo && view === "setup" && (
-            <section className="panel setup">
-              <div className="setup-icon">
-                <ShieldCheck size={27} />
-              </div>
-              <h2>
-                {demo
-                  ? "Ready for your real numbers."
-                  : "Your secure workspace."}
-              </h2>
-              <p>
-                The interface is ready. Live accounts and shared data require a
-                Supabase project.
-              </p>
-              <ol>
-                <li>
-                  <strong>Connect a database</strong>
-                  <p>
-                    Run the repository’s <code>supabase/schema.sql</code> in
-                    your Supabase project. It creates market tables, permission
-                    policies, version checks, and an audit log.
-                  </p>
-                </li>
-                <li>
-                  <strong>Configure this application</strong>
-                  <p>
-                    Set <code>VITE_SUPABASE_URL</code> and{" "}
-                    <code>VITE_SUPABASE_PUBLISHABLE_KEY</code> as project
-                    environment variables, then redeploy. Never use a secret or
-                    service-role key in the browser.
-                  </p>
-                </li>
-                <li>
-                  <strong>Invite and assign managers</strong>
-                  <p>
-                    Create manager accounts in Supabase Auth. A database
-                    administrator assigns each account to one or more markets.
-                    No self-assignment is possible. See the README for SQL
-                    examples.
-                  </p>
-                </li>
-                <li>
-                  <strong>Import your market workbooks</strong>
-                  <p>
-                    An administrator uses Data Input to choose the matching
-                    market and year, then Import Excel. All other pages are
-                    read-only. FULL BUDGET is a reference workbook, not a market
-                    import.
-                  </p>
-                </li>
-              </ol>
-              <div className="notice">
-                USD is the initial reporting currency; no currency conversion is
-                applied. Confirm the currency before importing. Your original
-                workbooks have not been committed or uploaded.
-              </div>
-              <a
-                className="button primary"
-                href="https://github.com/Aasn22/KVM-Business-Tracker#readme"
-                target="_blank"
-                rel="noreferrer"
-              >
-                Read setup guide <ArrowUpRight size={16} />
-              </a>
-            </section>
-          )}
         </main>
-        <PageInsights
-          view={view}
-          entries={entries}
-          year={year}
-          market={market}
-        />
+        {!(view === "overview" && !market) && (
+          <PageInsights
+            view={view}
+            entries={entries}
+            year={year}
+            market={market}
+          />
+        )}
       </div>
       {login && (
         <div className="modal-backdrop">

@@ -6,17 +6,11 @@ describe("public read-only dashboard", () => {
   it("opens the dashboard with clear real-data labels and no login form", () => {
     vi.stubGlobal("window", { location: { pathname: "/" } });
     const html = renderToStaticMarkup(<App publicDemo />);
-    expect(html).toContain("Maintained by Revenue Director");
-    expect(html).toContain("Database manually sourced from Opera (PMS)");
-    expect(html).toContain("Last update: Not available");
-    expect(html).not.toContain("Live database from Opera");
-    expect(html).not.toContain("Data source details");
-    expect(html).not.toContain("WORKBOOK SNAPSHOT");
-    expect(html).toContain("compact-status");
-    expect(html).not.toContain("Fictional figures");
-    expect(html).toContain(
-      "Commercial performance, from historical benchmarks to future targets.",
-    );
+    expect(html).toContain("Commercial performance · KVM (2021 – 2026)");
+    expect(html).toContain("Commercial Budget · KVM (2027)");
+    expect(html).not.toContain("compact-status");
+    expect(html).not.toContain("Revenue at a glance");
+    expect(html).not.toContain("Show page insights");
     expect(html).not.toContain("Email me a sign-in link");
     expect(html).not.toContain("Try Super Admin");
     expect(html).not.toContain(">Data Input</button>");

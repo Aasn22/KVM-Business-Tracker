@@ -8,12 +8,8 @@ describe("read-only views and admin entry", () => {
     const html = renderToStaticMarkup(<App />);
     expect(html.match(/src="\/kuda-villingili-logo.png"/g)).toHaveLength(1);
     expect(html).toContain("KVM BUSINESS LENSE");
-    expect(html).toContain(
-      "Commercial performance, from historical benchmarks to future targets.",
-    );
-    expect(html).toContain(
-      "A unified executive view of property budgets, market pace, and revenue forecasts.",
-    );
+    expect(html).toContain("Commercial performance · KVM (2021 – 2026)");
+    expect(html).toContain("Commercial Budget · KVM (2027)");
     const button = html.match(
       /<button[^>]*aria-label="Commercial Pulse"[^>]*>[\s\S]*?<\/button>/,
     )?.[0];

@@ -15,6 +15,7 @@ import {
   pulseYoY,
   pulseMarketOrder,
   pulseMarketLabel,
+  pulseKnownSum,
 } from "./pulseData";
 type Metric = { label: string; value: string; note: string; detail?: string };
 export function PulseContent({
@@ -31,12 +32,11 @@ export function PulseContent({
     future = budgets.filter((e) => e.year === 2027),
     target = pulsePlanning(future);
   const actuals = pulseYears.map((y) => pulseActual(production, y));
-  const achieved = actuals.some((a) => a.revenue !== null)
-    ? actuals.reduce((a, r) => a + (r.revenue ?? 0), 0)
-    : null;
+  const achieved = pulseKnownSum(actuals.map((a) => a.revenue));
+  const totalAchieved = pulseKnownSum(actuals.map((a) => a.totalRevenue));
   const yoy = pulseYoY(production),
     unavailable = "Not supplied by current data. No value estimated.";
-  const historicalNote = `${planning.coverage}/${72 * 6} saved market-month budget records. Actuals: only supplied completed-stay dates; not necessarily full years. ${sourceNote}`;
+  const historicalNote = `${planning.coverage}/${72 * 6} saved market-month budget records. Actuals: sum of known room values on supplied completed-stay dates only; missing revenue values/years excluded, not verified zero; not necessarily full years. ${sourceNote}`;
   const change = (v: { amount: number; percent: number } | null) =>
     v ? `${v.percent.toFixed(1)}%` : "—";
   const top: Metric[] = [
@@ -49,7 +49,7 @@ export function PulseContent({
     {
       label: "Room Revenue Achieved",
       value: formatMoney(achieved),
-      note: "Year 2021 – Year 2026",
+      note: `Known values · ${actuals.filter((a) => a.revenue !== null).length}/6 years`,
       detail: historicalNote,
     },
     {
@@ -61,7 +61,7 @@ export function PulseContent({
     },
     {
       label: "Total Revenue Achieved",
-      value: "—",
+      value: formatMoney(totalAchieved),
       note: "Year 2021 – Year 2026",
       detail:
         "Production source contains room value only; no complete F&B/other achieved revenue.",
@@ -73,7 +73,12 @@ export function PulseContent({
       detail:
         "2026 vs 2025 on matching supplied completed stay-day coverage only. Unmatched/missing dates or unknown revenue means unavailable.",
     },
-    { label: "Total Revenue YOY", value: "—", note: "—", detail: unavailable },
+    {
+      label: "Total Revenue YOY",
+      value: formatMoney(yoy.totalRevenue?.amount ?? null),
+      note: change(yoy.totalRevenue),
+      detail: unavailable,
+    },
     {
       label: "ADR YOY",
       value: formatMoney(yoy.adr?.amount ?? null),
@@ -160,12 +165,24 @@ export function PulseContent({
             a ? "Achieved Room Revenue" : "BOB Room Revenue",
           ],
           [a ? a.adr : p.bobADR, a ? "Achieved ADR" : "BOB ADR"],
+          ...(a
+            ? [
+                [a.occupancy, "Actual Occupancy"],
+                [a.foodRevenue, "Actual F&B Revenue"],
+                [a.otherRevenue, "Actual Other Revenue"],
+                [a.totalRevenue, "Actual Total Revenue"],
+              ]
+            : []),
         ].map(([n, title]) => (
           <div key={String(title)}>
             <strong>
-              {/Revenue|ADR/.test(String(title))
-                ? formatMoney(n as number | null)
-                : formatNumber(n as number | null)}
+              {String(title) === "Actual Occupancy"
+                ? n === null
+                  ? "—"
+                  : `${Number(n).toFixed(1)}%`
+                : /Revenue|ADR/.test(String(title))
+                  ? formatMoney(n as number | null)
+                  : formatNumber(n as number | null)}
             </strong>
             <span>{title}</span>
           </div>
@@ -173,6 +190,15 @@ export function PulseContent({
       </article>
     );
   };
+  const annualRows = pulseYears.map((y, i) => ({
+    label: String(y),
+    budget: pulsePlanning(historical.filter((e) => e.year === y)),
+    actual: actuals[i],
+  }));
+  const marketRows = pulseMarketOrder.map((id) => ({
+    label: pulseMarketLabel(id),
+    value: pulsePlanning(future.filter((e) => e.market_id === id)),
+  }));
   return (
     <div className="pulse-board">
       <section aria-label="Commercial performance 2021 to 2026">
@@ -222,10 +248,193 @@ export function PulseContent({
                 `Sum of supplied market records only; ${target.coverage}/72 available. ${sourceNote}`,
               )}
             </div>
+            <div
+              className="pulse-mini-graphs"
+              aria-label="Mini performance charts"
+            >
+              <PulseMiniGraph
+                title="Annual Room Revenue"
+                money
+                rows={annualRows.map((r) => ({
+                  label: r.label,
+                  a: r.budget.budget,
+                  b: r.actual.revenue,
+                }))}
+                aLabel="Budget"
+                bLabel="Known achieved"
+              />
+              <PulseMiniGraph
+                title="Annual Room Nights"
+                rows={annualRows.map((r) => ({
+                  label: r.label,
+                  a: r.budget.nights,
+                  b: r.actual.nights,
+                }))}
+                aLabel="Target"
+                bLabel="Achieved"
+              />
+              <PulseMiniGraph
+                title="Annual ADR"
+                money
+                rows={annualRows.map((r) => ({
+                  label: r.label,
+                  a: r.budget.targetADR,
+                  b: r.actual.adr,
+                }))}
+                aLabel="Target"
+                bLabel="Achieved"
+              />
+              <PulseMiniGraph
+                title="2027 Market Room Revenue"
+                money
+                rows={marketRows.map((r) => ({
+                  label: r.label,
+                  a: r.value.budget,
+                  b: r.value.bob,
+                }))}
+                aLabel="Budget"
+                bLabel="BOB"
+              />
+              <PulseMiniGraph
+                title="2027 Market Room Nights"
+                rows={marketRows.map((r) => ({
+                  label: r.label,
+                  a: r.value.nights,
+                  b: r.value.booked,
+                }))}
+                aLabel="Target"
+                bLabel="BOB"
+              />
+              <PulseMiniGraph
+                title="2027 Market ADR"
+                money
+                rows={marketRows.map((r) => ({
+                  label: r.label,
+                  a: r.value.targetADR,
+                  b: r.value.bobADR,
+                }))}
+                aLabel="Target"
+                bLabel="BOB"
+              />
+              <PulseMiniGraph
+                title="Actual Revenue Components"
+                money
+                rows={annualRows.map((r) => ({
+                  label: r.label,
+                  a: r.actual.foodRevenue,
+                  b: r.actual.otherRevenue,
+                }))}
+                aLabel="F&B"
+                bLabel="Other"
+              />
+              <PulseMiniGraph
+                title="Actual Occupancy"
+                percent
+                rows={annualRows.map((r) => ({
+                  label: r.label,
+                  a: r.actual.occupancy,
+                  b: null,
+                }))}
+                aLabel="Occupancy"
+                bLabel=""
+              />
+            </div>
           </div>
         </div>
       </section>
     </div>
+  );
+}
+export function PulseMiniGraph({
+  title,
+  rows,
+  money = false,
+  percent = false,
+  aLabel,
+  bLabel,
+}: {
+  title: string;
+  rows: { label: string; a: number | null; b: number | null }[];
+  money?: boolean;
+  percent?: boolean;
+  aLabel: string;
+  bLabel: string;
+}) {
+  const maximum = Math.max(
+    1,
+    ...rows.flatMap((r) => [Math.abs(r.a ?? 0), Math.abs(r.b ?? 0)]),
+  );
+  const fmt = (n: number | null) =>
+    n === null
+      ? "Not available"
+      : money
+        ? formatMoney(n)
+        : percent
+          ? `${n.toFixed(1)}%`
+          : formatNumber(n);
+  const available = rows.some((r) => r.a !== null || r.b !== null);
+  return (
+    <figure className="pulse-mini-graph">
+      <figcaption>{title}</figcaption>
+      <div className="pulse-graph-legend">
+        <span>
+          <i />
+          {aLabel}
+        </span>
+        {bLabel && (
+          <span>
+            <i />
+            {bLabel}
+          </span>
+        )}
+      </div>
+      {!available ? (
+        <p className="pulse-graph-empty">
+          Not available — required source data not supplied.
+        </p>
+      ) : (
+        <div className="pulse-graph-rows">
+          {rows.map((r) => (
+            <div className="pulse-graph-row" key={r.label}>
+              <span>{r.label}</span>
+              <div>
+                {(
+                  [
+                    ["a", r.a, aLabel],
+                    ["b", r.b, bLabel],
+                  ] as const
+                )
+                  .filter(([, , name]) => name)
+                  .map(([key, value, name]) => (
+                    <div
+                      key={key}
+                      className={`pulse-graph-track ${key}`}
+                      aria-label={`${r.label} ${name}: ${fmt(value)}`}
+                      title={`${r.label} ${name}: ${fmt(value)}`}
+                    >
+                      <i
+                        style={{
+                          width:
+                            value === null
+                              ? "0"
+                              : `${(Math.abs(value) / maximum) * 100}%`,
+                        }}
+                      />
+                      {value === null && <small>—</small>}
+                    </div>
+                  ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      <small className="pulse-graph-footnote">
+        Supplied values only; — is missing, not zero.
+        {title === "Annual Room Revenue"
+          ? " Known achieved may exclude missing revenue records."
+          : ""}
+      </small>
+    </figure>
   );
 }
 export default function PulsePage({

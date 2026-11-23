@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
-import { PulseContent } from "./PulsePage";
+import { PulseContent, PulseMiniGraph } from "./PulsePage";
 import { pulsePlanning, pulseActual, pulseYoY, pulseYears } from "./pulseData";
 import { blank, type Entry } from "./model";
 import type { ProductionData } from "./production";
@@ -68,5 +68,61 @@ describe("compact linked Pulse", () => {
     };
     expect(pulseYoY(both).revenue?.amount).toBe(20);
     expect(pulseYoY(both).revenue?.percent).toBe(25);
+  });
+});
+
+describe("extended Pulse actuals and charts", () => {
+  it("adds all four actual rows for each historical year without inventing data", () => {
+    const html = renderToStaticMarkup(
+      <PulseContent budgets={[]} production={null} />,
+    );
+    for (const label of [
+      "Actual Occupancy",
+      "Actual F&amp;B Revenue",
+      "Actual Other Revenue",
+      "Actual Total Revenue",
+    ])
+      expect(html.split(`<span>${label}</span>`)).toHaveLength(7);
+    expect(html).toContain("Mini performance charts");
+    expect(html.match(/class="pulse-mini-graph"/g)).toHaveLength(8);
+    expect(html).toContain("required source data not supplied");
+  });
+  it("sums known room values but does not call incomplete components total revenue or comparable YoY", () => {
+    const data = {
+      days: [
+        {
+          date: "2026-01-01",
+          status: "CHECKED OUT",
+          revenue: 100,
+          nights: 1,
+          missingRevenue: 0,
+        },
+        {
+          date: "2026-01-02",
+          status: "CHECKED OUT",
+          revenue: 0,
+          nights: 1,
+          missingRevenue: 1,
+        },
+      ],
+    } as ProductionData;
+    expect(pulseActual(data, 2026).revenue).toBe(100);
+    expect(pulseActual(data, 2026).totalRevenue).toBeNull();
+    expect(pulseActual(data, 2026).adr).toBeNull();
+    expect(pulseYoY(data).totalRevenue).toBeNull();
+  });
+  it("charts known zero separately from missing values and exposes accessible numeric values", () => {
+    const html = renderToStaticMarkup(
+      <PulseMiniGraph
+        title="Test"
+        rows={[{ label: "2026", a: 0, b: null }]}
+        money
+        aLabel="Budget"
+        bLabel="Achieved"
+      />,
+    );
+    expect(html).toContain("2026 Budget: $0");
+    expect(html).toContain("2026 Achieved: Not available");
+    expect(html).not.toContain("required source data not supplied");
   });
 });

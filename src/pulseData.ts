@@ -24,16 +24,22 @@ export function pulseActual(data: ProductionData | null, year: number) {
       (r) =>
         r.status === "CHECKED OUT" && r.date.startsWith(String(year) + "-"),
     ) ?? [];
-  const revenue =
-    rows.length && !rows.some((r) => r.missingRevenue > 0)
-      ? rows.reduce((a, r) => a + r.revenue, 0)
-      : null;
+  const knownRows = rows.filter((r) => !r.missingRevenue);
+  const revenue = knownRows.length
+    ? knownRows.reduce((a, r) => a + r.revenue, 0)
+    : null;
+  const missingRevenue = rows.filter((r) => r.missingRevenue > 0).length;
   const nights = rows.length ? rows.reduce((a, r) => a + r.nights, 0) : null;
   return {
     revenue,
+    missingRevenue,
+    foodRevenue: null as number | null,
+    otherRevenue: null as number | null,
+    totalRevenue: null as number | null,
+    occupancy: null as number | null,
     nights,
     adr:
-      revenue !== null && nights !== null && nights > 0
+      revenue !== null && nights !== null && nights > 0 && missingRevenue === 0
         ? revenue / nights
         : null,
     dates: [...new Set(rows.map((r) => r.date.slice(5)))].sort(),
@@ -46,6 +52,8 @@ export function pulseYoY(data: ProductionData | null) {
   // Do not present unmatched partial years as like-for-like growth.
   const comparable =
     latest.dates.length > 0 &&
+    latest.missingRevenue === 0 &&
+    previous.missingRevenue === 0 &&
     JSON.stringify(latest.dates) === JSON.stringify(previous.dates);
   const change = (a: number | null, b: number | null) =>
     comparable && a !== null && b !== null && b !== 0
@@ -54,6 +62,7 @@ export function pulseYoY(data: ProductionData | null) {
   return {
     revenue: change(latest.revenue, previous.revenue),
     adr: change(latest.adr, previous.adr),
+    totalRevenue: change(latest.totalRevenue, previous.totalRevenue),
   };
 }
 export const pulseMarketOrder = [
@@ -76,4 +85,9 @@ export function pulseMarketLabel(id: string) {
     markets.find((m) => m.id === id)?.name.toUpperCase() ??
     id
   );
+}
+
+export function pulseKnownSum(values: (number | null)[]) {
+  const known = values.filter((v): v is number => v !== null);
+  return known.length ? known.reduce((a, b) => a + b, 0) : null;
 }

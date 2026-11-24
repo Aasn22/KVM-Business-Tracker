@@ -2174,3 +2174,422 @@ td small,
     color: #607568;
   }
 }
+
+/* Staff self-service and unified fulfillment. */
+.portal-entry {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #047857;
+  background: #edf7f0;
+  border: 1px solid #c9dfd1;
+  padding: 14px;
+  border-radius: 8px;
+  margin: 20px 0;
+  font-size: 12px;
+  font-weight: 600;
+}
+.staff-login {
+  max-width: 620px;
+  margin: 0 auto;
+  padding: 70px 24px;
+}
+.staff-login > h1 {
+  font-size: 38px;
+}
+.staff-login > p {
+  margin: 15px 0 28px;
+  color: #607568;
+  line-height: 1.7;
+}
+.staff-login-card {
+  padding: 28px;
+  background: white;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.staff-login-card a {
+  color: #047857;
+  font-size: 13px;
+}
+.staff-login-card form > p {
+  margin-bottom: 15px;
+}
+.portal-header {
+  padding: 20px max(24px, calc((100vw - 1200px) / 2));
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  background: white;
+  border-bottom: 1px solid #dce6df;
+}
+.portal-header > div:nth-child(2) {
+  margin-left: auto;
+}
+.portal-header strong {
+  font-size: 12px;
+}
+.portal-header small {
+  display: block;
+  margin-top: 4px;
+  color: #607568;
+}
+.portal-header button {
+  min-height: 44px;
+  padding: 10px 15px;
+}
+.portal-demo {
+  padding: 12px 24px;
+  background: #e8f2ec;
+  text-align: center;
+  color: #496d57;
+  font-size: 11px;
+  line-height: 1.8;
+}
+.portal-demo strong {
+  margin-right: 12px;
+}
+.portal-demo a {
+  text-decoration: underline;
+}
+.portal-main {
+  max-width: 1248px;
+  margin: auto;
+  padding: 35px 24px;
+}
+.portal-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 28px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #dae5dd;
+  flex-wrap: wrap;
+}
+.portal-tabs button {
+  padding: 12px 18px;
+  min-height: 46px;
+  border-radius: 8px;
+  color: #526c5b;
+  background: white;
+  border: 1px solid #dce7df;
+}
+.portal-tabs button.selected {
+  background: #065f46;
+  color: white;
+  border-color: #065f46;
+}
+.portal-shop-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 28px;
+  align-items: start;
+}
+.portal-shop-layout > section {
+  min-width: 0;
+}
+.portal-shop-layout > section > input {
+  margin-bottom: 16px;
+  min-height: 48px;
+}
+.portal-modifiers {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  padding: 17px;
+  background: #edf4ee;
+  border-radius: 10px;
+  margin-bottom: 24px;
+}
+.portal-modifiers .field {
+  margin: 0;
+}
+.portal-catalog {
+  margin-bottom: 30px;
+}
+.portal-catalog > h2 {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 18px;
+  font-size: 20px;
+}
+.portal-catalog > h2 small {
+  margin-left: auto;
+  color: #607568;
+  font-size: 11px;
+  font-weight: 400;
+}
+.portal-catalog .product-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.portal-catalog .product-card:disabled {
+  opacity: 0.5;
+}
+.portal-cart {
+  padding: 24px;
+  background: white;
+  position: sticky;
+  top: 20px;
+  gap: 12px;
+}
+.portal-cart .cart-line {
+  padding-top: 5px;
+}
+.portal-cart .field {
+  margin: 0;
+}
+.portal-cart > .empty {
+  display: grid;
+  justify-items: center;
+  gap: 15px;
+}
+.portal-cart > p {
+  font-size: 11px;
+}
+.portal-cart .account-info {
+  font-size: 11px;
+  color: #526e58;
+}
+.portal-orders {
+  max-width: 950px;
+  margin: auto;
+}
+.portal-order,
+.portal-bill,
+.fulfillment-card {
+  padding: 24px;
+  background: white;
+  margin-bottom: 20px;
+  gap: 16px;
+}
+.portal-order-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+.portal-order-heading small {
+  display: block;
+  color: #607568;
+  margin-top: 6px;
+  font-size: 11px;
+}
+.portal-order-heading h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.portal-order-heading .status-badge {
+  font-size: 11px;
+}
+.portal-tracking-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  border-top: 1px solid #e4ece5;
+  padding: 15px 0 0;
+}
+.portal-tracking-item strong {
+  font-size: 14px;
+}
+.portal-tracking-item small {
+  display: block;
+  font-size: 11px;
+  color: #607568;
+  margin-top: 7px;
+  line-height: 1.5;
+}
+.portal-tracking-item > div:last-child {
+  text-align: right;
+}
+.portal-tracking-item .overdue-text {
+  color: #a23e32;
+}
+.bill-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  border-top: 1px solid #e4ece5;
+  padding-top: 15px;
+}
+.bill-line small {
+  display: block;
+  color: #607568;
+  margin-top: 5px;
+}
+.portal-bill .total-row {
+  margin: 0;
+  padding: 15px 0 0;
+  border: 0;
+}
+.fulfillment-list {
+  margin-top: 25px;
+}
+.fulfillment > .muted {
+  max-width: 850px;
+}
+.fulfillment-item {
+  border: 1px solid #dfe8df;
+  padding: 17px;
+  border-radius: 9px;
+  background: #fafcf9;
+}
+.fulfillment-item-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 15px;
+  flex-wrap: wrap;
+  margin-bottom: 15px;
+}
+.fulfillment-item-title small {
+  display: block;
+  color: #607568;
+  margin-top: 6px;
+  font-size: 11px;
+}
+.fulfillment-controls {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.fulfillment-controls > .status-badge {
+  align-self: center;
+  margin-right: auto;
+  font-size: 11px;
+}
+.fulfillment-controls small {
+  color: #607568;
+  font-size: 11px;
+}
+.runner-label {
+  min-width: 180px;
+}
+.runner-label span {
+  display: block;
+  font-size: 10px;
+  color: #607568;
+  margin-bottom: 7px;
+}
+.fulfillment-controls button {
+  font-size: 12px;
+}
+.escalation-note {
+  background: #fff5e7;
+  padding: 18px;
+  border-radius: 8px;
+}
+.escalation-note .field {
+  margin-bottom: 12px;
+}
+.escalation-note button {
+  min-height: 44px;
+  padding: 10px 15px;
+}
+.info-banner a {
+  text-decoration: underline;
+  font-weight: 600;
+}
+.alert {
+  flex-wrap: wrap;
+}
+@media (max-width: 950px) {
+  .portal-shop-layout {
+    grid-template-columns: minmax(0, 1fr) 290px;
+    gap: 18px;
+  }
+  .portal-catalog .product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .portal-cart {
+    padding: 18px;
+  }
+}
+@media (max-width: 700px) {
+  .portal-shop-layout {
+    grid-template-columns: 1fr;
+  }
+  .portal-cart {
+    position: static;
+  }
+  .portal-header {
+    padding: 16px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .portal-header .brand {
+    font-size: 21px;
+    margin-right: auto;
+  }
+  .portal-header > div:nth-child(2) {
+    margin-left: 0;
+  }
+  .portal-header button {
+    padding: 8px;
+    font-size: 11px;
+  }
+  .portal-main {
+    padding: 28px 16px;
+  }
+  .portal-tabs {
+    gap: 7px;
+  }
+  .portal-tabs button {
+    font-size: 11px;
+    padding: 12px 10px;
+  }
+  .portal-catalog > h2 small {
+    font-size: 10px;
+  }
+  .portal-order,
+  .portal-bill,
+  .fulfillment-card {
+    padding: 18px;
+  }
+  .portal-tracking-item {
+    flex-direction: column;
+  }
+  .portal-tracking-item > div:last-child {
+    text-align: left;
+  }
+  .portal-modifiers {
+    padding: 13px;
+    gap: 10px;
+  }
+  .portal-modifiers span {
+    font-size: 10px;
+  }
+  .portal-modifiers select {
+    font-size: 11px;
+  }
+  .fulfillment-item {
+    padding: 13px;
+  }
+  .fulfillment-controls {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .runner-label {
+    min-width: 0;
+  }
+  .staff-login {
+    padding-top: 40px;
+  }
+}
+.topbar .breadcrumb {
+  white-space: normal;
+  line-height: 1.8;
+}
+@media (max-width: 700px) {
+  .topbar .breadcrumb {
+    max-width: calc(100% - 80px);
+  }
+  .topbar .header-right {
+    gap: 5px;
+  }
+  .fulfillment .info-banner {
+    flex-wrap: wrap;
+  }
+}

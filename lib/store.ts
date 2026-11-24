@@ -1,3 +1,4 @@
+import type { CustomerOrder } from "./orders";
 export type Segment = "cafe" | "shop";
 export type Role =
   "Cashier / Barista" | "Kitchen / Café Prep" | "Store Manager / Admin";
@@ -72,6 +73,7 @@ export type PO = {
 };
 export type Store = {
   version: 1;
+  customerOrders?: CustomerOrder[];
   products: Product[];
   supplies: Supply[];
   sales: Sale[];

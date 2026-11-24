@@ -1,5 +1,8 @@
 "use client";
 
+import Link from "next/link";
+import { FulfillmentBoard } from "@/components/fulfillment-board";
+import { escalatedOrders } from "@/lib/orders";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   Coffee,
@@ -63,12 +66,14 @@ const paymentIcons = [Banknote, CreditCard, Wallet, Users];
 type Page =
   | "Point of Sale"
   | "Kitchen Board"
+  | "Orders & Dispatch"
   | "Inventory"
   | "Purchasing"
   | "Reports & Ledger";
 const navigation: { name: Page; icon: typeof Coffee; manager?: boolean }[] = [
   { name: "Point of Sale", icon: LayoutGrid },
   { name: "Kitchen Board", icon: ChefHat },
+  { name: "Orders & Dispatch", icon: Truck },
   { name: "Inventory", icon: Package, manager: true },
   { name: "Purchasing", icon: Truck, manager: true },
   { name: "Reports & Ledger", icon: ChartNoAxesCombined, manager: true },
@@ -451,6 +456,9 @@ export default function Home() {
         <div className="login-form">
           <Badge variant="outline">INTERACTIVE DEMO</Badge>
           <h2>Welcome to your shift</h2>
+          <Link className="portal-entry" href="/staff">
+            <ShoppingBag size={18} /> Staff ordering portal · Shop & Café →
+          </Link>
           <p>Sign in to your staff workspace.</p>
           {alerts}
           <form
@@ -524,7 +532,9 @@ export default function Home() {
             .filter(
               (n) =>
                 (!n.manager || manager) &&
-                (!kitchen || n.name === "Kitchen Board"),
+                (!kitchen ||
+                  n.name === "Kitchen Board" ||
+                  n.name === "Orders & Dispatch"),
             )
             .map((n) => (
               <button
@@ -565,6 +575,8 @@ export default function Home() {
       <div className="main-shell">
         <header className="topbar">
           <div className="breadcrumb">
+            <Link href="/staff">Staff ordering portal ↗</Link>
+            <span>/</span>
             Workspace <span>/</span> <strong>{page}</strong>
           </div>
           <div className="header-right">
@@ -625,6 +637,27 @@ export default function Home() {
         </div>
         <main className="content">
           {alerts}
+          {manager && escalatedOrders(store, now).length > 0 && (
+            <div className="alert danger" role="alert">
+              <AlertTriangle size={18} />
+              {escalatedOrders(store, now).length} staff orders have undelivered
+              items over 15 minutes.
+              <Button
+                variant="outline"
+                onClick={() => setPage("Orders & Dispatch")}
+              >
+                Review escalations
+              </Button>
+            </div>
+          )}
+          {page === "Orders & Dispatch" && (
+            <FulfillmentBoard
+              store={store}
+              commit={commit}
+              user={user}
+              now={now}
+            />
+          )}
           {page === "Point of Sale" && !kitchen && (
             <>
               <SectionTitle
@@ -1031,6 +1064,21 @@ export default function Home() {
           )}
           {page === "Kitchen Board" && (
             <>
+              <div className="info-banner">
+                Staff portal café tickets and mixed shop orders are in{" "}
+                <Button
+                  variant="outline"
+                  onClick={() => setPage("Orders & Dispatch")}
+                >
+                  Orders &amp; Dispatch (
+                  {
+                    (store.customerOrders ?? []).filter((o) =>
+                      o.items.some((i) => i.state !== "Delivered"),
+                    ).length
+                  }
+                  )
+                </Button>
+              </div>
               <SectionTitle
                 eyebrow="CAFÉ OPERATIONS"
                 title="Kitchen & dispatch"
@@ -1492,7 +1540,24 @@ export default function Home() {
                   <strong>
                     {(() => {
                       if (reportSegment === "shop") return "N/A";
-                      const orders = store.orders.filter(
+                      const orders = [
+                        ...store.orders,
+                        ...(store.customerOrders ?? []).flatMap((o) => {
+                          const cafe = o.items.filter(
+                            (i) => i.segment === "cafe",
+                          );
+                          return cafe.length && cafe.every((i) => i.readyAt)
+                            ? [
+                                {
+                                  created: o.created,
+                                  readyAt: Math.max(
+                                    ...cafe.map((i) => i.readyAt!),
+                                  ),
+                                },
+                              ]
+                            : [];
+                        }),
+                      ].filter(
                         (o) => o.readyAt && inPeriod(o.created, period, now),
                       );
                       return orders.length

@@ -58,5 +58,9 @@ describe("dated Business Insight", () => {
     expect(html).toContain("Sources &amp; methodology");
     expect(html).toContain("Reporting year");
     expect(html).not.toContain("Export report");
+    expect(html).not.toContain(
+      'class="panel primary-source-analysis production-analysis"',
+    );
+    expect(html).not.toContain("Production date basis");
   });
 });

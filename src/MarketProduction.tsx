@@ -72,7 +72,7 @@ export default function MarketProduction({
       className="market-uploaded-summary"
       aria-label="Uploaded monthly performance"
     >
-      <h3>Uploaded production · selected month</h3>
+      <h3>Completed stays · selected month</h3>
       <p className="market-hint">
         {source}. Completed values below are separate from planning budgets/BOB.
       </p>

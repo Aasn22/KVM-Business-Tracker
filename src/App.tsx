@@ -51,7 +51,6 @@ import OperationalInput from "./OperationalInput";
 import PerformanceInput from "./PerformanceInput";
 import HistoryUpdate from "./HistoryUpdate";
 import PageInsights from "./PageInsights";
-import ProductionAnalysis from "./ProductionAnalysis";
 import MarketPage from "./MarketPage";
 import PulsePage from "./PulsePage";
 import { useAdminName } from "./AdminIdentity";
@@ -1115,25 +1114,7 @@ export default function App({
                   onBusyChange={setBusy}
                 />
               )}
-              {view === "insight" && (
-                <>
-                  <ProductionAnalysis year={year} compactMoney />
-                  <BusinessInsight />
-                </>
-              )}
-              {!countryOnly &&
-                ["overview", "total"].includes(view) &&
-                !market && <ProductionAnalysis year={year} market={market} />}
-              {!countryOnly &&
-                !market &&
-                ["overview", "total"].includes(view) && (
-                  <div className="notice">
-                    Budget planning / legacy workbook BOB below · Not the newly
-                    uploaded reported-history or forecast source. Use Production
-                    Analysis above for dated uploaded performance. Budget
-                    figures are never replaced by actuals.
-                  </div>
-                )}
+              {view === "insight" && <BusinessInsight />}
               {view === "total" && !countryOnly && (
                 <TotalReview
                   entries={entries}
@@ -1433,13 +1414,6 @@ export default function App({
                       entries={entries}
                       onBack={() => navigate(() => setMarket(null))}
                     />
-                    <details className="market-source-details">
-                      <summary>
-                        Uploaded completed-stay analysis · separate from budgets
-                        and BOB
-                      </summary>
-                      <ProductionAnalysis year={year} market={market} />
-                    </details>
                   </>
                 )}
               {((view === "overview" &&

@@ -95,12 +95,7 @@ export default function MarketPage({
           </button>
         ))}
       </nav>
-      <MarketProduction
-        market={market}
-        year={year}
-        month={month}
-        category={category}
-      />
+
       <h2>Monthly performance · planning targets / workbook BOB</h2>
       <p className="market-hint">
         BOB = business on the books. ADR is calculated automatically. Saved
@@ -178,6 +173,12 @@ export default function MarketPage({
         fourth slot includes week 5 when supplied. {saved.length}/12 planning
         months available.
       </p>
+      <MarketProduction
+        market={market}
+        year={year}
+        month={month}
+        category={category}
+      />
     </section>
   );
 }

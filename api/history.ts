@@ -2,6 +2,10 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { createClient } from "@supabase/supabase-js";
 import { validSession } from "./pin-session.js";
 import { cleanHistory } from "../src/history.js";
+import {
+  initializeAndSaveHistory,
+  missingHistorySchema,
+} from "../src/server/historyStorage.js";
 export default async function handler(
   req: IncomingMessage & { body?: unknown },
   res: ServerResponse,
@@ -55,7 +59,10 @@ export default async function handler(
       if (r.error)
         return send(
           503,
-          "History database setup required. No saved history could be loaded.",
+          missingHistorySchema(r.error)
+            ? "History storage needs initialization. You may enter figures and use Save History to initialize and save securely."
+            : "History database could not be read. Your unsaved entries will not be discarded; try Save History or download a backup.",
+          { canInitialize: missingHistorySchema(r.error) },
         );
       return send(200, "History loaded", {
         years: (r.data ?? []).map((y) => ({
@@ -83,24 +90,47 @@ export default async function handler(
       p_version: y.version,
       p_months: y.months,
     });
-    if (saved.error)
-      return send(
-        String(saved.error.message).includes("conflict") ? 409 : 503,
-        String(saved.error.message).includes("conflict")
-          ? "History changed on another device. Reload before editing."
-          : "History save unavailable. Apply the History Update database setup; nothing confirmed saved.",
-      );
-    const result = await db
-      .from("history_years")
-      .select("year,version,months,updated_at")
-      .eq("year", y.year)
-      .single();
-    if (result.error)
-      return send(
-        503,
-        "Save returned but read-back failed. Reload before retrying.",
-      );
-    const verify = cleanHistory(result.data);
+    let stored: unknown;
+    if (saved.error) {
+      if (String(saved.error.message).includes("conflict"))
+        return send(
+          409,
+          "History changed on another device. Your entries are kept. Download a backup before reloading.",
+        );
+      if (!missingHistorySchema(saved.error))
+        return send(
+          503,
+          "History save failed. Your entries are kept; download a backup and retry.",
+        );
+      try {
+        stored = await initializeAndSaveHistory(y.year, y.version, y.months);
+      } catch (e) {
+        const code = (e as { code?: string }).code,
+          message = (e as Error).message;
+        if (code === "P0001" && message.includes("conflict"))
+          return send(
+            409,
+            "History exists or changed on another device. Your entries are kept; download a backup before reloading.",
+          );
+        return send(
+          503,
+          "Unable to initialize shared History storage using the connected database. Your entries are kept. Download a backup; database connection/permissions need attention.",
+        );
+      }
+    } else {
+      const result = await db
+        .from("history_years")
+        .select("year,version,months,updated_at")
+        .eq("year", y.year)
+        .single();
+      if (result.error)
+        return send(
+          503,
+          "Save returned but read-back failed. Keep your entries and check saved data before retrying.",
+        );
+      stored = result.data;
+    }
+    const verify = cleanHistory(stored);
     if (
       verify.version !== y.version + 1 ||
       JSON.stringify(verify.months) !== JSON.stringify(y.months)
@@ -110,7 +140,10 @@ export default async function handler(
         "Another save occurred before verification. Reload the saved year.",
       );
     return send(200, "History saved and verified", {
-      year: { ...verify, updated_at: result.data.updated_at },
+      year: {
+        ...verify,
+        updated_at: (stored as { updated_at?: unknown }).updated_at,
+      },
     });
   } catch (e) {
     return send(400, e instanceof Error ? e.message : "Invalid history data.");

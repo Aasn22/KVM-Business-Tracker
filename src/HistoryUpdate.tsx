@@ -10,6 +10,7 @@ import {
 import { loadHistory, saveHistory, historyChanged } from "./historyClient";
 import { months } from "./model";
 import { pasteHistory, historyInputValue } from "./historyPaste";
+import HistoryValueInput from "./HistoryValueInput";
 import { formatMoney, formatNumber } from "./format";
 export const historyColumns = [
   "Month",
@@ -74,39 +75,22 @@ export function HistoryTable({
                     {editable &&
                     field !== "budgetADR" &&
                     field !== "actualADR" ? (
-                      <input
-                        type="number"
-                        min="0"
-                        max="1000000000000"
-                        step={field.endsWith("Nights") ? "1" : "any"}
-                        aria-label={`${months[r.month - 1]} ${field}`}
-                        value={r[field] ?? ""}
-                        onPaste={(e) => {
-                          e.preventDefault();
+                      <HistoryValueInput
+                        field={field}
+                        label={`${months[r.month - 1]} ${field}`}
+                        value={r[field]}
+                        onError={setInputError}
+                        onChange={(value) =>
+                          onChange(
+                            data.months.map((row, j) =>
+                              i === j ? { ...row, [field]: value } : row,
+                            ),
+                          )
+                        }
+                        onPaste={(text) => {
                           try {
-                            const next = pasteHistory(
-                              data,
-                              i,
-                              field,
-                              e.clipboardData.getData("text/plain"),
-                            );
+                            const next = pasteHistory(data, i, field, text);
                             onChange(next.months);
-                            setInputError("");
-                          } catch (err) {
-                            setInputError((err as Error).message);
-                          }
-                        }}
-                        onChange={(e) => {
-                          try {
-                            const value = historyInputValue(
-                              e.target.value,
-                              field,
-                            );
-                            onChange(
-                              data.months.map((row, j) =>
-                                i === j ? { ...row, [field]: value } : row,
-                              ),
-                            );
                             setInputError("");
                           } catch (err) {
                             setInputError((err as Error).message);
@@ -182,7 +166,10 @@ export default function HistoryUpdate({
         }
       })
       .catch((e) => {
-        if (active) setError((e as Error).message);
+        if (active) {
+          setError((e as Error).message);
+          setReady(true);
+        }
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -243,6 +230,37 @@ export default function HistoryUpdate({
           {busy ? "Saving…" : "Save History"}
         </button>
       </header>
+      <button
+        type="button"
+        className="button outline"
+        disabled={!dirty || busy}
+        onClick={() => {
+          const rows = [
+            ["Month", ...historyColumns.slice(1)],
+            ...data.months.map((m) => {
+              const c = historySummary([m]);
+              return [months[m.month - 1], ...fields.map((f) => c[f] ?? "")];
+            }),
+          ];
+          const text = rows
+            .map((r) =>
+              r
+                .map((v) => '"' + String(v).replaceAll('"', '""') + '"')
+                .join(","),
+            )
+            .join("\r\n");
+          const url = URL.createObjectURL(
+            new Blob([text], { type: "text/csv" }),
+          );
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `KVM-history-${year}-unsaved-backup.csv`;
+          a.click();
+          URL.revokeObjectURL(url);
+        }}
+      >
+        Download unsaved backup
+      </button>
       <p>
         Excel paste: copy numeric cells and paste into the first matching input.
         Six input columns or all eight columns (ADR ignored/recalculated) are
@@ -270,8 +288,9 @@ export default function HistoryUpdate({
         precedence for matching property-level historical summaries, never
         distributed to markets or added to uploaded production.{" "}
         {historySummary(data.months).knownMonths}/12 months contain figures.
-        Shared saving requires the History Update database table; no
-        browser-only save is reported as shared.
+        Save History initializes missing History storage through the existing
+        server database connection when permitted, then verifies the saved
+        values. No browser-only backup is reported as shared.
       </small>
     </section>
   );

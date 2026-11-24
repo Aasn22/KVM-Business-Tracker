@@ -15,7 +15,7 @@ describe("manual historical year entry", () => {
     y.months[0].budgetNights = 10;
     y.months[0].actualTotalRevenue = 50;
     y.months[0].actualRoomRevenue = 100;
-    expect(() => cleanHistory(y)).toThrow("Total");
+    expect(cleanHistory(y).months[0].actualTotalRevenue).toBe(50);
   });
   it("calculates weighted ADR and avoids division errors or summing monthly ADR", () => {
     const y = blankHistory(2024);

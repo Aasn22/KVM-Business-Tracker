@@ -47,3 +47,17 @@ describe("2021 opening-year revenue", () => {
     );
   });
 });
+
+it("does not reject a whole year when a saved room/total figure needs reconciliation", () => {
+  const y = blankHistory(2021);
+  y.version = 1;
+  y.months[9].actualRoomRevenue = 2000000;
+  y.months[9].actualTotalRevenue = 1948140;
+  expect(() => cleanHistory(y)).not.toThrow();
+  const merged = withRevenueReference([y]).find((h) => h.year === 2021)!;
+  expect(merged.months[9].actualRoomRevenue).toBe(2000000);
+  expect(merged.months[9].actualTotalRevenue).toBe(1948140);
+  const html = renderToStaticMarkup(<HistoryTable data={merged} />);
+  expect(html).toContain("Reconciliation");
+  expect(html).toContain("exceeds actual total");
+});

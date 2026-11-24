@@ -78,15 +78,8 @@ export function cleanHistory(raw: unknown): HistoryYear {
       throw Error(
         `Month ${i + 1} is marked not opened; no financial figures may be entered until that status is cleared.`,
       );
-    for (const p of [
-      ["budgetTotalRevenue", "budgetRoomRevenue"],
-      ["actualTotalRevenue", "actualRoomRevenue"],
-    ] as const) {
-      if (out[p[0]] !== null && out[p[1]] !== null && out[p[0]]! < out[p[1]]!)
-        throw Error(
-          `Total revenue cannot be less than room revenue in month ${i + 1}.`,
-        );
-    }
+    // Component/total disagreements are retained for visible reconciliation,
+    // not a reason to block every year/report or prevent corrective edits.
     return out;
   });
   return { year: r.year, version: r.version, months };
@@ -194,3 +187,26 @@ export function withRevenueReference(saved: HistoryYear[]): HistoryYear[] {
 }
 export const revenueReferenceNote =
   "2021 opening-year total revenue supplied by the user: January–May not opened, June–December budget $8,921,065 / actual $7,844,799. Saved nonblank values take precedence. F&B/Other source: user-supplied monthly table; saved nonblank entries override it. December 2026 missing. Monthly sums differ from printed totals: 2024 F&B sums $1,288,228 vs $1,378,228 printed; minor $1 differences in 2022 Other, 2024 Other and 2026 components. Existing explicit total revenue is preserved; components are not added twice.";
+
+export function historyReconciliation(data: HistoryYear): string[] {
+  return data.months.flatMap((m) => {
+    const issues: string[] = [];
+    if (
+      m.budgetRoomRevenue !== null &&
+      m.budgetTotalRevenue !== null &&
+      m.budgetRoomRevenue > m.budgetTotalRevenue
+    )
+      issues.push(
+        `Month ${m.month}: budget room revenue exceeds budget total; source figures preserved.`,
+      );
+    if (
+      m.actualRoomRevenue !== null &&
+      m.actualTotalRevenue !== null &&
+      m.actualRoomRevenue > m.actualTotalRevenue
+    )
+      issues.push(
+        `Month ${m.month}: actual room revenue exceeds actual total; source figures preserved.`,
+      );
+    return issues;
+  });
+}

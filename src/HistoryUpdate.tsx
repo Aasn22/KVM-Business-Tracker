@@ -7,6 +7,7 @@ import {
   historySummary,
   revenueReferenceNote,
   withRevenueReference,
+  historyReconciliation,
   type HistoryYear,
   type HistoryMonth,
 } from "./history";
@@ -60,6 +61,13 @@ export function HistoryTable({
       aria-label="Monthly history table"
       tabIndex={0}
     >
+      {historyReconciliation(data).length > 0 && (
+        <p role="status" className="history-reconciliation">
+          Reconciliation: {historyReconciliation(data).join(" ")}. You may save
+          these supplied values and correct them later; no source amount was
+          adjusted.
+        </p>
+      )}
       {inputError && (
         <p role="alert" className="error">
           {inputError}

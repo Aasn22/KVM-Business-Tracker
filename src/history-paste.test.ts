@@ -37,20 +37,20 @@ describe("Excel history range paste", () => {
     expect(() => pasteHistory(y, 0, "budgetNights", "2\t3\nBOGUS")).toThrow();
     expect(y.months[0].budgetNights).toBeNull();
   });
-  it("rejects the oversized screenshot input, decimal nights, formulas and inconsistent totals", () => {
+  it("rejects the oversized screenshot input, decimal nights/formulas but preserves source total discrepancies", () => {
     expect(() =>
       historyInputValue("184618461348740155", "budgetNights"),
     ).toThrow();
     expect(() => historyInputValue("1e100", "budgetNights")).toThrow();
     expect(() => historyInputValue("1.5", "actualNights")).toThrow();
-    expect(() =>
+    expect(
       pasteHistory(
         blankHistory(2026),
         0,
         "budgetRoomRevenue",
         "100\t50\t10\t20",
-      ),
-    ).toThrow("Total revenue");
+      ).months[0].budgetTotalRevenue,
+    ).toBe(10);
     expect(historyInputValue("0", "actualNights")).toBe(0);
   });
 });

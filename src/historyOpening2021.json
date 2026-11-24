@@ -1,0 +1,74 @@
+[
+  {
+    "month": 1,
+    "notOpened": true,
+    "budgetTotalRevenue": null,
+    "actualTotalRevenue": null
+  },
+  {
+    "month": 2,
+    "notOpened": true,
+    "budgetTotalRevenue": null,
+    "actualTotalRevenue": null
+  },
+  {
+    "month": 3,
+    "notOpened": true,
+    "budgetTotalRevenue": null,
+    "actualTotalRevenue": null
+  },
+  {
+    "month": 4,
+    "notOpened": true,
+    "budgetTotalRevenue": null,
+    "actualTotalRevenue": null
+  },
+  {
+    "month": 5,
+    "notOpened": true,
+    "budgetTotalRevenue": null,
+    "actualTotalRevenue": null
+  },
+  {
+    "month": 6,
+    "notOpened": false,
+    "budgetTotalRevenue": 720790,
+    "actualTotalRevenue": 22183
+  },
+  {
+    "month": 7,
+    "notOpened": false,
+    "budgetTotalRevenue": 1001022,
+    "actualTotalRevenue": 288666
+  },
+  {
+    "month": 8,
+    "notOpened": false,
+    "budgetTotalRevenue": 1255929,
+    "actualTotalRevenue": 390917
+  },
+  {
+    "month": 9,
+    "notOpened": false,
+    "budgetTotalRevenue": 434263,
+    "actualTotalRevenue": 1350562
+  },
+  {
+    "month": 10,
+    "notOpened": false,
+    "budgetTotalRevenue": 863146,
+    "actualTotalRevenue": 1948140
+  },
+  {
+    "month": 11,
+    "notOpened": false,
+    "budgetTotalRevenue": 2211296,
+    "actualTotalRevenue": 1403839
+  },
+  {
+    "month": 12,
+    "notOpened": false,
+    "budgetTotalRevenue": 2434619,
+    "actualTotalRevenue": 2440492
+  }
+]

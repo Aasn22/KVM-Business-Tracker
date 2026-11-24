@@ -79,52 +79,63 @@ export function HistoryTable({
             return (
               <tr key={r.month}>
                 <th scope="row">{months[r.month - 1]}</th>
-                {fields.map((field) => (
-                  <td key={field}>
-                    {editable &&
-                    field !== "budgetADR" &&
-                    field !== "actualADR" ? (
-                      <HistoryValueInput
-                        field={field}
-                        label={`${months[r.month - 1]} ${field}`}
-                        value={r[field]}
-                        onError={setInputError}
-                        onChange={(value) =>
-                          onChange(
-                            data.months.map((row, j) =>
-                              i === j ? { ...row, [field]: value } : row,
-                            ),
-                          )
-                        }
-                        onPaste={(text) => {
-                          try {
-                            const next = pasteHistory(data, i, field, text);
-                            onChange(next.months);
-                            setInputError("");
-                          } catch (err) {
-                            setInputError((err as Error).message);
-                          }
-                        }}
-                      />
-                    ) : field.endsWith("Nights") ? (
-                      formatNumber(
-                        computed[field as "budgetNights" | "actualNights"],
-                      )
-                    ) : (
-                      formatMoney(computed[field])
-                    )}
+                {r.notOpened ? (
+                  <td
+                    colSpan={fields.length + 2}
+                    className="history-not-opened"
+                  >
+                    NOT OPENED (UNDER DEVELOPMENT)
                   </td>
-                ))}
-                <td>
-                  {formatOccupancy(
-                    periodOccupancy(r.budgetNights, data.year, [r.month]),
-                  )}
-                </td>
-                <td>
-                  {formatOccupancy(
-                    periodOccupancy(r.actualNights, data.year, [r.month]),
-                  )}
-                </td>
+                ) : (
+                  <>
+                    {fields.map((field) => (
+                      <td key={field}>
+                        {editable &&
+                        field !== "budgetADR" &&
+                        field !== "actualADR" ? (
+                          <HistoryValueInput
+                            field={field}
+                            label={`${months[r.month - 1]} ${field}`}
+                            value={r[field]}
+                            onError={setInputError}
+                            onChange={(value) =>
+                              onChange(
+                                data.months.map((row, j) =>
+                                  i === j ? { ...row, [field]: value } : row,
+                                ),
+                              )
+                            }
+                            onPaste={(text) => {
+                              try {
+                                const next = pasteHistory(data, i, field, text);
+                                onChange(next.months);
+                                setInputError("");
+                              } catch (err) {
+                                setInputError((err as Error).message);
+                              }
+                            }}
+                          />
+                        ) : field.endsWith("Nights") ? (
+                          formatNumber(
+                            computed[field as "budgetNights" | "actualNights"],
+                          )
+                        ) : (
+                          formatMoney(computed[field])
+                        )}
+                      </td>
+                    ))}
+                    <td>
+                      {formatOccupancy(
+                        periodOccupancy(r.budgetNights, data.year, [r.month]),
+                      )}
+                    </td>
+                    <td>
+                      {formatOccupancy(
+                        periodOccupancy(r.actualNights, data.year, [r.month]),
+                      )}
+                    </td>
+                  </>
+                )}
               </tr>
             );
           })}
@@ -277,6 +288,39 @@ export default function HistoryUpdate({
       <button
         type="button"
         className="button outline"
+        disabled={busy || loading}
+        onClick={async () => {
+          if (
+            dirty &&
+            !window.confirm(
+              "Reloading will discard unsaved edits. Download a backup first. Continue?",
+            )
+          )
+            return;
+          setLoading(true);
+          setError("");
+          try {
+            const rows = await loadHistory(year);
+            setData(
+              rows[0] ??
+                withRevenueReference([]).find((y) => y.year === year) ??
+                blankHistory(year),
+            );
+            setReady(true);
+            setDirty(false);
+            setMessage("Saved history reloaded.");
+          } catch (e) {
+            setError((e as Error).message);
+          } finally {
+            setLoading(false);
+          }
+        }}
+      >
+        Reload saved year
+      </button>
+      <button
+        type="button"
+        className="button outline"
         disabled={!dirty || busy}
         onClick={() => {
           const rows = [
@@ -352,8 +396,10 @@ export default function HistoryUpdate({
         />
       </fieldset>
       <small>
-        Manual monthly history is a separate source. Saved nonblank figures take
-        precedence for matching property-level historical summaries, never
+        Manual monthly history is a separate source. Published reference figures
+        are displayed before any database save; a successful Save History
+        confirmation is required to confirm persistence. Saved nonblank figures
+        take precedence for matching property-level historical summaries, never
         distributed to markets or added to uploaded production.{" "}
         {historySummary(data.months).knownMonths}/12 months contain figures.
         Save History initializes missing History storage through the existing

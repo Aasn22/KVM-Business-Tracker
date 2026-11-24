@@ -105,6 +105,17 @@ export function pasteHistory(
       throw Error(
         "Too many columns. Paste six input columns, or all eight columns including calculated ADR.",
       );
+    if (next.months[row].notOpened) {
+      if (
+        values.some(
+          (v) => v.trim() !== "" && v.trim() !== "—" && v.trim() !== "-",
+        )
+      )
+        throw Error(
+          `${months[row]} is marked not opened. Paste opening-year financial values from June onward, or include blank January–May cells.`,
+        );
+      return;
+    }
     values.forEach((v, j) => {
       const field = columns[start + j];
       if (

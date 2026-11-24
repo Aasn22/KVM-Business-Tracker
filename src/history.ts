@@ -1,4 +1,5 @@
 import { periodOccupancy } from "./occupancy.js";
+import opening2021 from "./historyOpening2021.json" with { type: "json" };
 import revenueSource from "./historyRevenueSource.json" with { type: "json" };
 export const historyFields = [
   "budgetNights",
@@ -11,7 +12,7 @@ export const historyFields = [
   "actualOtherRevenue",
 ] as const;
 export type HistoryField = (typeof historyFields)[number];
-export type HistoryMonth = { month: number } & Record<
+export type HistoryMonth = { month: number; notOpened?: boolean } & Record<
   HistoryField,
   number | null
 >;
@@ -54,7 +55,10 @@ export function cleanHistory(raw: unknown): HistoryYear {
   const months = r.months.map((m, i) => {
     if (m.month !== i + 1)
       throw Error("Month rows must be January to December.");
-    const out = { month: m.month } as HistoryMonth;
+    const out = {
+      month: m.month,
+      ...(m.notOpened === true ? { notOpened: true } : {}),
+    } as HistoryMonth;
     for (const field of historyFields) {
       const v = m[field] ?? null;
       if (
@@ -70,6 +74,10 @@ export function cleanHistory(raw: unknown): HistoryYear {
         );
       out[field] = v;
     }
+    if (out.notOpened && historyFields.some((k) => out[k] !== null))
+      throw Error(
+        `Month ${i + 1} is marked not opened; no financial figures may be entered until that status is cleared.`,
+      );
     for (const p of [
       ["budgetTotalRevenue", "budgetRoomRevenue"],
       ["actualTotalRevenue", "actualRoomRevenue"],
@@ -156,6 +164,18 @@ export function historyPlan(data: HistoryYear) {
 
 export function withRevenueReference(saved: HistoryYear[]): HistoryYear[] {
   const map = new Map(saved.map((y) => [y.year, cleanHistory(y)]));
+  const opening = map.get(2021) ?? blankHistory(2021);
+  opening.months = opening.months.map((m) => {
+    const reference = opening2021.find((r) => r.month === m.month)!;
+    const hasSaved = historyFields.some((k) => m[k] !== null);
+    return {
+      ...m,
+      ...(reference.notOpened && !hasSaved ? { notOpened: true } : {}),
+      budgetTotalRevenue: m.budgetTotalRevenue ?? reference.budgetTotalRevenue,
+      actualTotalRevenue: m.actualTotalRevenue ?? reference.actualTotalRevenue,
+    };
+  });
+  map.set(2021, opening);
   for (const [year, values] of Object.entries(revenueSource)) {
     const y = map.get(+year) ?? blankHistory(+year);
     y.months = y.months.map((m) => {
@@ -173,4 +193,4 @@ export function withRevenueReference(saved: HistoryYear[]): HistoryYear[] {
   return [...map.values()].sort((a, b) => a.year - b.year);
 }
 export const revenueReferenceNote =
-  "F&B/Other source: user-supplied monthly table; saved nonblank entries override it. December 2026 missing. Monthly sums differ from printed totals: 2024 F&B sums $1,288,228 vs $1,378,228 printed; minor $1 differences in 2022 Other, 2024 Other and 2026 components. Existing explicit total revenue is preserved; components are not added twice.";
+  "2021 opening-year total revenue supplied by the user: January–May not opened, June–December budget $8,921,065 / actual $7,844,799. Saved nonblank values take precedence. F&B/Other source: user-supplied monthly table; saved nonblank entries override it. December 2026 missing. Monthly sums differ from printed totals: 2024 F&B sums $1,288,228 vs $1,378,228 printed; minor $1 differences in 2022 Other, 2024 Other and 2026 components. Existing explicit total revenue is preserved; components are not added twice.";

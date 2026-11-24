@@ -1,4 +1,4 @@
-# KVM Staff Collective
+# CALM BREAK - KUDA VILLINGILI
 
 Interactive Staff Café + Tuck Shop demo using Next.js App Router, TypeScript, Tailwind, generated shadcn/ui components (Base UI), and Lucide icons.
 
@@ -48,3 +48,29 @@ Open **`/staff`** (also linked on the operator login and header). Use any listed
 **This remains a browser-local prototype, not a real online ordering service.** To demonstrate the complete loop, open `/staff` and `/` in separate tabs on the **same deployment origin in the same browser**. Orders and updates sync through browser storage. Another phone/browser/device cannot send an order to this demo's operator queue. There is no secure server session, shared transactional database, background SLA worker, push/email/SMS delivery, or real payment integration. Manager alerts are derived when the app is open or reopened; no background messages are sent. Do not use real staff/customer financial or personal data. Cross-device online service requires an authenticated backend, database transactions and a notification channel chosen and configured before production use.
 
 Existing saved v1 demo data is preserved; the new customer-order collection is optional until the first portal order. Use Reset demo data only if you want to discard all existing local records.
+
+## CALM BREAK - KUDA VILLINGILI update
+
+Both operator `/` and staff `/staff` interfaces now use the CALM BREAK identity, a consistent resort-green design, and the **same local-store implementation** (not two separate hook implementations). Local writes notify subscribers and same-origin tabs; focus reloads the latest saved record. A changed persisted baseline rejects an observed stale write rather than silently replacing it. Failed storage writes are not reported as saved. This is still not an atomic multi-device database: simultaneous writes in separate tabs can race, and different origins/devices never share localStorage.
+
+### Staff improvements
+
+- Overview cards for open orders, salary allowance and allergy declaration.
+- **My profile & allergies**: explicitly choose Not provided / No known allergies / Allergies declared, select allergens and add notes. No provided data is never presented as allergy-free. Use fictional test data only.
+- The combined cart previews the allergy note that will accompany checkout. New bills and order tickets capture an immutable declaration snapshot. Bills/CSV exports do **not** include allergy health notes.
+- Reorder previous mixed orders at current catalog prices with stock checks. Checkout is never automatic; destination, account and current allergy notes must be reviewed.
+
+### Operator improvements
+
+- Dispatch summary for active/partial/overdue orders and allergy reviews; search by order, employee/name or destination; filter pending café/shop work.
+- Every portal order shows the original allergy note. If a profile changes while an order is active, the current declaration is separately flagged **UPDATED AFTER ORDER** without rewriting the historical note.
+- Declared allergy orders require operator acknowledgment of the current profile revision before preparation or dispatch. Updating the profile invalidates the previous review. Clearing a declaration after ordering also requires re-review. Completed-order snapshots are preserved.
+- POS checkout has an explicit staff-customer selector (unidentified by default), including for cash/bank orders. Identified orders capture their allergy note and staff ID; kitchen tickets show current profile updates and historical completion notes. Legacy orders without identified staff must prompt staff to ask about allergies.
+
+**Safety:** This is staff-reported information, not ingredient matching or a guarantee of safe food. Review ingredients and cross-contact procedures directly with staff. Do not enter real medical/allergy information into this publicly accessible demo. UI role switching is not real authentication or authorization.
+
+### Live cross-device synchronization — still blocked
+
+The Vercel project has an existing connected Supabase resource; it has **not** been modified, and no credentials were retrieved. The current tool session exposes resource connections, but no supported external database connection or SQL migration/admin channel. No shared schema/auth implementation was applied, so this PR must **not** be described as live staff-phone/POS synchronization.
+
+Before collecting actual staff profiles, a database administrator must enable the authenticated backend: provision distinct staff/operator accounts, map employee IDs and operator roles, apply owner-only profile/account access and segment-scoped order permissions, store allergy snapshots + current revision separately, and perform atomic order/stock/account transactions. Both interfaces must then subscribe to the same protected order/profile data with reconnect handling. Avoid a publicly writable/readable shared JSON document: that would expose private bills and allergy information. Server-side SLA jobs and a notification channel are also still required for off-page alerts. Database work must use additive, isolated CALM BREAK tables so existing business-tracker data is untouched.

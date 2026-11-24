@@ -1,5 +1,8 @@
 "use client";
 import Link from "next/link";
+import { StaffProfileEditor } from "@/components/staff-profile";
+import { AllergyAlert } from "@/components/allergy-alert";
+import { profileFor } from "@/lib/profiles";
 import { useRef, useState } from "react";
 import {
   Coffee,
@@ -36,7 +39,7 @@ import {
 import { useDemoStore } from "@/lib/use-demo-store";
 
 export default function StaffPortal() {
-  const { store, commit, now, warning } = useDemoStore();
+  const { store, commit, now, warning, lastSynced } = useDemoStore();
   const [user, setUser] = useState<Employee | null>(null);
   const [id, setId] = useState("KV4106");
   const [pin, setPin] = useState("1234");
@@ -59,7 +62,10 @@ export default function StaffPortal() {
       setError(e instanceof Error ? e.message : "Please try again.");
     }
   }
-  if (!store) return <main className="loading">Opening staff portal…</main>;
+  if (!store)
+    return (
+      <main className="loading">{warning || "Opening staff portal…"}</main>
+    );
   function signIn() {
     run(() => {
       const employee = employees.find((e) => e.id === id);
@@ -124,6 +130,39 @@ export default function StaffPortal() {
     });
     busy.current = false;
   }
+  function reorder(o: CustomerOrder) {
+    run(() => {
+      if (
+        cart.length &&
+        !window.confirm("Replace your current cart with this previous order?")
+      )
+        return;
+      const next = o.items.map((l) => {
+        const p = store!.products.find((p) => p.id === l.productId);
+        if (!p) throw Error(`${l.name} is no longer available.`);
+        return {
+          productId: p.id,
+          name: p.name,
+          segment: p.segment,
+          price: p.price,
+          qty: l.qty,
+          modifiers: l.modifiers,
+        };
+      });
+      for (const p of store!.products.filter((p) => p.segment === "shop"))
+        if (
+          next
+            .filter((l) => l.productId === p.id)
+            .reduce((n, l) => n + l.qty, 0) > p.stock
+        )
+          throw Error(`${p.name} has insufficient stock for this reorder.`);
+      setCart(next);
+      setTab("Order food & essentials");
+      setMessage(
+        "Previous items added at current prices. Review your current allergy note, quantities and delivery location before placing.",
+      );
+    });
+  }
   function downloadBill(saleId: string) {
     const sale = bills.find((s) => s.id === saleId)!;
     const rows: (string | number)[][] = [
@@ -180,7 +219,7 @@ export default function StaffPortal() {
   if (!user)
     return (
       <main className="staff-login">
-        <div className="eyebrow">KVM STAFF COLLECTIVE</div>
+        <div className="eyebrow">CALM BREAK - KUDA VILLINGILI</div>
         <h1>Your break, delivered.</h1>
         <p>Café meals and tuck shop essentials. One order, one account.</p>
         <Card className="staff-login-card">
@@ -247,6 +286,19 @@ export default function StaffPortal() {
           {o.items.filter((i) => i.state === "Delivered").length}/
           {o.items.length} item lines delivered
         </p>
+        <AllergyAlert
+          note={o.allergyNote}
+          label="Allergy declaration when ordered"
+        />
+        {orderState(o) !== "Completed" &&
+          (o.allergyNote?.revision ?? 0) !==
+            profileFor(store!, o.employeeId).revision && (
+            <AllergyAlert
+              note={profileFor(store!, o.employeeId)}
+              label="Current profile — operator review required"
+              changed
+            />
+          )}
         {o.items.map((i) => (
           <div className="portal-tracking-item" key={i.id}>
             <div>
@@ -277,6 +329,9 @@ export default function StaffPortal() {
         {o.managerNote && (
           <div className="info-banner">Manager update: {o.managerNote}</div>
         )}
+        <Button variant="outline" onClick={() => reorder(o)}>
+          Order these items again
+        </Button>
         <p className="muted">
           The order completes automatically only when every item line has been
           delivered. Items may arrive in separate deliveries.
@@ -292,7 +347,7 @@ export default function StaffPortal() {
             <Coffee />
           </div>
           <div>
-            KVM<span>YOUR STAFF STORE</span>
+            CALM BREAK<span>KUDA VILLINGILI</span>
           </div>
         </Link>
         <div>
@@ -328,23 +383,68 @@ export default function StaffPortal() {
             orders
           </span>
         </div>
+        <div className="portal-quick-stats">
+          <div>
+            <strong>
+              {mine.filter((o) => orderState(o) !== "Completed").length}
+            </strong>
+            <span>Orders in progress</span>
+          </div>
+          <div>
+            <strong>
+              {money(
+                user.salaryLimit -
+                  accountUsed(store, user.id, "Salary Deduction", now),
+              )}
+            </strong>
+            <span>Salary allowance left</span>
+          </div>
+          <div>
+            <strong>
+              {profileFor(store, user.id).declaration === "Not provided"
+                ? "Not set"
+                : "Saved"}
+            </strong>
+            <span>Allergy declaration</span>
+            <button onClick={() => setTab("My profile & allergies")}>
+              Review profile →
+            </button>
+          </div>
+        </div>
         <nav className="portal-tabs">
-          {["Order food & essentials", "My orders", "My account & bills"].map(
-            (t) => (
-              <button
-                key={t}
-                className={tab === t ? "selected" : ""}
-                onClick={() => {
-                  setTab(t);
-                  setError("");
-                }}
-              >
-                {t}
-              </button>
-            ),
-          )}
+          {[
+            "Order food & essentials",
+            "My orders",
+            "My account & bills",
+            "My profile & allergies",
+          ].map((t) => (
+            <button
+              key={t}
+              className={tab === t ? "selected" : ""}
+              onClick={() => {
+                setTab(t);
+                setError("");
+              }}
+            >
+              {t}
+            </button>
+          ))}
         </nav>
+        <div className="sync-strip">
+          <span className="live-dot" />
+          Local demo updated{" "}
+          {lastSynced ? new Date(lastSynced).toLocaleTimeString() : "—"}
+          <strong>Cross-device sync not connected</strong>
+        </div>
         {alerts}
+        {tab === "My profile & allergies" && (
+          <StaffProfileEditor
+            key={user.id}
+            store={store}
+            user={user}
+            commit={commit}
+          />
+        )}
         {tab === "Order food & essentials" && (
           <div className="portal-shop-layout">
             <section>
@@ -453,6 +553,16 @@ export default function StaffPortal() {
             </section>
             <Card className="portal-cart">
               <h2>Your combined order</h2>
+              <AllergyAlert
+                note={profileFor(store, user.id)}
+                label="Allergy note sent with this order"
+              />
+              <button
+                className="text-link"
+                onClick={() => setTab("My profile & allergies")}
+              >
+                Update my allergy profile →
+              </button>
               <p className="muted">One bill. Separate item deliveries.</p>
               {cart.map((l, index) => (
                 <div className="cart-line" key={`${l.productId}-${index}`}>

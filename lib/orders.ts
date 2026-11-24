@@ -1,3 +1,4 @@
+import { profileFor, type AllergyNote } from "./profiles";
 import {
   checkout,
   employees,
@@ -26,6 +27,10 @@ export type CustomerOrder = {
   acknowledgedAt?: number;
   acknowledgedBy?: string;
   managerNote?: string;
+  allergyNote?: AllergyNote;
+  safetyReviewedRevision?: number;
+  safetyReviewedBy?: string;
+  safetyReviewedAt?: number;
 };
 export const SLA_WARNING_MINUTES = 10;
 export const SLA_ESCALATION_MINUTES = 15;
@@ -90,6 +95,7 @@ export function placeOrder(
     created: input.now,
     location: input.location,
     source: "Staff portal",
+    allergyNote: structuredClone(profileFor(store, input.employeeId)),
     items: sale.lines.map((l, n) => ({
       ...l,
       id: `${input.id}-${n}`,
@@ -134,6 +140,16 @@ export function updateItem(
   let updated = { ...item };
   if (input.runner !== undefined) updated.runner = input.runner;
   if (input.nextState) {
+    const profile = profileFor(store, order.employeeId);
+    if (
+      (profile.declaration === "Allergies declared" ||
+        order.allergyNote?.declaration === "Allergies declared") &&
+      order.safetyReviewedRevision !== profile.revision &&
+      ["Preparing", "Dispatched"].includes(input.nextState)
+    )
+      throw Error(
+        "Review and acknowledge the current allergy note before preparing or dispatching this order.",
+      );
     const states: ItemState[] = [
       "Queued",
       "Preparing",
@@ -184,6 +200,31 @@ export function acknowledgeOrder(
             acknowledgedAt: now,
             acknowledgedBy: managerId,
             managerNote: note.trim(),
+          }
+        : o,
+    ),
+  };
+}
+
+export function reviewAllergy(
+  store: Store,
+  orderId: string,
+  actorId: string,
+  now: number,
+): Store {
+  const actor = employees.find((e) => e.id === actorId);
+  const order = store.customerOrders?.find((o) => o.id === orderId);
+  if (!actor || !order || orderState(order) === "Completed")
+    throw Error("Active order and valid operator required.");
+  return {
+    ...store,
+    customerOrders: store.customerOrders!.map((o) =>
+      o.id === orderId
+        ? {
+            ...o,
+            safetyReviewedRevision: profileFor(store, o.employeeId).revision,
+            safetyReviewedBy: actorId,
+            safetyReviewedAt: now,
           }
         : o,
     ),

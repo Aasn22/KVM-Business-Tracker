@@ -1,3 +1,4 @@
+import { profileFor, type StaffProfile, type AllergyNote } from "./profiles";
 import type { CustomerOrder } from "./orders";
 export type Segment = "cafe" | "shop";
 export type Role =
@@ -39,6 +40,7 @@ export type Sale = {
   reference: string;
   lines: Line[];
   cashierId: string;
+  allergyNote?: AllergyNote;
 };
 export type Order = {
   id: string;
@@ -51,6 +53,8 @@ export type Order = {
   lines: Line[];
   location: string;
   runner: string;
+  employeeId?: string;
+  allergyNote?: AllergyNote;
 };
 export type Supply = {
   id: string;
@@ -74,6 +78,7 @@ export type PO = {
 export type Store = {
   version: 1;
   customerOrders?: CustomerOrder[];
+  staffProfiles?: StaffProfile[];
   products: Product[];
   supplies: Supply[];
   sales: Sale[];
@@ -372,9 +377,10 @@ export function checkout(
     id: input.id,
     at: input.now,
     payment: input.payment,
-    employeeId: ["Customer Credit", "Salary Deduction"].includes(input.payment)
+    employeeId: employees.some((e) => e.id === input.employeeId)
       ? input.employeeId
       : "",
+    allergyNote: structuredClone(profileFor(store, input.employeeId)),
     reference: input.reference.trim(),
     cashierId: input.cashierId,
     lines,
@@ -393,6 +399,8 @@ export function checkout(
           {
             id: `K-${input.id.slice(2)}`,
             saleId: sale.id,
+            employeeId: sale.employeeId,
+            allergyNote: structuredClone(sale.allergyNote),
             created: input.now,
             status: "New",
             lines: cafe,

@@ -1,4 +1,6 @@
 "use client";
+import { AllergyAlert } from "./allergy-alert";
+import { profileFor } from "@/lib/profiles";
 import { useState } from "react";
 import { ArrowRight, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -12,6 +14,7 @@ import {
   itemSla,
   orderState,
   updateItem,
+  reviewAllergy,
   type ItemState,
 } from "@/lib/orders";
 const nextStates: Partial<Record<ItemState, ItemState>> = {
@@ -37,6 +40,8 @@ export function FulfillmentBoard({
   user: Employee;
   now: number;
 }) {
+  const [search, setSearch] = useState("");
+  const [segment, setSegment] = useState("all");
   const [filter, setFilter] = useState("Active");
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [error, setError] = useState("");
@@ -44,6 +49,16 @@ export function FulfillmentBoard({
   const escalations = escalatedOrders(store, now);
   const all = store.customerOrders ?? [];
   const orders = all
+    .filter(
+      (o) =>
+        `${o.id} ${o.employeeId} ${o.location} ${employees.find((e) => e.id === o.employeeId)?.name ?? ""}`
+          .toLowerCase()
+          .includes(search.toLowerCase()) &&
+        (segment === "all" ||
+          o.items.some(
+            (i) => i.segment === segment && i.state !== "Delivered",
+          )),
+    )
     .filter((o) =>
       filter === "Completed"
         ? orderState(o) === "Completed"
@@ -90,6 +105,57 @@ export function FulfillmentBoard({
           {error}
         </div>
       )}
+      <div className="dispatch-summary">
+        <div>
+          <strong>
+            {all.filter((o) => orderState(o) !== "Completed").length}
+          </strong>
+          <span>Active orders</span>
+        </div>
+        <div>
+          <strong>
+            {all.filter((o) => orderState(o) === "Partially delivered").length}
+          </strong>
+          <span>Partially delivered</span>
+        </div>
+        <div>
+          <strong>
+            {
+              all.filter(
+                (o) =>
+                  orderState(o) !== "Completed" &&
+                  (profileFor(store, o.employeeId).declaration ===
+                    "Allergies declared" ||
+                    o.allergyNote?.declaration === "Allergies declared") &&
+                  o.safetyReviewedRevision !==
+                    profileFor(store, o.employeeId).revision,
+              ).length
+            }
+          </strong>
+          <span>Allergy reviews needed</span>
+        </div>
+        <div>
+          <strong>{escalations.length}</strong>
+          <span>Overdue orders</span>
+        </div>
+      </div>
+      <div className="dispatch-search">
+        <Input
+          aria-label="Search orders"
+          placeholder="Search order, staff name, employee ID or destination…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        <select
+          aria-label="Pending business segment"
+          value={segment}
+          onChange={(e) => setSegment(e.target.value)}
+        >
+          <option value="all">All business segments</option>
+          <option value="cafe">Café items pending</option>
+          <option value="shop">Shop items pending</option>
+        </select>
+      </div>
       <div className="filter-row">
         {["Active", "Escalated", "Completed"].map((f) => (
           <Button
@@ -137,6 +203,49 @@ export function FulfillmentBoard({
                   </small>
                 </div>
               </div>
+              <AllergyAlert
+                note={o.allergyNote}
+                label="Order allergy note (at checkout)"
+              />
+              {orderState(o) !== "Completed" &&
+                (o.allergyNote?.revision ?? 0) !==
+                  profileFor(store, o.employeeId).revision && (
+                  <AllergyAlert
+                    note={profileFor(store, o.employeeId)}
+                    changed
+                    label="Current staff allergy update"
+                  />
+                )}
+              {orderState(o) !== "Completed" &&
+                (profileFor(store, o.employeeId).declaration ===
+                  "Allergies declared" ||
+                  o.allergyNote?.declaration === "Allergies declared") && (
+                  <div className="safety-review">
+                    {o.safetyReviewedRevision ===
+                    profileFor(store, o.employeeId).revision ? (
+                      <span>
+                        Current allergy note reviewed by {o.safetyReviewedBy} ·{" "}
+                        {new Date(o.safetyReviewedAt!).toLocaleTimeString()}
+                      </span>
+                    ) : (
+                      <>
+                        <strong>
+                          Safety review required before preparing or dispatching
+                        </strong>
+                        <Button
+                          variant="outline"
+                          onClick={() =>
+                            apply(() =>
+                              reviewAllergy(store, o.id, user.id, Date.now()),
+                            )
+                          }
+                        >
+                          I have reviewed the current allergy note
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                )}
               {o.items.map((item) => {
                 const sla = itemSla(o, item, now);
                 const allowed = canFulfill(user.role, item);

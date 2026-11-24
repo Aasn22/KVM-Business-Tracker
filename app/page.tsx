@@ -1,9 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { useDemoStore } from "@/lib/use-demo-store";
+import { AllergyAlert } from "@/components/allergy-alert";
+import { profileFor } from "@/lib/profiles";
 import { FulfillmentBoard } from "@/components/fulfillment-board";
 import { escalatedOrders } from "@/lib/orders";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import {
   Coffee,
   ShoppingBag,
@@ -52,10 +55,8 @@ import {
   type Payment,
   type Product,
   type Segment,
-  type Store,
 } from "@/lib/store";
 
-const STORAGE = "kvm-staff-pos-v1";
 const methods: Payment[] = [
   "Cash",
   "Bank Transfer",
@@ -134,15 +135,19 @@ function SectionTitle({
 }
 
 export default function Home() {
-  const [store, setStore] = useState<Store | null>(null);
+  const {
+    store,
+    commit,
+    now,
+    warning: storageError,
+    lastSynced,
+  } = useDemoStore();
   const [user, setUser] = useState<Employee | null>(null);
   const [page, setPage] = useState<Page>("Point of Sale");
   const [id, setId] = useState("KV1042");
   const [pin, setPin] = useState("1234");
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
-  const [storageError, setStorageError] = useState("");
-  const [now, setNow] = useState(0);
   const [shift, setShift] = useState(0);
   const [segment, setSegment] = useState<Segment>("cafe");
   const [category, setCategory] = useState("All items");
@@ -155,7 +160,7 @@ export default function Home() {
   const [payment, setPayment] = useState<Payment>("Cash");
   const [cash, setCash] = useState("");
   const [reference, setReference] = useState("");
-  const [buyer, setBuyer] = useState("KV4106");
+  const [buyer, setBuyer] = useState("");
   const [receipt, setReceipt] = useState<{
     id: string;
     amount: number;
@@ -171,60 +176,6 @@ export default function Home() {
   const [qty, setQty] = useState("24");
   const [cost, setCost] = useState("");
   const busy = useRef(false);
-  useEffect(() => {
-    const init = window.setTimeout(() => {
-      const time = Date.now();
-      let initial = seed(time);
-      try {
-        const saved = localStorage.getItem(STORAGE);
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (
-            parsed.version !== 1 ||
-            !["products", "supplies", "sales", "orders", "purchases"].every(
-              (key) => Array.isArray(parsed[key]),
-            )
-          )
-            throw Error("Invalid data");
-          initial = parsed;
-        }
-      } catch {
-        setStorageError(
-          "Saved demo data could not be loaded. A fresh demo is available; reset to replace the unreadable copy.",
-        );
-      }
-      setStore(initial);
-      setNow(time);
-    }, 0);
-    const interval = setInterval(() => setNow(Date.now()), 1000);
-    const sync = (e: StorageEvent) => {
-      if (e.key === STORAGE && e.newValue) {
-        try {
-          const value = JSON.parse(e.newValue);
-          if (value.version === 1) setStore(value);
-        } catch {
-          setStorageError("Another tab saved unreadable demo data.");
-        }
-      }
-    };
-    window.addEventListener("storage", sync);
-    return () => {
-      clearTimeout(init);
-      clearInterval(interval);
-      window.removeEventListener("storage", sync);
-    };
-  }, []);
-  function commit(next: Store) {
-    setStore(next);
-    try {
-      localStorage.setItem(STORAGE, JSON.stringify(next));
-      setStorageError("");
-    } catch {
-      setStorageError(
-        "Browser storage is unavailable or full. Changes last only until this page is closed.",
-      );
-    }
-  }
   function attempt(fn: () => void) {
     setError("");
     setNotice("");
@@ -262,7 +213,7 @@ export default function Home() {
     return (
       <div className="loading">
         <Coffee size={40} />
-        <p>Opening your workspace…</p>
+        <p>{storageError || "Opening your workspace…"}</p>
       </div>
     );
   const manager = user?.role === "Store Manager / Admin";
@@ -426,7 +377,7 @@ export default function Home() {
               <Leaf />
             </div>
             <div>
-              KVM<span>STAFF COLLECTIVE</span>
+              CALM BREAK<span>KUDA VILLINGILI</span>
             </div>
           </div>
           <div>
@@ -523,7 +474,7 @@ export default function Home() {
             <Leaf />
           </div>
           <div>
-            KVM<span>STAFF COLLECTIVE</span>
+            CALM BREAK<span>KUDA VILLINGILI</span>
           </div>
         </div>
         <div className="workspace-label">WORKSPACE</div>
@@ -618,7 +569,7 @@ export default function Home() {
         </header>
         <div className="demo-bar">
           <span>
-            <strong>DEMO WORKSPACE</strong> Browser-local sample data · USD
+            <strong>CALM BREAK DEMO</strong> Local demo sync · USD
           </span>
           <label>
             Demo role{" "}
@@ -636,6 +587,12 @@ export default function Home() {
           </label>
         </div>
         <main className="content">
+          <div className="sync-strip">
+            <span className="live-dot" />
+            Local demo · both platforms share this browser store · updated{" "}
+            {lastSynced ? new Date(lastSynced).toLocaleTimeString() : "—"}
+            <strong>Cross-device sync not connected</strong>
+          </div>
           {alerts}
           {manager && escalatedOrders(store, now).length > 0 && (
             <div className="alert danger" role="alert">
@@ -948,6 +905,25 @@ export default function Home() {
                     )}
                   </div>
                   <div className="checkout-area">
+                    <Select
+                      label="Staff customer / allergy profile"
+                      value={buyer}
+                      onChange={setBuyer}
+                      options={[
+                        {
+                          value: "",
+                          label: "Unidentified customer — ask about allergies",
+                        },
+                        ...employees.map((e) => ({
+                          value: e.id,
+                          label: `${e.id} · ${e.name}`,
+                        })),
+                      ]}
+                    />
+                    <AllergyAlert
+                      note={profileFor(store, buyer)}
+                      label="Customer allergy note"
+                    />
                     {cart.some((l) => l.segment === "cafe") && (
                       <Select
                         label="Order destination"
@@ -1018,10 +994,13 @@ export default function Home() {
                           label="Charge to employee"
                           value={buyer}
                           onChange={setBuyer}
-                          options={employees.map((e) => ({
-                            value: e.id,
-                            label: `${e.id} · ${e.name}`,
-                          }))}
+                          options={[
+                            { value: "", label: "Select staff customer" },
+                            ...employees.map((e) => ({
+                              value: e.id,
+                              label: `${e.id} · ${e.name}`,
+                            })),
+                          ]}
                         />
                         <div className="account-info">
                           <span>
@@ -1035,10 +1014,10 @@ export default function Home() {
                             Available:{" "}
                             {money(
                               (payment === "Salary Deduction"
-                                ? employees.find((e) => e.id === buyer)!
-                                    .salaryLimit
-                                : employees.find((e) => e.id === buyer)!
-                                    .creditLimit) -
+                                ? (employees.find((e) => e.id === buyer)
+                                    ?.salaryLimit ?? 0)
+                                : (employees.find((e) => e.id === buyer)
+                                    ?.creditLimit ?? 0)) -
                                 accountUsed(store, buyer, payment, now),
                             )}
                           </strong>
@@ -1143,6 +1122,20 @@ export default function Home() {
                                   })}
                                 </span>
                               </div>
+                              <AllergyAlert
+                                note={
+                                  o.status === "Completed"
+                                    ? o.allergyNote
+                                    : profileFor(store, o.employeeId ?? "")
+                                }
+                                label="Kitchen allergy note"
+                                changed={
+                                  o.status !== "Completed" &&
+                                  (o.allergyNote?.revision ?? 0) !==
+                                    profileFor(store, o.employeeId ?? "")
+                                      .revision
+                                }
+                              />
                               <ul className="order-lines">
                                 {o.lines.map((l, i) => (
                                   <li key={i}>
@@ -1715,7 +1708,8 @@ export default function Home() {
           )}
           <footer className="page-footer">
             <span>
-              KVM Staff Collective <span>·</span> Your everyday, simplified.
+              CALM BREAK - KUDA VILLINGILI <span>·</span> Your everyday,
+              simplified.
             </span>
             <button
               onClick={() => {

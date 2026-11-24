@@ -1,4 +1,5 @@
 import { markets, summarize, type Entry } from "./model";
+import { historyActual, historySummary, type HistoryYear } from "./history";
 import type { ProductionData } from "./production";
 export const pulseYears = [2021, 2022, 2023, 2024, 2025, 2026];
 export function pulsePlanning(entries: Entry[]) {
@@ -18,7 +19,28 @@ export function pulsePlanning(entries: Entry[]) {
     coverage: known.length,
   };
 }
-export function pulseActual(data: ProductionData | null, year: number) {
+export function pulseActual(
+  data: ProductionData | null,
+  year: number,
+  histories: HistoryYear[] = [],
+) {
+  const manual = histories.find((y) => y.year === year);
+  if (
+    manual &&
+    manual.months.some(
+      (m) =>
+        m.actualNights !== null ||
+        m.actualRoomRevenue !== null ||
+        m.actualTotalRevenue !== null,
+    )
+  )
+    return {
+      ...historyActual(manual),
+      dates: manual.months
+        .filter((m) => m.actualRoomRevenue !== null)
+        .map((m) => `manual-month-${m.month}`),
+    };
+
   const rows =
     data?.days.filter(
       (r) =>
@@ -46,9 +68,12 @@ export function pulseActual(data: ProductionData | null, year: number) {
     coverage: rows.length,
   };
 }
-export function pulseYoY(data: ProductionData | null) {
-  const latest = pulseActual(data, 2026),
-    previous = pulseActual(data, 2025);
+export function pulseYoY(
+  data: ProductionData | null,
+  histories: HistoryYear[] = [],
+) {
+  const latest = pulseActual(data, 2026, histories),
+    previous = pulseActual(data, 2025, histories);
   // Do not present unmatched partial years as like-for-like growth.
   const comparable =
     latest.dates.length > 0 &&
@@ -62,7 +87,26 @@ export function pulseYoY(data: ProductionData | null) {
   return {
     revenue: change(latest.revenue, previous.revenue),
     adr: change(latest.adr, previous.adr),
-    totalRevenue: change(latest.totalRevenue, previous.totalRevenue),
+    totalRevenue: (() => {
+      const a = histories.find((h) => h.year === 2026),
+        b = histories.find((h) => h.year === 2025);
+      if (!a || !b) return null;
+      const ma = a.months
+          .filter((m) => m.actualTotalRevenue !== null)
+          .map((m) => m.month),
+        mb = b.months
+          .filter((m) => m.actualTotalRevenue !== null)
+          .map((m) => m.month);
+      const av = historySummary(a.months).actualTotalRevenue,
+        bv = historySummary(b.months).actualTotalRevenue;
+      return ma.length &&
+        JSON.stringify(ma) === JSON.stringify(mb) &&
+        av !== null &&
+        bv !== null &&
+        bv !== 0
+        ? { amount: av - bv, percent: ((av - bv) / bv) * 100 }
+        : null;
+    })(),
   };
 }
 export const pulseMarketOrder = [
@@ -90,4 +134,26 @@ export function pulseMarketLabel(id: string) {
 export function pulseKnownSum(values: (number | null)[]) {
   const known = values.filter((v): v is number => v !== null);
   return known.length ? known.reduce((a, b) => a + b, 0) : null;
+}
+
+export function pulseYearPlanning(
+  entries: Entry[],
+  year: number,
+  histories: HistoryYear[] = [],
+) {
+  const manual = histories.find((h) => h.year === year),
+    base = pulsePlanning(entries.filter((e) => e.year === year));
+  if (!manual) return base;
+  const summary = historySummary(manual.months);
+  const budget = summary.budgetRoomRevenue ?? base.budget,
+    nights = summary.budgetNights ?? base.nights;
+  return {
+    ...base,
+    budget,
+    nights,
+    targetADR:
+      summary.budgetRoomRevenue !== null || summary.budgetNights !== null
+        ? summary.budgetADR
+        : base.targetADR,
+  };
 }

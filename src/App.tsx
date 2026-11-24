@@ -49,6 +49,7 @@ import { formatMoney, formatNumber, isMoneyMetric } from "./format";
 import ActivityLog from "./ActivityLog";
 import OperationalInput from "./OperationalInput";
 import PerformanceInput from "./PerformanceInput";
+import HistoryUpdate from "./HistoryUpdate";
 import PageInsights from "./PageInsights";
 import ProductionAnalysis from "./ProductionAnalysis";
 import MarketPage from "./MarketPage";
@@ -1347,6 +1348,10 @@ export default function App({
               )}
               {localPin && view === "admin" && (
                 <>
+                  <HistoryUpdate
+                    onDirtyChange={setDirty}
+                    onBusyChange={setBusy}
+                  />
                   <PerformanceInput />
                   <OperationalInput onBusyChange={setBusy} />
                 </>

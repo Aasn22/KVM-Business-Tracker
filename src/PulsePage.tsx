@@ -6,6 +6,8 @@ import {
   watchProduction,
 } from "./productionClient";
 import type { ProductionData } from "./production";
+import { loadHistory, historyChanged } from "./historyClient";
+import { historySummary, type HistoryYear } from "./history";
 import type { Entry } from "./model";
 import { formatMoney, formatNumber } from "./format";
 import {
@@ -16,25 +18,36 @@ import {
   pulseMarketOrder,
   pulseMarketLabel,
   pulseKnownSum,
+  pulseYearPlanning,
 } from "./pulseData";
 type Metric = { label: string; value: string; note: string; detail?: string };
 export function PulseContent({
   budgets,
   production,
   sourceNote = "",
+  histories = [],
 }: {
   budgets: Entry[];
   production: ProductionData | null;
   sourceNote?: string;
+  histories?: HistoryYear[];
 }) {
   const historical = budgets.filter((e) => pulseYears.includes(e.year)),
-    planning = pulsePlanning(historical),
+    planning = (() => {
+      const values = pulseYears.map((y) =>
+        pulseYearPlanning(historical, y, histories),
+      );
+      return {
+        ...pulsePlanning(historical),
+        budget: pulseKnownSum(values.map((v) => v.budget)),
+      };
+    })(),
     future = budgets.filter((e) => e.year === 2027),
-    target = pulsePlanning(future);
-  const actuals = pulseYears.map((y) => pulseActual(production, y));
+    target = pulseYearPlanning(future, 2027, histories);
+  const actuals = pulseYears.map((y) => pulseActual(production, y, histories));
   const achieved = pulseKnownSum(actuals.map((a) => a.revenue));
   const totalAchieved = pulseKnownSum(actuals.map((a) => a.totalRevenue));
-  const yoy = pulseYoY(production),
+  const yoy = pulseYoY(production, histories),
     unavailable = "Not supplied by current data. No value estimated.";
   const historicalNote = `${planning.coverage}/${72 * 6} saved market-month budget records. Actuals: sum of known room values on supplied completed-stay dates only; missing revenue values/years excluded, not verified zero; not necessarily full years. ${sourceNote}`;
   const change = (v: { amount: number; percent: number } | null) =>
@@ -54,17 +67,23 @@ export function PulseContent({
     },
     {
       label: "Total Revenue Budgeted",
-      value: "—",
+      value: formatMoney(
+        pulseKnownSum(
+          histories
+            .filter((h) => pulseYears.includes(h.year))
+            .map((h) => historySummary(h.months).budgetTotalRevenue),
+        ),
+      ),
       note: "Year 2021 – Year 2026",
       detail:
-        "F&B and other revenue budgets not supplied; room revenue is not total revenue.",
+        "Sum of saved History Update budget total revenue values; missing months/years excluded. Room-only budgets are not called total revenue.",
     },
     {
       label: "Total Revenue Achieved",
       value: formatMoney(totalAchieved),
       note: "Year 2021 – Year 2026",
       detail:
-        "Production source contains room value only; no complete F&B/other achieved revenue.",
+        "Sum of saved History Update actual total revenue values. Production room-only revenue is never substituted for total revenue.",
     },
     {
       label: "Room Revenue YOY",
@@ -119,9 +138,15 @@ export function PulseContent({
     },
     {
       label: "Total Revenue Budget",
-      value: "—",
+      value: formatMoney(
+        histories.find((h) => h.year === 2027)
+          ? historySummary(histories.find((h) => h.year === 2027)!.months)
+              .budgetTotalRevenue
+          : null,
+      ),
       note: "Year 2027",
-      detail: "Requires room + F&B + other revenue budgets; not inferred.",
+      detail:
+        "Saved History Update 2027 property total if entered; no total inferred from room-only sources.",
     },
   ];
   const metrics = (items: Metric[]) => (
@@ -147,8 +172,14 @@ export function PulseContent({
     detail: string,
     actualYear?: number,
   ) => {
-    const p = pulsePlanning(rows);
-    const a = actualYear ? pulseActual(production, actualYear) : null;
+    const p = actualYear
+      ? pulseYearPlanning(rows, actualYear, histories)
+      : label === "TOTAL"
+        ? pulseYearPlanning(rows, 2027, histories)
+        : pulsePlanning(rows);
+    const a = actualYear
+      ? pulseActual(production, actualYear, histories)
+      : null;
     return (
       <article className="pulse-mini-column" key={label} title={detail}>
         <h3>{label}</h3>
@@ -192,7 +223,7 @@ export function PulseContent({
   };
   const annualRows = pulseYears.map((y, i) => ({
     label: String(y),
-    budget: pulsePlanning(historical.filter((e) => e.year === y)),
+    budget: pulseYearPlanning(historical, y, histories),
     actual: actuals[i],
   }));
   const marketRows = pulseMarketOrder.map((id) => ({
@@ -445,6 +476,7 @@ export default function PulsePage({
   const [budgets, setBudgets] = useState<Entry[]>([]),
     [production, setProduction] = useState<ProductionData | null>(null),
     [note, setNote] = useState("Loading saved sources.");
+  const [histories, setHistories] = useState<HistoryYear[]>([]);
   useEffect(() => {
     let active = true,
       busy = false;
@@ -452,15 +484,17 @@ export default function PulsePage({
       if (busy) return;
       busy = true;
       try {
-        const [years, prod] = await Promise.all([
+        const [years, prod, history] = await Promise.all([
           Promise.all([...pulseYears, 2027].map((y) => readYear(y))),
           loadProduction().catch(() => null),
+          loadHistory().catch(() => null),
         ]);
         if (active) {
           setBudgets(years.flatMap((r) => r.entries));
           setProduction(prod?.data ?? null);
+          setHistories(history ?? []);
           setNote(
-            `${years.every((r) => r.databaseAvailable) ? "Saved database budgets." : "Some budget sources unavailable or published workbook baseline."} ${prod?.source ?? "Uploaded production unavailable."}`,
+            `${years.every((r) => r.databaseAvailable) ? "Saved database budgets." : "Some budget sources unavailable or published workbook baseline."} ${prod?.source ?? "Uploaded production unavailable."} ${history === null ? "History Update database unavailable." : `Manual history available for ${history.map((h) => h.year).join(", ") || "no years"}. Saved manual year actuals/targets take precedence, are never added to production, and may cover partial months.`}`,
           );
         }
       } catch (e) {
@@ -476,16 +510,23 @@ export default function PulsePage({
       if (document.visibilityState === "visible") void refresh();
     };
     window.addEventListener(productionChanged, refresh);
+    window.addEventListener(historyChanged, refresh);
     document.addEventListener("visibilitychange", visible);
     return () => {
       active = false;
       stop();
       clearInterval(timer);
       window.removeEventListener(productionChanged, refresh);
+      window.removeEventListener(historyChanged, refresh);
       document.removeEventListener("visibilitychange", visible);
     };
   }, [readYear]);
   return (
-    <PulseContent budgets={budgets} production={production} sourceNote={note} />
+    <PulseContent
+      budgets={budgets}
+      production={production}
+      sourceNote={note}
+      histories={histories}
+    />
   );
 }

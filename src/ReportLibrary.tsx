@@ -22,6 +22,8 @@ import { formatMoney, formatNumber } from "./format";
 import { budgetYears, markets, months, type Entry } from "./model";
 import OperationalReports from "./OperationalReports";
 import ProductionAnalysis from "./ProductionAnalysis";
+import { HistoryReport } from "./HistoryUpdate";
+import { periodMonths } from "./totals";
 import {
   productionReportMode,
   type ProductionReportMode,
@@ -590,7 +592,13 @@ export default function ReportLibrary({
     "stay" | "booking" | "cancellation"
   >("stay");
   const [productionTitle, setProductionTitle] = useState("");
-  const [basis, setBasis] = useState<"production" | "budget">("production");
+  const [basis, setBasis] = useState<"production" | "budget" | "history">(
+    "production",
+  );
+  const [historyReport, setHistoryReport] = useState<{
+    title: string;
+    period: string;
+  } | null>(null);
   const [reportYear, setReportYear] = useState(2026);
   const [operational, setOperational] = useState<OperationKind | null>(null);
   const [inputNotice, setInputNotice] = useState<string | null>(null);
@@ -610,6 +618,26 @@ export default function ReportLibrary({
     quick?: { title: string; period: string; limitation?: string },
   ) {
     if (stage !== null || loading) return;
+    if (basis === "history") {
+      if (
+        market !== "all" ||
+        !["executive", "monthly", "nights"].includes(selected)
+      ) {
+        setInputNotice(
+          "History Update contains property-level monthly totals only. Select All markets and an Executive, Monthly or Room Nights report; country/villa/segment breakdowns require production data.",
+        );
+        return;
+      }
+      setHistoryReport({
+        title:
+          (custom && title.trim()) ||
+          quick?.title ||
+          reportTypes.find((t) => t.id === selected)?.title ||
+          "Historical performance",
+        period: quick?.period ?? period,
+      });
+      return;
+    }
     if (basis === "production") {
       setProductionStatus("CHECKED OUT");
       setProductionBasis("stay");
@@ -655,6 +683,15 @@ export default function ReportLibrary({
       }
     }
   }
+  if (historyReport)
+    return (
+      <HistoryReport
+        year={reportYear}
+        title={historyReport.title}
+        period={periodMonths(historyReport.period)}
+        onClose={() => setHistoryReport(null)}
+      />
+    );
   if (productionOpen)
     return (
       <section className="report-library production-report-wrapper">
@@ -818,15 +855,18 @@ export default function ReportLibrary({
                   Uploaded reservation production
                 </option>
                 <option value="budget">Budget / legacy BOB planning</option>
+                <option value="history">
+                  History Update · property monthly totals
+                </option>
               </select>
             </label>
             <label>
               Report year
               <select
                 aria-label="Quick report year"
-                value={basis === "production" ? reportYear : year}
+                value={basis !== "budget" ? reportYear : year}
                 onChange={(e) =>
-                  basis === "production"
+                  basis !== "budget"
                     ? setReportYear(Number(e.target.value))
                     : onYearChange?.(Number(e.target.value))
                 }
@@ -845,9 +885,9 @@ export default function ReportLibrary({
                   Report year
                   <select
                     aria-label="Report year"
-                    value={basis === "production" ? reportYear : year}
+                    value={basis !== "budget" ? reportYear : year}
                     onChange={(e) =>
-                      basis === "production"
+                      basis !== "budget"
                         ? setReportYear(Number(e.target.value))
                         : onYearChange?.(Number(e.target.value))
                     }
@@ -959,7 +999,7 @@ export default function ReportLibrary({
             </section>
           )}
           <p className="report-selection">
-            {basis === "production" ? reportYear : year} ·{" "}
+            {basis !== "budget" ? reportYear : year} ·{" "}
             {market === "all"
               ? "All available markets"
               : markets.find((m) => m.id === market)?.name}{" "}
@@ -974,6 +1014,25 @@ export default function ReportLibrary({
             loading={loading}
             onSelect={(id) => {
               const quick = quickReports.find((r) => r.id === id)!;
+              if (basis === "history") {
+                if (
+                  market !== "all" ||
+                  !["hotel", "monthly", "quarterly", "yearly"].includes(
+                    quick.id,
+                  )
+                ) {
+                  setInputNotice(
+                    "History Update provides property-level monthly totals only. Use Hotel Performance, Monthly, Quarterly or Yearly reports with All markets; other breakdowns require production uploads.",
+                  );
+                  return;
+                }
+                setHistoryReport({
+                  title: quick.title,
+                  period: quickReportPeriod(quick.periodMode, period),
+                });
+                return;
+              }
+
               if (basis === "production" && !quick.unavailable) {
                 setProductionStatus(
                   quick.id === "cancellation"

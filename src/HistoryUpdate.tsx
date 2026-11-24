@@ -9,6 +9,7 @@ import {
 } from "./history";
 import { loadHistory, saveHistory, historyChanged } from "./historyClient";
 import { months } from "./model";
+import { pasteHistory, historyInputValue } from "./historyPaste";
 import { formatMoney, formatNumber } from "./format";
 export const historyColumns = [
   "Month",
@@ -39,6 +40,7 @@ export function HistoryTable({
   data: HistoryYear;
   onChange?: (months: HistoryMonth[]) => void;
 }) {
+  const [inputError, setInputError] = useState("");
   const total = historySummary(data.months),
     editable = !!onChange;
   return (
@@ -48,6 +50,11 @@ export function HistoryTable({
       aria-label="Monthly history table"
       tabIndex={0}
     >
+      {inputError && (
+        <p role="alert" className="error">
+          {inputError}
+        </p>
+      )}
       <table className="history-table">
         <thead>
           <tr>
@@ -74,16 +81,36 @@ export function HistoryTable({
                         step={field.endsWith("Nights") ? "1" : "any"}
                         aria-label={`${months[r.month - 1]} ${field}`}
                         value={r[field] ?? ""}
+                        onPaste={(e) => {
+                          e.preventDefault();
+                          try {
+                            const next = pasteHistory(
+                              data,
+                              i,
+                              field,
+                              e.clipboardData.getData("text/plain"),
+                            );
+                            onChange(next.months);
+                            setInputError("");
+                          } catch (err) {
+                            setInputError((err as Error).message);
+                          }
+                        }}
                         onChange={(e) => {
-                          const value =
-                            e.target.value === ""
-                              ? null
-                              : Number(e.target.value);
-                          onChange(
-                            data.months.map((row, j) =>
-                              i === j ? { ...row, [field]: value } : row,
-                            ),
-                          );
+                          try {
+                            const value = historyInputValue(
+                              e.target.value,
+                              field,
+                            );
+                            onChange(
+                              data.months.map((row, j) =>
+                                i === j ? { ...row, [field]: value } : row,
+                              ),
+                            );
+                            setInputError("");
+                          } catch (err) {
+                            setInputError((err as Error).message);
+                          }
                         }}
                       />
                     ) : field.endsWith("Nights") ? (
@@ -217,10 +244,13 @@ export default function HistoryUpdate({
         </button>
       </header>
       <p>
-        Enter property totals for the selected year. Blank = unavailable; 0 = a
-        confirmed zero. ADR is calculated from room revenue ÷ room nights; TOTAL
-        ADR is weighted, not a sum. Budget and actual total revenue includes
-        room revenue.
+        Excel paste: copy numeric cells and paste into the first matching input.
+        Six input columns or all eight columns (ADR ignored/recalculated) are
+        supported; month names and headers may be included. Enter property
+        totals for the selected year. Blank = unavailable; 0 = a confirmed zero.
+        ADR is calculated from room revenue ÷ room nights; TOTAL ADR is
+        weighted, not a sum. Budget and actual total revenue includes room
+        revenue.
       </p>
       {loading && <p role="status">Loading saved year…</p>}
       {error && <p role="alert">{error}</p>}

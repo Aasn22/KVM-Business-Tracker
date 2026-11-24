@@ -6044,3 +6044,15 @@ fieldset {
     padding: 3px;
   }
 }
+.history-table td,
+.history-table tfoot th {
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+.history-table tfoot td {
+  font-size: 11px;
+  white-space: normal;
+}
+.history-table input {
+  text-align: right;
+}

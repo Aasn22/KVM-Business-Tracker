@@ -1348,12 +1348,12 @@ export default function App({
               )}
               {localPin && view === "admin" && (
                 <>
+                  <PerformanceInput />
+                  <OperationalInput onBusyChange={setBusy} />
                   <HistoryUpdate
                     onDirtyChange={setDirty}
                     onBusyChange={setBusy}
                   />
-                  <PerformanceInput />
-                  <OperationalInput onBusyChange={setBusy} />
                 </>
               )}
               {!publicDemo && !localPin && view === "admin" && (

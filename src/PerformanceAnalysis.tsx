@@ -1,3 +1,4 @@
+import { periodOccupancy, formatOccupancy } from "./occupancy";
 import { useEffect, useState } from "react";
 import {
   fetchPerformance,
@@ -212,9 +213,12 @@ export default function PerformanceAnalysis({
               .map((r) => r.date)
               .sort()
               .at(-1)}
-            . Occupancy is not summed or recomputed without a verified
-            available-room denominator. Some adjustments may have negative
-            revenue.
+            . Occupancy (75-unit assumption):{" "}
+            {formatOccupancy(
+              periodOccupancy(summary.rooms, year, selectedMonths),
+            )}
+            . Selected source may be incomplete. Some adjustments may have
+            negative revenue.
           </p>
           {groups.map((r) => (
             <div className="primary-source-bar" key={r.label}>

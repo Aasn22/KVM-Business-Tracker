@@ -48,7 +48,7 @@ describe("manual historical year entry", () => {
       "Actual Total Revenue",
     ])
       expect(html).toContain(col);
-    expect(html.match(/<input/g)).toHaveLength(72);
+    expect(html.match(/<input/g)).toHaveLength(96);
     expect(html).not.toContain("DIV/0");
     const q = renderToStaticMarkup(
       <HistoryTable data={{ ...y, months: y.months.slice(3, 6) }} />,

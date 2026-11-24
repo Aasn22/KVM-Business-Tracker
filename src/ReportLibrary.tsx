@@ -1,3 +1,4 @@
+import { periodOccupancy, formatOccupancy } from "./occupancy";
 import { useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
@@ -477,6 +478,26 @@ export function VisualReport({ report }: { report: ReportSnapshot }) {
           </section>
         ))}
       </div>
+      <p className="report-source-note">
+        Budget occupancy:{" "}
+        {formatOccupancy(
+          periodOccupancy(
+            report.nights.budget,
+            report.year,
+            periodMonths(report.period),
+          ),
+        )}{" "}
+        · BOB occupancy:{" "}
+        {formatOccupancy(
+          periodOccupancy(
+            report.nights.bob,
+            report.year,
+            periodMonths(report.period),
+          ),
+        )}
+        . Fixed 75 units × days in reporting period; incomplete records are
+        partial contributions, not confirmed full-property occupancy.
+      </p>
       <section className="visual-panel visual-summary">
         <h3>Executive reading</h3>
         <p>

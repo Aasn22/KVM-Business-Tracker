@@ -1,3 +1,4 @@
+import { periodOccupancy, formatOccupancy } from "./occupancy";
 import { formatMoney, formatNumber, isMoneyMetric } from "./format";
 import { Fragment, useState } from "react";
 import { ArrowDownToLine, LockKeyhole, Printer } from "lucide-react";
@@ -291,8 +292,24 @@ export default function TotalReview({
             </thead>
             <tbody>
               <tr>
-                <th>Occupancy %</th>
-                <td>{unavailable}</td>
+                <th>Occupancy % (budget / BOB)</th>
+                <td title="Fixed 75 units × all days of selected year; available source nights only.">
+                  {formatOccupancy(
+                    periodOccupancy(
+                      report.commercial("year", "Room Nights").budget,
+                      year,
+                      [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+                    ),
+                  )}{" "}
+                  /{" "}
+                  {formatOccupancy(
+                    periodOccupancy(
+                      report.commercial("year", "Room Nights").bob,
+                      year,
+                      [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+                    ),
+                  )}
+                </td>
                 <td rowSpan={2}>
                   {money(report.commercial("year", "ADR").budget)} /{" "}
                   {money(report.commercial("year", "ADR").bob)}
@@ -443,9 +460,10 @@ export default function TotalReview({
             ))}
           </div>
           <p className="management-footnote">
-            No approval or signature records exist in the source data.
-            Occupancy, MTD actuals, forecasts, F&B/other/total revenue and
-            category ADR are not supplied; none are invented or entered here.
+            No approval or signature records exist in the source data. Occupancy
+            uses the fixed 75-unit assumption. MTD actuals, forecasts,
+            F&B/other/total revenue and category ADR are not supplied; none are
+            invented or entered here.
           </p>
         </SheetSection>
       </article>

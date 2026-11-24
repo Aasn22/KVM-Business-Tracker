@@ -1,3 +1,4 @@
+import { periodOccupancy, formatOccupancy } from "./occupancy";
 import { useEffect, useState } from "react";
 import {
   loadProduction,
@@ -93,6 +94,14 @@ export default function MarketProduction({
           </article>
         ))}
       </div>
+      <p className="market-hint">
+        Completed occupancy contribution:{" "}
+        {completed.groups.length
+          ? formatOccupancy(periodOccupancy(completed.nights, year, [month]))
+          : "—"}{" "}
+        · fixed 75-unit property capacity; uploaded arrival cohort may not
+        include every in-house stay.
+      </p>
       {!completed.groups.length && (
         <p className="market-hint">
           No completed rows supplied for this month/market; not a verified zero.

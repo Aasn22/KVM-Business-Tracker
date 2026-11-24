@@ -1,3 +1,4 @@
+import { periodOccupancy, formatOccupancy } from "./occupancy";
 import { useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import MarketProduction from "./MarketProduction";
@@ -120,6 +121,14 @@ export default function MarketPage({
           </article>
         ))}
       </div>
+      <p className="market-hint">
+        Budget occupancy:{" "}
+        {formatOccupancy(periodOccupancy(nights?.budget, year, [month]))} · BOB
+        occupancy:{" "}
+        {formatOccupancy(periodOccupancy(nights?.bob, year, [month]))}. Market
+        contribution to total property capacity (75 units × days in month), not
+        a market-specific inventory.
+      </p>
       {!current ? (
         <p className="market-empty">
           No saved planning figures for {name} · {months[month - 1]} {year}.

@@ -1,3 +1,4 @@
+import { periodOccupancy } from "./occupancy";
 import { dollarExcelFormat } from "./format";
 import { markets, months, type Entry, type MonthData } from "./model";
 import { periodMonths, totalReview } from "./totals";
@@ -303,7 +304,24 @@ export function reportTables(report: ReportSnapshot) {
         ["Missing records", report.missing.join("; ")],
       ],
     },
-    table("Summary", [report.revenue, report.nights, report.adr]),
+    table("Summary", [
+      report.revenue,
+      report.nights,
+      report.adr,
+      {
+        label: "Occupancy % (75 units)",
+        budget: periodOccupancy(
+          report.nights.budget,
+          report.year,
+          periodMonths(report.period),
+        ),
+        bob: periodOccupancy(
+          report.nights.bob,
+          report.year,
+          periodMonths(report.period),
+        ),
+      },
+    ]),
     table("Markets", report.byMarket),
     table("Monthly", report.byMonth),
     table("Categories", report.breakdown),
@@ -321,6 +339,11 @@ export async function exportVisualReport(report: ReportSnapshot) {
       r.eachCell((cell) => {
         if (typeof cell.value === "number") cell.numFmt = "#,##0;(#,##0);0";
       });
+      if (
+        t.name === "Summary" &&
+        String(r.getCell(1).value).startsWith("Occupancy")
+      )
+        for (const c of [2, 3, 4]) r.getCell(c).numFmt = '0.0"%"';
       const moneyColumns = ["Markets", "Monthly"].includes(t.name)
         ? [2, 3, 4, 8, 9]
         : t.name === "Weekly snapshots"

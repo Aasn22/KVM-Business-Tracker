@@ -1,3 +1,4 @@
+import { periodOccupancy, formatOccupancy } from "./occupancy";
 import { useEffect, useState } from "react";
 import { loadPublicBudgets, type PublicBudgets } from "./publicBudgets";
 import {
@@ -7,7 +8,12 @@ import {
 } from "./productionClient";
 import type { ProductionData } from "./production";
 import { loadHistory, historyChanged } from "./historyClient";
-import { historySummary, type HistoryYear } from "./history";
+import {
+  historySummary,
+  withRevenueReference,
+  revenueReferenceNote,
+  type HistoryYear,
+} from "./history";
 import type { Entry } from "./model";
 import { formatMoney, formatNumber } from "./format";
 import {
@@ -114,9 +120,16 @@ export function PulseContent({
     },
     {
       label: "Occupancy %",
-      value: "—",
+      value: formatOccupancy(
+        periodOccupancy(
+          target.nights,
+          2027,
+          [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+        ),
+      ),
       note: "Year 2027",
-      detail: "Verified daily room inventory denominator not supplied.",
+      detail:
+        "Budget room nights / (75 units × 365 calendar days). Supplied budget coverage only; no occupancy inferred for missing target records.",
     },
     {
       label: "Room Nights",
@@ -487,14 +500,14 @@ export default function PulsePage({
         const [years, prod, history] = await Promise.all([
           Promise.all([...pulseYears, 2027].map((y) => readYear(y))),
           loadProduction().catch(() => null),
-          loadHistory().catch(() => null),
+          loadHistory().catch(() => withRevenueReference([])),
         ]);
         if (active) {
           setBudgets(years.flatMap((r) => r.entries));
           setProduction(prod?.data ?? null);
           setHistories(history ?? []);
           setNote(
-            `${years.every((r) => r.databaseAvailable) ? "Saved database budgets." : "Some budget sources unavailable or published workbook baseline."} ${prod?.source ?? "Uploaded production unavailable."} ${history === null ? "History Update database unavailable." : `Manual history available for ${history.map((h) => h.year).join(", ") || "no years"}. Saved manual year actuals/targets take precedence, are never added to production, and may cover partial months.`}`,
+            `${years.every((r) => r.databaseAvailable) ? "Saved database budgets." : "Some budget sources unavailable or published workbook baseline."} ${prod?.source ?? "Uploaded production unavailable."} ${history === null ? "History Update database unavailable." : `Manual history available for ${history.map((h) => h.year).join(", ") || "no years"}. Saved manual year actuals/targets take precedence, never added to production; partial months possible. Occupancy assumes 75 units throughout each included calendar period. ${revenueReferenceNote}`}`,
           );
         }
       } catch (e) {

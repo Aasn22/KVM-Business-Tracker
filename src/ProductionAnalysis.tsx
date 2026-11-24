@@ -1,3 +1,4 @@
+import { occupancyForDates, formatOccupancy } from "./occupancy";
 import { useEffect, useState } from "react";
 import {
   loadProduction,
@@ -405,6 +406,27 @@ export default function ProductionAnalysis({
                 <strong>{formatNumber(summary.arrivals)}</strong>
               </article>
             </div>
+            {dateBasis === "stay" && (
+              <p>
+                Occupancy (
+                {status === "CHECKED OUT"
+                  ? "actual"
+                  : status === "CANCELLED" || status === "NO SHOW"
+                    ? "not applicable to non-stays"
+                    : "booked/selected status"}
+                ):{" "}
+                {!["CHECKED OUT", "CHECKED IN", "RESERVED", "DUE IN"].includes(
+                  status,
+                ) || !summary.groups.length
+                  ? "—"
+                  : formatOccupancy(
+                      occupancyForDates(summary.nights, from, to),
+                    )}
+                . Fixed 75 units × every calendar day in the selected stay
+                range; partial source coverage may understate occupancy. Filters
+                show contribution to property capacity.
+              </p>
+            )}
             {!summary.groups.length && (
               <p role="status">
                 No records for the selected dates/market. This is not a verified

@@ -13,6 +13,11 @@ export async function exportManagementReport(
       r.eachCell((c) => {
         if (typeof c.value === "number") c.numFmt = "#,##0;(#,##0);0";
       });
+      if (String(r.getCell(2).value) === "Occupancy %")
+        for (let c = 3; c <= r.cellCount; c++) {
+          if (typeof r.getCell(c).value === "number")
+            r.getCell(c).numFmt = '0.0"%"';
+        }
       // Only commercial revenue/ADR rows, never independent categories or counts.
       if (
         isMoneyMetric(String(r.getCell(2).value)) &&

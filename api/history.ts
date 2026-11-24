@@ -1,7 +1,11 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { createClient } from "@supabase/supabase-js";
 import { validSession } from "./pin-session.js";
-import { cleanHistory } from "../src/history.js";
+import {
+  cleanHistory,
+  withRevenueReference,
+  revenueReferenceNote,
+} from "../src/history.js";
 import {
   initializeAndSaveHistory,
   missingHistorySchema,
@@ -56,6 +60,18 @@ export default async function handler(
         .select("year,version,months,updated_at");
       if (value) query = query.eq("year", +value);
       const r = await query.order("year");
+      if (r.error && missingHistorySchema(r.error))
+        return send(
+          200,
+          "Published monthly component reference; shared History table not initialized.",
+          {
+            years: withRevenueReference([]).filter(
+              (y) => !value || y.year === +value,
+            ),
+            storageAvailable: false,
+            notice: revenueReferenceNote,
+          },
+        );
       if (r.error)
         return send(
           503,
@@ -65,10 +81,11 @@ export default async function handler(
           { canInitialize: missingHistorySchema(r.error) },
         );
       return send(200, "History loaded", {
-        years: (r.data ?? []).map((y) => ({
-          ...cleanHistory(y),
-          updated_at: y.updated_at,
-        })),
+        years: withRevenueReference(r.data ?? []).filter(
+          (y) => !value || y.year === +value,
+        ),
+        storageAvailable: true,
+        notice: revenueReferenceNote,
       });
     }
     let raw = req.body;

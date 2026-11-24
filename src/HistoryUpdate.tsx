@@ -1,9 +1,12 @@
+import { periodOccupancy, formatOccupancy } from "./occupancy";
 import { useEffect, useState } from "react";
 import {
   blankHistory,
   cleanHistory,
   historyFields,
   historySummary,
+  revenueReferenceNote,
+  withRevenueReference,
   type HistoryYear,
   type HistoryMonth,
 } from "./history";
@@ -22,6 +25,10 @@ export const historyColumns = [
   "Actual ADR",
   "Budgeted Total Revenue",
   "Actual Total Revenue",
+  "Actual F&B Revenue",
+  "Actual Other Revenue",
+  "Budget Occupancy",
+  "Actual Occupancy",
 ];
 const years = Array.from({ length: 40 }, (_, i) => 2021 + i);
 const fields = [
@@ -33,6 +40,8 @@ const fields = [
   "actualADR",
   "budgetTotalRevenue",
   "actualTotalRevenue",
+  "actualFoodRevenue",
+  "actualOtherRevenue",
 ] as const;
 export function HistoryTable({
   data,
@@ -106,6 +115,16 @@ export function HistoryTable({
                     )}
                   </td>
                 ))}
+                <td>
+                  {formatOccupancy(
+                    periodOccupancy(r.budgetNights, data.year, [r.month]),
+                  )}
+                </td>
+                <td>
+                  {formatOccupancy(
+                    periodOccupancy(r.actualNights, data.year, [r.month]),
+                  )}
+                </td>
               </tr>
             );
           })}
@@ -122,6 +141,24 @@ export function HistoryTable({
                   : formatMoney(total[field])}
               </td>
             ))}
+            <td>
+              {formatOccupancy(
+                periodOccupancy(
+                  total.budgetNights,
+                  data.year,
+                  data.months.map((m) => m.month),
+                ),
+              )}
+            </td>
+            <td>
+              {formatOccupancy(
+                periodOccupancy(
+                  total.actualNights,
+                  data.year,
+                  data.months.map((m) => m.month),
+                ),
+              )}
+            </td>
           </tr>
         </tfoot>
       </table>
@@ -157,11 +194,18 @@ export default function HistoryUpdate({
     setError("");
     setMessage("");
     setDirty(false);
-    setData(blankHistory(year));
+    setData(
+      withRevenueReference([]).find((y) => y.year === year) ??
+        blankHistory(year),
+    );
     loadHistory(year)
       .then((rows) => {
         if (active) {
-          setData(rows[0] ?? blankHistory(year));
+          setData(
+            rows[0] ??
+              withRevenueReference([]).find((y) => y.year === year) ??
+              blankHistory(year),
+          );
           setReady(true);
         }
       })
@@ -263,13 +307,37 @@ export default function HistoryUpdate({
       </button>
       <p>
         Excel paste: copy numeric cells and paste into the first matching input.
-        Six input columns or all eight columns (ADR ignored/recalculated) are
-        supported; month names and headers may be included. Enter property
-        totals for the selected year. Blank = unavailable; 0 = a confirmed zero.
-        ADR is calculated from room revenue ÷ room nights; TOTAL ADR is
-        weighted, not a sum. Budget and actual total revenue includes room
-        revenue.
+        Original six input/eight displayed columns or the extended table
+        (including F&B/Other; ADR/occupancy recalculated) are supported; month
+        names and headers may be included. Enter property totals for the
+        selected year. Blank = unavailable; 0 = a confirmed zero. ADR is
+        calculated from room revenue ÷ room nights; TOTAL ADR is weighted, not a
+        sum. Budget and actual total revenue includes room revenue. Occupancy =
+        room nights ÷ (75 units × days in the full selected period; missing
+        months remain partial contributions), including leap years. Component
+        reference monthly sums may differ from the printed source totals; check
+        reconciliation below.
       </p>
+      <p className="history-reconciliation">{revenueReferenceNote}</p>
+      {data.months.some(
+        (m) =>
+          m.actualTotalRevenue !== null &&
+          m.actualRoomRevenue !== null &&
+          m.actualFoodRevenue !== null &&
+          m.actualOtherRevenue !== null &&
+          Math.abs(
+            m.actualTotalRevenue -
+              (m.actualRoomRevenue +
+                m.actualFoodRevenue +
+                m.actualOtherRevenue),
+          ) > 0.5,
+      ) && (
+        <p role="status">
+          Reconciliation: some saved Actual Total Revenue figures differ from
+          room + F&B + other components. Saved total revenue is preserved;
+          inspect monthly entries rather than adding components twice.
+        </p>
+      )}
       {loading && <p role="status">Loading saved year…</p>}
       {error && <p role="alert">{error}</p>}
       {message && <p role="status">{message}</p>}

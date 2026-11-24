@@ -128,8 +128,9 @@ describe("PIN history API", () => {
     });
     const r = response();
     await handler(req(), r.res);
-    expect(r.res.statusCode).toBe(503);
-    expect(r.json().canInitialize).toBe(true);
+    expect(r.res.statusCode).toBe(200);
+    expect(r.json().storageAvailable).toBe(false);
+    expect(r.json().years[0].year).toBe(2024);
     expect(initializer).not.toHaveBeenCalled();
   });
 });

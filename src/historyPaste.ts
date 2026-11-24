@@ -63,9 +63,28 @@ export function pasteHistory(
   const hasMonths = cells.some((r) =>
     months.some((m) => m.toLowerCase() === r[0]?.trim().toLowerCase()),
   );
-  const hasADR = cells.some((r) => (hasMonths ? r.length - 1 : r.length) > 6);
-  const columns = hasADR ? historyDisplayFields : historyFields;
-  const start = hasMonths ? 0 : columns.indexOf(startField);
+  const count = Math.max(
+    ...cells.map((r) => (hasMonths ? r.length - 1 : r.length)),
+  );
+  const extendedDisplay = [
+    ...historyDisplayFields,
+    "actualFoodRevenue",
+    "actualOtherRevenue",
+    "budgetOccupancy",
+    "actualOccupancy",
+  ] as const;
+  const columns =
+    count >= 10 ||
+    startField === "actualFoodRevenue" ||
+    startField === "actualOtherRevenue"
+      ? extendedDisplay
+      : count > 6
+        ? historyDisplayFields
+        : historyFields.slice(0, 6);
+
+  const start = hasMonths
+    ? 0
+    : (columns as readonly string[]).indexOf(startField);
   if (start < 0) throw Error("Select an editable numeric cell.");
   const next = structuredClone(data);
   const used = new Set<number>();
@@ -88,7 +107,13 @@ export function pasteHistory(
       );
     values.forEach((v, j) => {
       const field = columns[start + j];
-      if (field === "budgetADR" || field === "actualADR") return;
+      if (
+        field === "budgetADR" ||
+        field === "actualADR" ||
+        field === "budgetOccupancy" ||
+        field === "actualOccupancy"
+      )
+        return;
       next.months[row][field] = historyInputValue(v, field);
     });
   });

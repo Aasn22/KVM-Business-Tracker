@@ -1,3 +1,5 @@
+import { periodOccupancy } from "./occupancy.js";
+import revenueSource from "./historyRevenueSource.json" with { type: "json" };
 export const historyFields = [
   "budgetNights",
   "actualNights",
@@ -5,6 +7,8 @@ export const historyFields = [
   "actualRoomRevenue",
   "budgetTotalRevenue",
   "actualTotalRevenue",
+  "actualFoodRevenue",
+  "actualOtherRevenue",
 ] as const;
 export type HistoryField = (typeof historyFields)[number];
 export type HistoryMonth = { month: number } & Record<
@@ -29,6 +33,8 @@ export function blankHistory(year: number): HistoryYear {
       actualRoomRevenue: null,
       budgetTotalRevenue: null,
       actualTotalRevenue: null,
+      actualFoodRevenue: null,
+      actualOtherRevenue: null,
     })),
   };
 }
@@ -50,7 +56,7 @@ export function cleanHistory(raw: unknown): HistoryYear {
       throw Error("Month rows must be January to December.");
     const out = { month: m.month } as HistoryMonth;
     for (const field of historyFields) {
-      const v = m[field];
+      const v = m[field] ?? null;
       if (
         v !== null &&
         (typeof v !== "number" ||
@@ -78,17 +84,27 @@ export function cleanHistory(raw: unknown): HistoryYear {
   return { year: r.year, version: r.version, months };
 }
 export function historySummary(months: HistoryMonth[]) {
+  const normalized = months.map((m) => ({
+    ...m,
+    actualTotalRevenue:
+      m.actualTotalRevenue ??
+      (typeof m.actualRoomRevenue === "number" &&
+      typeof m.actualFoodRevenue === "number" &&
+      typeof m.actualOtherRevenue === "number"
+        ? m.actualRoomRevenue + m.actualFoodRevenue + m.actualOtherRevenue
+        : null),
+  }));
   const totals = Object.fromEntries(
     historyFields.map((k) => {
-      const values = months
+      const values = normalized
         .map((m) => m[k])
-        .filter((n): n is number => n !== null);
+        .filter((n): n is number => typeof n === "number");
       return [k, values.length ? values.reduce((a, b) => a + b, 0) : null];
     }),
   ) as Record<HistoryField, number | null>;
   const adr = (revenue: HistoryField, nights: HistoryField) => {
     const pairs = months.filter(
-      (m) => m[revenue] !== null && m[nights] !== null,
+      (m) => typeof m[revenue] === "number" && typeof m[nights] === "number",
     );
     if (!pairs.length) return null;
     const n = pairs.reduce((a, m) => a + m[nights]!, 0);
@@ -112,9 +128,13 @@ export function historyActual(data: HistoryYear) {
     missingRevenue: data.months.filter(
       (m) => m.actualNights !== null && m.actualRoomRevenue === null,
     ).length,
-    foodRevenue: null as number | null,
-    otherRevenue: null as number | null,
-    occupancy: null as number | null,
+    foodRevenue: t.actualFoodRevenue,
+    otherRevenue: t.actualOtherRevenue,
+    occupancy: periodOccupancy(
+      t.actualNights,
+      data.year,
+      data.months.map((m) => m.month),
+    ),
     dates: data.months
       .filter((m) => m.actualRoomRevenue !== null)
       .map((m) => String(m.month).padStart(2, "0")),
@@ -133,3 +153,24 @@ export function historyPlan(data: HistoryYear) {
     coverage: t.knownMonths,
   };
 }
+
+export function withRevenueReference(saved: HistoryYear[]): HistoryYear[] {
+  const map = new Map(saved.map((y) => [y.year, cleanHistory(y)]));
+  for (const [year, values] of Object.entries(revenueSource)) {
+    const y = map.get(+year) ?? blankHistory(+year);
+    y.months = y.months.map((m) => {
+      const reference = values.find((v) => v.month === m.month);
+      return {
+        ...m,
+        actualFoodRevenue:
+          m.actualFoodRevenue ?? reference?.actualFoodRevenue ?? null,
+        actualOtherRevenue:
+          m.actualOtherRevenue ?? reference?.actualOtherRevenue ?? null,
+      };
+    });
+    map.set(+year, y);
+  }
+  return [...map.values()].sort((a, b) => a.year - b.year);
+}
+export const revenueReferenceNote =
+  "F&B/Other source: user-supplied monthly table; saved nonblank entries override it. December 2026 missing. Monthly sums differ from printed totals: 2024 F&B sums $1,288,228 vs $1,378,228 printed; minor $1 differences in 2022 Other, 2024 Other and 2026 components. Existing explicit total revenue is preserved; components are not added twice.";

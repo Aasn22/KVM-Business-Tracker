@@ -1,0 +1,72 @@
+{
+  "2022": [
+    { "month": 1, "actualFoodRevenue": 698097, "actualOtherRevenue": 313627 },
+    { "month": 2, "actualFoodRevenue": 619500, "actualOtherRevenue": 351594 },
+    { "month": 3, "actualFoodRevenue": 558540, "actualOtherRevenue": 316873 },
+    { "month": 4, "actualFoodRevenue": 483204, "actualOtherRevenue": 267040 },
+    { "month": 5, "actualFoodRevenue": 316952, "actualOtherRevenue": 126531 },
+    { "month": 6, "actualFoodRevenue": 237940, "actualOtherRevenue": 73979 },
+    { "month": 7, "actualFoodRevenue": 254061, "actualOtherRevenue": 53329 },
+    { "month": 8, "actualFoodRevenue": 384972, "actualOtherRevenue": 96115 },
+    { "month": 9, "actualFoodRevenue": 179692, "actualOtherRevenue": 53074 },
+    { "month": 10, "actualFoodRevenue": 77010, "actualOtherRevenue": 80207 },
+    { "month": 11, "actualFoodRevenue": 161570, "actualOtherRevenue": 98149 },
+    { "month": 12, "actualFoodRevenue": 236903, "actualOtherRevenue": 161732 }
+  ],
+  "2023": [
+    { "month": 1, "actualFoodRevenue": 204199, "actualOtherRevenue": 168291 },
+    { "month": 2, "actualFoodRevenue": 174438, "actualOtherRevenue": 217082 },
+    { "month": 3, "actualFoodRevenue": 138215, "actualOtherRevenue": 152233 },
+    { "month": 4, "actualFoodRevenue": 132678, "actualOtherRevenue": 162375 },
+    { "month": 5, "actualFoodRevenue": 75314, "actualOtherRevenue": 95467 },
+    { "month": 6, "actualFoodRevenue": 92142, "actualOtherRevenue": 104266 },
+    { "month": 7, "actualFoodRevenue": 122368, "actualOtherRevenue": 135283 },
+    { "month": 8, "actualFoodRevenue": 98891, "actualOtherRevenue": 125019 },
+    { "month": 9, "actualFoodRevenue": 48787, "actualOtherRevenue": 80591 },
+    { "month": 10, "actualFoodRevenue": 54084, "actualOtherRevenue": 84283 },
+    { "month": 11, "actualFoodRevenue": 53047, "actualOtherRevenue": 108008 },
+    { "month": 12, "actualFoodRevenue": 266660, "actualOtherRevenue": 151123 }
+  ],
+  "2024": [
+    { "month": 1, "actualFoodRevenue": 148445, "actualOtherRevenue": 176558 },
+    { "month": 2, "actualFoodRevenue": 186074, "actualOtherRevenue": 195769 },
+    { "month": 3, "actualFoodRevenue": 161965, "actualOtherRevenue": 171047 },
+    { "month": 4, "actualFoodRevenue": 129805, "actualOtherRevenue": 150516 },
+    { "month": 5, "actualFoodRevenue": 61357, "actualOtherRevenue": 83848 },
+    { "month": 6, "actualFoodRevenue": 42329, "actualOtherRevenue": 70337 },
+    { "month": 7, "actualFoodRevenue": 86345, "actualOtherRevenue": 118616 },
+    { "month": 8, "actualFoodRevenue": 100181, "actualOtherRevenue": 114099 },
+    { "month": 9, "actualFoodRevenue": 56751, "actualOtherRevenue": 85352 },
+    { "month": 10, "actualFoodRevenue": 86300, "actualOtherRevenue": 85352 },
+    { "month": 11, "actualFoodRevenue": 107300, "actualOtherRevenue": 114062 },
+    { "month": 12, "actualFoodRevenue": 121376, "actualOtherRevenue": 219324 }
+  ],
+  "2025": [
+    { "month": 1, "actualFoodRevenue": 157807, "actualOtherRevenue": 161395 },
+    { "month": 2, "actualFoodRevenue": 161178, "actualOtherRevenue": 160891 },
+    { "month": 3, "actualFoodRevenue": 127024, "actualOtherRevenue": 108238 },
+    { "month": 4, "actualFoodRevenue": 135042, "actualOtherRevenue": 148169 },
+    { "month": 5, "actualFoodRevenue": 106404, "actualOtherRevenue": 75461 },
+    { "month": 6, "actualFoodRevenue": 92000, "actualOtherRevenue": 107231 },
+    { "month": 7, "actualFoodRevenue": 118299, "actualOtherRevenue": 98111 },
+    { "month": 8, "actualFoodRevenue": 107043, "actualOtherRevenue": 142855 },
+    { "month": 9, "actualFoodRevenue": 59714, "actualOtherRevenue": 66211 },
+    { "month": 10, "actualFoodRevenue": 95013, "actualOtherRevenue": 100193 },
+    { "month": 11, "actualFoodRevenue": 86112, "actualOtherRevenue": 119298 },
+    { "month": 12, "actualFoodRevenue": 195589, "actualOtherRevenue": 228149 }
+  ],
+  "2026": [
+    { "month": 1, "actualFoodRevenue": 185423, "actualOtherRevenue": 260021 },
+    { "month": 2, "actualFoodRevenue": 111787, "actualOtherRevenue": 157263 },
+    { "month": 3, "actualFoodRevenue": 93011, "actualOtherRevenue": 129274 },
+    { "month": 4, "actualFoodRevenue": 103448, "actualOtherRevenue": 84903 },
+    { "month": 5, "actualFoodRevenue": 108790, "actualOtherRevenue": 148307 },
+    { "month": 6, "actualFoodRevenue": 71169, "actualOtherRevenue": 102370 },
+    { "month": 7, "actualFoodRevenue": 110719, "actualOtherRevenue": 132680 },
+    { "month": 8, "actualFoodRevenue": 90589, "actualOtherRevenue": 127304 },
+    { "month": 9, "actualFoodRevenue": 67495, "actualOtherRevenue": 85872 },
+    { "month": 10, "actualFoodRevenue": 76663, "actualOtherRevenue": 136096 },
+    { "month": 11, "actualFoodRevenue": 71633, "actualOtherRevenue": 102502 },
+    { "month": 12, "actualFoodRevenue": null, "actualOtherRevenue": null }
+  ]
+}

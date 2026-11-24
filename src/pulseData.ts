@@ -1,3 +1,4 @@
+import { periodOccupancy } from "./occupancy";
 import { markets, summarize, type Entry } from "./model";
 import { historyActual, historySummary, type HistoryYear } from "./history";
 import type { ProductionData } from "./production";
@@ -55,10 +56,18 @@ export function pulseActual(
   return {
     revenue,
     missingRevenue,
-    foodRevenue: null as number | null,
-    otherRevenue: null as number | null,
+    foodRevenue: manual
+      ? historySummary(manual.months).actualFoodRevenue
+      : null,
+    otherRevenue: manual
+      ? historySummary(manual.months).actualOtherRevenue
+      : null,
     totalRevenue: null as number | null,
-    occupancy: null as number | null,
+    occupancy: periodOccupancy(
+      nights,
+      year,
+      [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+    ),
     nights,
     adr:
       revenue !== null && nights !== null && nights > 0 && missingRevenue === 0
